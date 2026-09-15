@@ -1,0 +1,12 @@
+unity/[Ll]ibrary/
+unity/[Tt]emp/
+unity/[Oo]bj/
+unity/[Bb]uild/
+unity/[Bb]uilds/
+unity/[Ll]ogs/
+unity/[Uu]ser[Ss]ettings/
+unity-export/
+ven-mobile/.gradle/
+ven-mobile/build/
+backend-api/vendor/
+backend-api/.env
