@@ -35,4 +35,16 @@ return [
         ],
     ],
 
+    'google' => [
+        'client_id' => env('GOOGLE_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+        'redirect' => env('GOOGLE_REDIRECT_URI'),
+    ],
+
+    'ai' => [
+        'key' => env('AI_API_KEY'),
+        'url' => env('AI_API_URL', 'https://api.openai.com/v1/chat/completions'),
+        'model' => env('AI_MODEL', 'gpt-4o-mini'),
+    ],
+
 ];
