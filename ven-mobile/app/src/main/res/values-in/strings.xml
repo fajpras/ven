@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">VEN</string>
+    <string name="interest_title">Minat</string>
+    <string name="interest_maybe_later">Nanti saja</string>
+    <string name="interest_save">Simpan</string>
+
+    <!-- Auth Strings -->
+    <string name="login_title">Masuk</string>
+    <string name="register_title">Daftar</string>
+    <string name="forgot_password">Lupa Kata Sandi?</string>
+    <string name="login_button">Masuk</string>
+    <string name="register_button">Daftar</string>
+    <string name="google_sign_in">Lanjutkan dengan Google</string>
+    <string name="dont_have_account">Belum punya akun?</string>
+    <string name="already_have_account">Sudah punya akun?</string>
+
+    <!-- Home Strings -->
+    <string name="home_coming_soon">Segera Hadir</string>
+    <string name="home_create_post">Buat Post</string>
+    <string name="home_request_meeting">Minta Pertemuan</string>
+    <string name="home_view_3d">Lihat Pameran 3D</string>
+    <string name="home_empty_feed">Belum ada postingan</string>
+</resources>
