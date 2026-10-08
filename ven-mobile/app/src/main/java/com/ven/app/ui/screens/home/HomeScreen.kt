@@ -173,7 +173,7 @@ fun HomeScreen(
 // Previews untuk Dark Mode & Light Mode
 // ---------------------------------------------------------
 
-private val sampleUiState = HomeUiState(
+val SampleHomeUiState = HomeUiState(
     comingSoonEvents = listOf(
         ComingSoonEvent(
             id = "1",
@@ -207,7 +207,7 @@ private val sampleUiState = HomeUiState(
 private fun HomeScreenDarkPreview() {
     VexTheme(mode = ThemeMode.Dark) {
         HomeScreen(
-            uiState = sampleUiState,
+            uiState = SampleHomeUiState,
             onTabSelected = {},
             onCreateClick = {},
             onRequestMeetingClick = {},
@@ -222,7 +222,7 @@ private fun HomeScreenDarkPreview() {
 private fun HomeScreenLightPreview() {
     VexTheme(mode = ThemeMode.Light) {
         HomeScreen(
-            uiState = sampleUiState,
+            uiState = SampleHomeUiState,
             onTabSelected = {},
             onCreateClick = {},
             onRequestMeetingClick = {},
