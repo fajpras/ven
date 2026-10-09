@@ -16,13 +16,11 @@ class PilihKoneksi
         if ($user) {
             $koneksi = match (true) {
                 $user->isAdmin() && $request->segment(2) === 'admin' => 'mysql_admin',
-                ! $request->isMethodSafe() => 'mysql_user',
-                default => null,
+                default => 'mysql_user',
             };
 
-            if ($koneksi) {
-                DB::setDefaultConnection($koneksi);
-            }
+            DB::setDefaultConnection($koneksi);
+            $user->setConnection($koneksi);
         }
 
         return $next($request);

@@ -24,7 +24,7 @@ return new class extends Migration
         return [
             'pengguna' => ['SELECT', 'UPDATE (nama, nama_panggilan, deskripsi, foto_profil, email, kata_sandi, status, updated_at)'],
             'pengguna_kategori' => ['SELECT', 'INSERT', 'UPDATE', 'DELETE'],
-            'pameran' => ['SELECT', 'INSERT', 'UPDATE (id_model, judul, banner, tipe, deleted_at)'],
+            'pameran' => ['SELECT', 'INSERT', 'UPDATE (id_model, judul, banner, tipe, updated_at, deleted_at)'],
             'ruangan' => ['SELECT', 'INSERT'],
             'karya' => ['SELECT', 'INSERT', 'UPDATE (id_kategori, id_pameran, id_objek, judul, jenis, deskripsi, file, updated_at, deleted_at)'],
             'objek' => ['SELECT', 'INSERT', 'UPDATE (id_model, jenis, id_posisi)'],
@@ -97,7 +97,9 @@ return new class extends Migration
         $host = config('database.ven_client_host', 'localhost');
         $app = "'".env('DB_APP_USERNAME', 'ven_app')."'@'{$host}'";
 
-        foreach ([[$this->hakApp(), $app], [$this->hakUser(), '`user_role`'], [$this->hakAdmin(), '`admin_role`']] as [$hak, $penerima]) {
+        foreach ([[$this->hakApp(), $app],
+         [$this->hakUser(), '`user_role`'],
+         [$this->hakAdmin(), '`admin_role`']] as [$hak, $penerima]) {
             foreach (array_keys($hak) as $tabel) {
                 try {
                     DB::unprepared("REVOKE ALL PRIVILEGES ON `{$db}`.`{$tabel}` FROM {$penerima}");

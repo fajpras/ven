@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Enums\TujuanOtp;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -14,24 +13,24 @@ class ResetKataSandi extends Model
     protected $table = 'reset_kata_sandi';
     protected $primaryKey = 'id_reset';
 
-    protected $fillable = ['tujuan', 'email', 'id_pengguna', 'otp_hash', 'expired_at', 'used_at'];
+    protected $fillable = ['tujuan', 'email', 'id_pengguna', 'otp_hash', 'expired_at', 'used_at', 'percobaan'];
 
     protected $hidden = ['otp_hash'];
 
     protected function casts(): array
     {
         return [
-            'tujuan' => TujuanOtp::class,
-            'percobaan' => 'integer',
+            'percobaan'  => 'integer',
             'expired_at' => 'datetime',
-            'used_at' => 'datetime',
+            'used_at'    => 'datetime',
             'created_at' => 'datetime',
         ];
     }
 
-    public function scopeUntuk(Builder $query, TujuanOtp $tujuan, string $email): Builder
+    public function scopeUntuk(Builder $query, $tujuan, string $email): Builder
     {
-        return $query->where('tujuan', $tujuan->value)->where('email', $email);
+        $tujuanVal = $tujuan instanceof \BackedEnum ? $tujuan->value : $tujuan;
+        return $query->where('tujuan', $tujuanVal)->where('email', $email);
     }
 
     public function scopeBelumDipakai(Builder $query): Builder

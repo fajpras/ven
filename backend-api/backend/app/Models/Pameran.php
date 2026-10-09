@@ -16,7 +16,7 @@ class Pameran extends Model
     protected $table = 'pameran';
     protected $primaryKey = 'id_pameran';
 
-    protected $fillable = ['id_model', 'judul', 'banner', 'tipe'];
+    protected $fillable = ['id_pengguna', 'id_model', 'judul', 'banner', 'tipe'];
 
     protected function casts(): array
     {

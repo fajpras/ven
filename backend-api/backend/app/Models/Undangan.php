@@ -29,6 +29,6 @@ class Undangan extends Model
 
     public function ruangan(): BelongsTo
     {
-        return $this->belongsTo(Ruangan::class, 'id_ruangan', 'id_ruangan');
+        return $this->belongsTo(Ruangan::class, 'id_runagan', 'id_ruangan');
     }
 }

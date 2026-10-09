@@ -15,9 +15,11 @@ class Karya extends Model
 
     protected $table = 'karya';
     protected $primaryKey = 'id_karya';
+    protected $keyType = 'string';
+    public $incrementing = false;
 
     protected $fillable = [
-        'id_kategori', 'id_pameran', 'id_objek',
+        'id_kategori', 'id_pengguna', 'id_pameran', 'id_objek',
         'judul', 'jenis', 'deskripsi', 'file',
     ];
 

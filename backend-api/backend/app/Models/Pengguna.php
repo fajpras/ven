@@ -16,10 +16,12 @@ class Pengguna extends Authenticatable
 
     protected $table = 'pengguna';
     protected $primaryKey = 'id_pengguna';
+    protected $keyType = 'string';
+    public $incrementing = false;
 
     protected $fillable = [
         'nama', 'nama_panggilan', 'kata_sandi', 'deskripsi', 'google_id',
-        'email', 'foto_profil',
+        'email', 'foto_profil', 'role', 'status',
     ];
 
     protected $hidden = ['kata_sandi', 'google_id'];
