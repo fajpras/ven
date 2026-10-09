@@ -2,29 +2,29 @@
 
 namespace App\Models;
 
-use App\Models\Concerns\HasBinaryUuid;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Support\Carbon;
 use Laravel\Sanctum\HasApiTokens;
 
 class Pengguna extends Authenticatable
 {
-    use HasApiTokens, HasBinaryUuid;
+    use HasApiTokens, HasUuids, SoftDeletes;
 
     protected $table = 'pengguna';
     protected $primaryKey = 'id_pengguna';
-    public $incrementing = false;
-    protected $keyType = 'string';
-
-    protected array $uuidColumns = ['id_pengguna'];
 
     protected $fillable = [
         'nama', 'nama_panggilan', 'kata_sandi', 'deskripsi', 'google_id',
-        'email', 'foto_profil', 'role', 'status',
+        'email', 'foto_profil',
     ];
 
     protected $hidden = ['kata_sandi', 'google_id'];
+
+    protected $attributes = ['status' => 'aktif'];
 
     protected function casts(): array
     {
@@ -32,10 +32,10 @@ class Pengguna extends Authenticatable
             'kata_sandi' => 'hashed',
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
+            'deleted_at' => 'datetime',
         ];
     }
 
-    /** Kolom password bukan "password". */
     public function getAuthPasswordName(): string
     {
         return 'kata_sandi';
@@ -86,5 +86,53 @@ class Pengguna extends Authenticatable
     public function logKeamanan(): HasMany
     {
         return $this->hasMany(LogKeamanan::class, 'id_pengguna', 'id_pengguna');
+    }
+
+    public function sanksiAktif(): ?SanksiAkun
+    {
+        return $this->sanksi()
+            ->where('mulai', '<=', now())
+            ->where(fn ($q) => $q->whereNull('berakhir')->orWhere('berakhir', '>', now()))
+            ->orderByRaw("jenis_sanksi = 'diblokir' desc")
+            ->latest('id_sanksi')
+            ->first();
+    }
+
+    public function sinkronStatusSanksi(): void
+    {
+        $sanksi = $this->sanksiAktif();
+
+        $status = match ($sanksi?->jenis_sanksi) {
+            'diblokir' => 'nonaktifkan',
+            'ditanggungkan' => 'ditanggungkan',
+            default => 'aktif',
+        };
+
+        if ($this->status !== $status) {
+            $this->forceFill(['status' => $status])->save();
+        }
+
+        if ($sanksi) {
+            $this->tokens()->delete();
+        }
+    }
+
+    public function cekAksesLogin(): ?string
+    {
+        if ($sanksi = $this->sanksiAktif()) {
+            $this->sinkronStatusSanksi();
+
+            $durasi = $sanksi->berakhir
+                ? 'sampai '.Carbon::parse($sanksi->berakhir)->translatedFormat('d M Y H:i')
+                : 'secara permanen';
+
+            return "Akun Anda dikenai sanksi {$durasi}. Alasan: {$sanksi->alasan}";
+        }
+
+        if ($this->status !== 'aktif') {
+            $this->forceFill(['status' => 'aktif'])->save();
+        }
+
+        return null;
     }
 }

@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Models\Concerns\HasBinaryUuid;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -10,20 +9,22 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Pameran extends Model
 {
-    use HasBinaryUuid, SoftDeletes;
+    use SoftDeletes;
 
     public $timestamps = false;
 
     protected $table = 'pameran';
     protected $primaryKey = 'id_pameran';
 
-    protected array $uuidColumns = ['id_pengguna'];
-
-    protected $fillable = ['id_pengguna', 'id_model', 'judul', 'banner', 'tipe'];
+    protected $fillable = ['id_model', 'judul', 'banner', 'tipe'];
 
     protected function casts(): array
     {
-        return ['deleted_at' => 'datetime'];
+        return [
+            'created_at' => 'datetime',
+            'updated_at' => 'datetime',
+            'deleted_at' => 'datetime',
+        ];
     }
 
     public function pengguna(): BelongsTo
