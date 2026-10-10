@@ -1,0 +1,12 @@
+$kind: http-request
+url: "{{base_url}}/api/auth/daftar/kirim-otp"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+        "email": "fajri@ven.test"
+    }
+order: 1000

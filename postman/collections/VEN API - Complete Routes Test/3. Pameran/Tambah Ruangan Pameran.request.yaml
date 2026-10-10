@@ -1,0 +1,16 @@
+$kind: http-request
+url: "{{base_url}}/api/pameran/1/ruangan"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+        "jenis": "umum"
+    }
+auth:
+  type: bearer
+  credentials:
+    token: "{{auth_token}}"
+order: 4000
