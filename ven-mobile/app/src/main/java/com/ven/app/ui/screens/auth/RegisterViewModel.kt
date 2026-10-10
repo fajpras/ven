@@ -196,52 +196,7 @@ fun RegisterRoute(
     }
 
     /** Daftar menggunakan akun Google */
-    fun registerWithGoogle(context: Context) {
-        viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, errorMessage = null) }
-
-            val googleResult = GoogleAuthHelper.getGoogleIdToken(context)
-
-            googleResult.onSuccess { idToken ->
-                // Coba daftar dulu, jika sudah ada akun langsung login
-                val registerResult = ApiRegister.registerGoogle(idToken = idToken)
-
-                registerResult.onSuccess { authData ->
-                    val sessionManager = SessionManager.getInstance(context)
-                    sessionManager.saveToken(authData.token)
-                    sessionManager.saveUser(authData.pengguna)
-
-                    _uiState.update { it.copy(isLoading = false) }
-                    _events.send(RegisterEvent.NavigateToOnboarding)
-                }.onFailure {
-                    // Akun mungkin sudah terdaftar, coba login Google
-                    val loginResult = ApiLogin.loginGoogle(idToken = idToken)
-                    loginResult.onSuccess { authData ->
-                        val sessionManager = SessionManager.getInstance(context)
-                        sessionManager.saveToken(authData.token)
-                        sessionManager.saveUser(authData.pengguna)
-
-                        _uiState.update { it.copy(isLoading = false) }
-                        _events.send(RegisterEvent.NavigateToOnboarding)
-                    }.onFailure { loginException ->
-                        _uiState.update {
-                            it.copy(
-                                isLoading = false,
-                                errorMessage = loginException.message ?: "Gagal mendaftar dengan Google"
-                            )
-                        }
-                    }
-                }
-            }.onFailure { exception ->
-                _uiState.update {
-                    it.copy(
-                        isLoading = false,
-                        errorMessage = exception.message ?: "Autentikasi Google dibatalkan"
-                    )
-                }
-            }
-        }
-    if (state.isOtpDialogOpen) {
+     if (state.isOtpDialogOpen) {
         VerifyOtpScreen(
             state = ForgotPasswordUiState(
                 email = state.email,
@@ -266,40 +221,5 @@ fun RegisterRoute(
         onRegisterClick = viewModel::requestOtpAndOpenDialog,
         onGoogleClick = onGoogleClick,
         onLoginClick = onNavigateToLogin,
-    )
-}
-
-/** Penghubung antara RegisterViewModel dan RegisterScreen (stateless). */
-@Composable
-fun RegisterRoute(
-    onNavigateToOnboarding: () -> Unit,
-    onNavigateToLogin: () -> Unit,
-    onGoogleClick: () -> Unit = onNavigateToOnboarding,
-    viewModel: RegisterViewModel = viewModel(),
-) {
-    val context = LocalContext.current
-    val state by viewModel.uiState.collectAsStateWithLifecycle()
-
-    LaunchedEffect(Unit) {
-        viewModel.events.collect { event ->
-            when (event) {
-                RegisterEvent.NavigateToOnboarding -> onNavigateToOnboarding()
-            }
-        }
-    }
-
-    RegisterScreen(
-        state = state,
-        onEmailChange = viewModel::onEmailChange,
-        onUsernameChange = viewModel::onUsernameChange,
-        onPasswordChange = viewModel::onPasswordChange,
-        onConfirmPasswordChange = viewModel::onConfirmPasswordChange,
-        onRegisterClick = viewModel::requestOtpAndOpenDialog,
-        onGoogleClick = { viewModel.registerWithGoogle(context) },
-        onLoginClick = onNavigateToLogin,
-        onOtpChange = viewModel::onOtpChange,
-        onSubmitOtpClick = { viewModel.submitRegisterWithOtp(context) },
-        onResendOtpClick = viewModel::resendOtp,
-        onDismissOtpDialog = viewModel::dismissOtpDialog,
     )
 }
