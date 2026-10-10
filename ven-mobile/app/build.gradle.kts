@@ -11,8 +11,11 @@ if (envFile.exists()) {
     envProperties.load(envFile.inputStream())
 }
 
-val envBaseUrl: String = envProperties.getProperty("BASE_URL") ?: "http://10.0.2.2:8000/api/"
-val envGoogleClientId: String = envProperties.getProperty("GOOGLE_SERVER_CLIENT_ID") ?: ""
+val envBaseUrl: String =
+    envProperties.getProperty("BASE_URL") ?: "http://localhost:8000/api/"
+
+val envGoogleClientId: String =
+    envProperties.getProperty("GOOGLE_SERVER_CLIENT_ID") ?: ""
 
 android {
     namespace = "com.ven.app"
@@ -26,9 +29,15 @@ android {
         versionName = "1.0"
 
         buildConfigField("String", "BASE_URL", "\"$envBaseUrl\"")
-        buildConfigField("String", "GOOGLE_SERVER_CLIENT_ID", "\"$envGoogleClientId\"")
+        buildConfigField(
+            "String",
+            "GOOGLE_SERVER_CLIENT_ID",
+            "\"$envGoogleClientId\""
+        )
 
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner =
+            "androidx.test.runner.AndroidJUnitRunner"
+
         vectorDrawables {
             useSupportLibrary = true
         }
@@ -43,14 +52,17 @@ android {
             )
         }
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
+
     buildFeatures {
         compose = true
         buildConfig = true
     }
+
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
@@ -67,6 +79,7 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
+
     implementation("androidx.navigation:navigation-compose:2.8.4")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.7")
@@ -88,6 +101,12 @@ dependencies {
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.junit)
+
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
+}
+
+// Lock versi dependensi yang di-resolve oleh Gradle.
+dependencyLocking {
+    lockAllConfigurations()
 }
