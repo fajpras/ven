@@ -143,8 +143,7 @@ class RegisterViewModel : ViewModel() {
         }
     }
 
-    /** Langkah 2: Kirim OTP + data registrasi ke backend */
-    fun submitRegisterWithOtp(context: Context) {
+    fun submitRegisterWithOtp() {
         val state = _uiState.value
         if (state.otp.trim().length < 6) {
             _uiState.update { it.copy(errorMessage = "Kode verifikasi harus 6 digit") }
@@ -163,12 +162,8 @@ class RegisterViewModel : ViewModel() {
                 otp = state.otp.trim()
             )
 
-            result.onSuccess { authData ->
-                val sessionManager = SessionManager.getInstance(context)
-                sessionManager.saveToken(authData.token)
-                sessionManager.saveUser(authData.pengguna)
-
-                _uiState.update { it.copy(isLoading = false, isOtpDialogOpen = false) }
+            result.onSuccess {
+                _uiState.update { it.copy(isLoading = false) }
                 _events.send(RegisterEvent.NavigateToOnboarding)
             }.onFailure { exception ->
                 _uiState.update {
@@ -177,6 +172,25 @@ class RegisterViewModel : ViewModel() {
                         errorMessage = exception.message ?: "Registrasi gagal, coba lagi"
                     )
                 }
+            }
+        }
+    }
+}
+
+/** Penghubung antara RegisterViewModel dan RegisterScreen (stateless). */
+@Composable
+fun RegisterRoute(
+    onNavigateToOnboarding: () -> Unit,
+    onNavigateToLogin: () -> Unit,
+    onGoogleClick: () -> Unit = onNavigateToOnboarding,
+    viewModel: RegisterViewModel = viewModel(),
+) {
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+
+    LaunchedEffect(Unit) {
+        viewModel.events.collect { event ->
+            when (event) {
+                RegisterEvent.NavigateToOnboarding -> onNavigateToOnboarding()
             }
         }
     }
@@ -227,7 +241,32 @@ class RegisterViewModel : ViewModel() {
                 }
             }
         }
+    if (state.isOtpDialogOpen) {
+        VerifyOtpScreen(
+            state = ForgotPasswordUiState(
+                email = state.email,
+                otp = state.otp,
+                isLoading = state.isLoading,
+                errorMessage = state.errorMessage,
+            ),
+            onOtpChange = viewModel::onOtpChange,
+            onVerifyClick = { viewModel.submitRegisterWithOtp() },
+            onResendClick = viewModel::resendOtp,
+            onBackClick = viewModel::dismissOtpDialog,
+        )
+        return
     }
+
+    RegisterScreen(
+        state = state,
+        onEmailChange = viewModel::onEmailChange,
+        onUsernameChange = viewModel::onUsernameChange,
+        onPasswordChange = viewModel::onPasswordChange,
+        onConfirmPasswordChange = viewModel::onConfirmPasswordChange,
+        onRegisterClick = viewModel::requestOtpAndOpenDialog,
+        onGoogleClick = onGoogleClick,
+        onLoginClick = onNavigateToLogin,
+    )
 }
 
 /** Penghubung antara RegisterViewModel dan RegisterScreen (stateless). */
