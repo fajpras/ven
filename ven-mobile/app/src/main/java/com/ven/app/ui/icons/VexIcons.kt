@@ -26,38 +26,38 @@ object VexIcons {
         val Explore = VexIconPair(R.drawable.ic_nav_explore_outline, R.drawable.ic_nav_explore_filled)
     }
 
-    // Tab icons
+    // Tab icons (Profile tabs)
     object Tab {
-        val Posts = VexIconPair(0, 0)     // TODO: R.drawable.ic_tab_posts_outline, _filled
-        val Exhibits = VexIconPair(0, 0)  // TODO: R.drawable.ic_tab_exhibits_outline, _filled
+        val Posts = VexIconPair(R.drawable.ic_tab_posts_outline, R.drawable.ic_tab_posts_filled)
+        val Exhibits = VexIconPair(R.drawable.ic_tab_exhibits_outline, R.drawable.ic_tab_exhibits_filled)
     }
 
     // Action icons
     @DrawableRes val Add = R.drawable.ic_action_add
-    @DrawableRes val Menu = 0             // TODO: R.drawable.ic_action_menu
-    @DrawableRes val Back = 0             // TODO: R.drawable.ic_action_back
+    @DrawableRes val Menu = R.drawable.ic_action_menu
+    @DrawableRes val Back = R.drawable.ic_action_back
     @DrawableRes val Close = 0            // TODO: R.drawable.ic_action_close
     @DrawableRes val ChevronRight = 0     // TODO: R.drawable.ic_action_chevron_right
     @DrawableRes val ChevronDown = 0      // TODO: R.drawable.ic_action_chevron_down
-    @DrawableRes val Search = 0           // TODO: R.drawable.ic_action_search
+    @DrawableRes val Search = R.drawable.ic_nav_explore_outline
     @DrawableRes val Filter = 0           // TODO: R.drawable.ic_action_filter
-    @DrawableRes val Calendar = R.drawable.ic_action_calendar
+    @DrawableRes val ScheduleAction = R.drawable.ic_nav_schedule_outline
     @DrawableRes val Play = R.drawable.ic_action_play
-    @DrawableRes val NewChat = 0          // TODO: R.drawable.ic_action_new_chat
+    @DrawableRes val NewChat = R.drawable.ic_action_new_chat
     @DrawableRes val Visibility = 0       // TODO: R.drawable.ic_action_visibility
     @DrawableRes val VisibilityOff = 0    // TODO: R.drawable.ic_action_visibility_off
 
     // Settings icons
-    @DrawableRes val SettingsProfile = 0
-    @DrawableRes val SettingsEmail = 0
-    @DrawableRes val SettingsPassword = 0
-    @DrawableRes val SettingsAccountStatus = 0
-    @DrawableRes val SettingsHistory = 0
-    @DrawableRes val SettingsTheme = 0
-    @DrawableRes val SettingsLanguage = 0
-    @DrawableRes val SettingsPrivacy = 0
-    @DrawableRes val SettingsHelp = 0
-    @DrawableRes val SettingsLogout = 0
+    @DrawableRes val SettingsProfile = R.drawable.ic_settings_profile
+    @DrawableRes val SettingsEmail = R.drawable.ic_settings_email
+    @DrawableRes val SettingsPassword = R.drawable.ic_settings_password
+    @DrawableRes val SettingsAccountStatus = R.drawable.ic_settings_account_status
+    @DrawableRes val SettingsHistory = R.drawable.ic_settings_history
+    @DrawableRes val SettingsTheme = R.drawable.ic_settings_theme
+    @DrawableRes val SettingsLanguage = R.drawable.ic_settings_language
+    @DrawableRes val SettingsPrivacy = R.drawable.ic_settings_privacy
+    @DrawableRes val SettingsHelp = R.drawable.ic_settings_help
+    @DrawableRes val SettingsLogout = R.drawable.ic_settings_logout
 
     // Editor icons
     @DrawableRes val EditorText = 0
@@ -71,7 +71,7 @@ object VexIcons {
     // Logos
     @DrawableRes val LogoVen = R.drawable.logo_ven
     @DrawableRes val LogoVex = R.drawable.logo_ven // Alias for DESIGN.md compatibility
-    @DrawableRes val LogoGoogle = 0                // Multi-color, NO tint
+    @DrawableRes val LogoGoogle = R.drawable.ic_google // Multi-color, NO tint
 }
 
 @Composable
