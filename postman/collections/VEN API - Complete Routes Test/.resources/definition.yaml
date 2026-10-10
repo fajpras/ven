@@ -1,6 +1,0 @@
-$kind: collection
-description: Koleksi pengujian Postman lengkap yang diselaraskan dengan api.php proyek ven_null.
-scripts:
-  - type: http:beforeRequest
-    code: "pm.request.headers.add({key: 'Accept', value: 'application/json'});"
-    language: text/javascript
