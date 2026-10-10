@@ -1,111 +1,103 @@
 <?php
 
-use App\Http\Controllers\Admin\KaryaController as AdminKaryaController;
-use App\Http\Controllers\Admin\KategoriController as AdminKategoriController;
-use App\Http\Controllers\Admin\LogController;
-use App\Http\Controllers\Admin\PameranController as AdminPameranController;
-use App\Http\Controllers\Admin\SanksiAkunController;
-use App\Http\Controllers\AIChatController;
+use App\Http\Controllers\Admin;
 use App\Http\Controllers\AuthController;
-use App\Http\Controllers\Model3DController;
-use App\Http\Controllers\ObjekController;
-use App\Http\Controllers\PasswordResetController;
-use App\Http\Controllers\Pengguna\KaryaController as PenggunaKaryaController;
-use App\Http\Controllers\Pengguna\PameranController as PenggunaPameranController;
-use App\Http\Controllers\PenggunaKategoriController;
-use App\Http\Controllers\PosisiObjekController;
-use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\RekomendasiController;
-use App\Http\Controllers\UndanganController;
+use App\Http\Controllers\Pengguna;
+use App\Http\Middleware\AkunAktif;
+use App\Http\Middleware\CatatKeamanan;
+use App\Http\Middleware\HanyaAdmin;
+use App\Http\Middleware\PilihKoneksi;
 use Illuminate\Support\Facades\Route;
 
-/*
-|--------------------------------------------------------------------------
-| Publik (tanpa auth)
-|--------------------------------------------------------------------------
-*/
-Route::post('/auth/register', [AuthController::class, 'register']);
-Route::post('/auth/register/google', [AuthController::class, 'registerGoogle']);
-Route::post('/auth/login', [AuthController::class, 'login']);
-Route::post('/auth/login/google', [AuthController::class, 'loginGoogle']);
+Route::middleware(CatatKeamanan::class)->group(function () {
+    Route::prefix('auth')->controller(AuthController::class)->group(function () {
+        Route::post('daftar/kirim-otp', 'kirimOtpRegistrasi')->middleware('throttle:5,1');
+        Route::post('daftar', 'register')->middleware('throttle:5,1');
+        Route::post('masuk', 'login')->middleware('throttle:5,1');
+        Route::post('google/daftar', 'registerGoogle')->middleware('throttle:10,1');
+        Route::post('google/masuk', 'loginGoogle')->middleware('throttle:10,1');
+        Route::post('lupa-kata-sandi', 'lupaKataSandi')->middleware('throttle:3,1');
+        Route::post('reset-kata-sandi', 'resetKataSandi')->middleware('throttle:5,1');
+        Route::post('keluar', 'logout')->middleware('auth:sanctum');
+    });
 
-Route::post('/password/forgot', [PasswordResetController::class, 'forgot']);
-Route::post('/password/reset', [PasswordResetController::class, 'reset']);
+    Route::get('karya/{karya}/berkas', [Pengguna\KaryaController::class, 'berkas'])
+        ->whereUuid('karya')->middleware(['signed', 'throttle:120,1'])->name('karya.berkas');
 
-/*
-|--------------------------------------------------------------------------
-| Auth (auth:sanctum)
-|--------------------------------------------------------------------------
-*/
-Route::middleware('auth:sanctum')->group(function () {
-    Route::post('/auth/logout', [AuthController::class, 'logout']);
+    Route::middleware(['auth:sanctum', AkunAktif::class, PilihKoneksi::class, 'throttle:120,1'])->group(function () {
+        Route::controller(Pengguna\ProfilController::class)->prefix('profil')->group(function () {
+            Route::get('/', 'show');
+            Route::put('/', 'update');
+            Route::post('email/kirim-otp', 'kirimOtpGantiEmail')->middleware('throttle:5,1');
+            Route::put('email', 'gantiEmail')->middleware('throttle:5,1');
+            Route::put('kata-sandi', 'updatePassword');
+            Route::put('status', 'updateStatus');
+            Route::get('minat', 'minat');
+            Route::put('minat', 'updateMinat');
+            Route::delete('minat/{kategori}', 'destroyMinat');
+        });
 
-    // Profil
-    Route::get('/profile', [ProfileController::class, 'show']);
-    Route::put('/profile', [ProfileController::class, 'update']);
-    Route::put('/profile/email', [ProfileController::class, 'updateEmail']);
-    Route::put('/profile/password', [ProfileController::class, 'updatePassword']);
-    Route::patch('/profile/status', [ProfileController::class, 'updateStatus']);
+        Route::controller(Pengguna\PameranController::class)->group(function () {
+            Route::get('model-3d', 'templates');
+            Route::get('model-3d/{model3d}', 'templateShow');
+            Route::get('pameran', 'index');
+            Route::post('pameran', 'store');
+            Route::get('pameran/{pameran}', 'show')->whereNumber('pameran');
+            Route::put('pameran/{pameran}', 'update')->whereNumber('pameran');
+            Route::delete('pameran/{pameran}', 'destroy')->whereNumber('pameran');
+            Route::post('pameran/{pameran}/ruangan', 'storeRuangan')->whereNumber('pameran');
+        });
 
-    // Karya & Pameran (pengguna)
-    Route::apiResource('karya', PenggunaKaryaController::class);
-    Route::apiResource('pameran', PenggunaPameranController::class);
-    Route::post('/pameran/{pameran}/ruangan', [PenggunaPameranController::class, 'storeRuangan']);
+        Route::controller(Pengguna\KaryaController::class)->group(function () {
+            Route::get('karya', 'index');
+            Route::get('karya/rekomendasi', 'rekomendasi');
+            Route::post('karya', 'store');
+            Route::get('karya/{karya}', 'show')->whereUuid('karya');
 
-    // Objek
-    Route::apiResource('objek', ObjekController::class);
-    Route::patch('/objek/{objek}/posisi', [PosisiObjekController::class, 'update']);
+            Route::match(['put', 'patch', 'post'], 'karya/{karya}', 'update')->whereUuid('karya');
+            Route::delete('karya/{karya}', 'destroy')->whereUuid('karya');
+            Route::put('karya/{karya}/posisi', 'updatePosisiObjek')->whereUuid('karya');
+        });
 
-    // Model 3D
-    Route::get('/model-3d', [Model3DController::class, 'index']);
-    Route::get('/model-3d/{model3d}', [Model3DController::class, 'show']);
+        Route::controller(Pengguna\DiskusiController::class)->group(function () {
+            Route::get('undangan', 'index');
+            Route::post('undangan', 'store');
+            Route::get('undangan/{undangan}', 'show');
+            Route::get('undangan/{undangan}/status', 'status');
+            Route::patch('undangan/{undangan}', 'tanggapi');
+            Route::get('ruangan/{ruangan}/voice', 'voiceToken')->middleware('throttle:30,1');
+        });
 
-    // AI Chat
-    Route::post('/ai-chat', [AIChatController::class, 'ask']);
+        Route::post('ai/tanya', [Pengguna\AIChatController::class, 'ask'])->middleware('throttle:10,1');
 
-    // Minat kategori pengguna
-    Route::get('/pengguna/kategori-minat', [PenggunaKategoriController::class, 'show']);
-    Route::put('/pengguna/kategori-minat', [PenggunaKategoriController::class, 'update']);
+        Route::prefix('admin')->middleware(HanyaAdmin::class)->group(function () {
+            Route::controller(Admin\PenggunaController::class)->group(function () {
+                Route::get('pengguna', 'index');
+                Route::get('pengguna/{pengguna}', 'show')->whereUuid('pengguna');
+                Route::post('pengguna/{pengguna}/sanksi', 'sanksiStore')->whereUuid('pengguna');
+                Route::get('sanksi', 'sanksiIndex');
+                Route::get('sanksi/{sanksi}', 'sanksiShow');
+                Route::patch('sanksi/{sanksi}', 'sanksiUpdate');
+                Route::delete('sanksi/{sanksi}', 'sanksiCabut');
+            });
 
-    // Rekomendasi
-    Route::get('/rekomendasi', [RekomendasiController::class, 'index']);
+            Route::controller(Admin\ModerasiController::class)->group(function () {
+                Route::get('karya', 'karyaIndex');
+                Route::get('karya/{karya}', 'karyaShow')->whereUuid('karya')->withTrashed();
+                Route::delete('karya/{karya}', 'karyaDestroy')->whereUuid('karya');
+                Route::post('karya/{karya}/pulihkan', 'karyaRestore')->whereUuid('karya')->withTrashed();
+                Route::get('pameran', 'pameranIndex');
+                Route::get('pameran/{pameran}', 'pameranShow')->whereNumber('pameran')->withTrashed();
+                Route::delete('pameran/{pameran}', 'pameranDestroy')->whereNumber('pameran');
+                Route::post('pameran/{pameran}/pulihkan', 'pameranRestore')->whereNumber('pameran')->withTrashed();
+            });
 
-    // Undangan
-    Route::get('/undangan', [UndanganController::class, 'index']);
-    Route::post('/undangan', [UndanganController::class, 'store']);
-    Route::get('/undangan/{undangan}', [UndanganController::class, 'show']);
-    Route::patch('/undangan/{undangan}', [UndanganController::class, 'update']);
-
-    /*
-    |----------------------------------------------------------------------
-    | Admin (auth:sanctum + admin)
-    |----------------------------------------------------------------------
-    */
-    Route::middleware('admin')->prefix('admin')->group(function () {
-        // Karya
-        Route::get('/karya', [AdminKaryaController::class, 'index']);
-        Route::get('/karya/{id}', [AdminKaryaController::class, 'show']);
-        Route::delete('/karya/{karya}', [AdminKaryaController::class, 'destroy']);
-
-        // Kategori
-        Route::apiResource('kategori', AdminKategoriController::class)->except(['show']);
-        Route::get('/kategori/{kategori}', [AdminKategoriController::class, 'show']);
-
-        // Log (read-only)
-        Route::get('/log/aktifitas', [LogController::class, 'aktifitasIndex']);
-        Route::get('/log/aktifitas/{id}', [LogController::class, 'aktifitasShow']);
-        Route::get('/log/keamanan', [LogController::class, 'keamananIndex']);
-        Route::get('/log/keamanan/{id}', [LogController::class, 'keamananShow']);
-
-        // Pameran
-        Route::get('/pameran', [AdminPameranController::class, 'index']);
-        Route::get('/pameran/{id}', [AdminPameranController::class, 'show']);
-        Route::delete('/pameran/{pameran}', [AdminPameranController::class, 'destroy']);
-
-        // Sanksi akun (flat resource)
-        Route::get('/sanksi-akun', [SanksiAkunController::class, 'index']);
-        Route::post('/sanksi-akun', [SanksiAkunController::class, 'store']);
-        Route::get('/sanksi-akun/{id}', [SanksiAkunController::class, 'show']);
-        Route::patch('/sanksi-akun/{id}', [SanksiAkunController::class, 'update']);
+            Route::controller(Admin\LogController::class)->prefix('log')->group(function () {
+                Route::get('aktifitas', 'aktifitasIndex');
+                Route::get('aktifitas/{log}', 'aktifitasShow');
+                Route::get('keamanan', 'keamananIndex');
+                Route::get('keamanan/{log}', 'keamananShow');
+            });
+        });
     });
 });

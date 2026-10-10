@@ -1,0 +1,19 @@
+$kind: http-request
+url: "{{base_url}}/api/profil/minat"
+method: PUT
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+        "minat": [
+            { "id_kategori": 1, "bobot": 0.85 },
+            { "id_kategori": 2, "bobot": 0.60 }
+        ]
+    }
+auth:
+  type: bearer
+  credentials:
+    token: "{{auth_token}}"
+order: 4000

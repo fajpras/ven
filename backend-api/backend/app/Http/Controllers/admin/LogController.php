@@ -5,27 +5,18 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\LogAktifitas;
 use App\Models\LogKeamanan;
-use App\Models\Pengguna;
 use Illuminate\Http\Request;
 use Spatie\QueryBuilder\AllowedFilter;
 use Spatie\QueryBuilder\QueryBuilder;
 
-/**
- * Gabungan LogAktifitas + LogKeamanan (read-only).
- * Data log diisi otomatis lewat middleware/event listener, bukan lewat endpoint publik.
- */
 class LogController extends Controller
 {
     public function aktifitasIndex(Request $request)
     {
+        $request->validate(['filter.id_pengguna' => ['nullable', 'uuid']]);
+
         $log = QueryBuilder::for(LogAktifitas::class)
-            ->allowedFilters([
-                'entitas',
-                'status',
-                AllowedFilter::callback('id_pengguna', fn ($q, $v) => $q->where('id_pengguna', Pengguna::uuidToBytes($v))),
-                AllowedFilter::callback('from', fn ($q, $v) => $q->where('waktu', '>=', $v)),
-                AllowedFilter::callback('to', fn ($q, $v) => $q->where('waktu', '<=', $v)),
-            ])
+            ->allowedFilters(['entitas', 'status', ...$this->filterUmum()])
             ->allowedSorts(['waktu', 'id_log'])
             ->defaultSort('-id_log')
             ->paginate(50);
@@ -33,23 +24,20 @@ class LogController extends Controller
         return $this->ok($log);
     }
 
-    public function aktifitasShow(Request $request, string $id)
+    public function aktifitasShow(LogAktifitas $log)
     {
-        return $this->ok(LogAktifitas::findOrFail($id)->load('pengguna'));
+        return $this->ok($log->load('pengguna'));
     }
 
     public function keamananIndex(Request $request)
     {
+        $request->validate(['filter.id_pengguna' => ['nullable', 'uuid']]);
+
         $log = QueryBuilder::for(LogKeamanan::class)
             ->allowedFilters([
-                'event',
-                'endpoint',
-                'method',
-                'ip_address',
+                'event', 'endpoint', 'method', 'ip_address',
                 AllowedFilter::exact('status_kode'),
-                AllowedFilter::callback('id_pengguna', fn ($q, $v) => $q->where('id_pengguna', Pengguna::uuidToBytes($v))),
-                AllowedFilter::callback('from', fn ($q, $v) => $q->where('waktu', '>=', $v)),
-                AllowedFilter::callback('to', fn ($q, $v) => $q->where('waktu', '<=', $v)),
+                ...$this->filterUmum(),
             ])
             ->allowedSorts(['waktu', 'id_log', 'status_kode'])
             ->defaultSort('-id_log')
@@ -58,8 +46,17 @@ class LogController extends Controller
         return $this->ok($log);
     }
 
-    public function keamananShow(Request $request, string $id)
+    public function keamananShow(LogKeamanan $log)
     {
-        return $this->ok(LogKeamanan::findOrFail($id)->load('pengguna'));
+        return $this->ok($log->load('pengguna'));
+    }
+
+    private function filterUmum(): array
+    {
+        return [
+            AllowedFilter::callback('id_pengguna', fn ($q, $v) => $q->where('id_pengguna', (string) $v)),
+            AllowedFilter::callback('from', fn ($q, $v) => $q->where('waktu', '>=', $v)),
+            AllowedFilter::callback('to', fn ($q, $v) => $q->where('waktu', '<=', $v)),
+        ];
     }
 }

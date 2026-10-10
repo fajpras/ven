@@ -5,10 +5,6 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-/**
- * Tabel `model`. Dinamai Model3D agar tidak bentrok dengan
- * Illuminate\Database\Eloquent\Model.
- */
 class Model3D extends Model
 {
     public $timestamps = false;

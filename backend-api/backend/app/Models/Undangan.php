@@ -2,20 +2,15 @@
 
 namespace App\Models;
 
-use App\Models\Concerns\HasBinaryUuid;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Undangan extends Model
 {
-    use HasBinaryUuid;
-
     public $timestamps = false;
 
     protected $table = 'undangan';
     protected $primaryKey = 'id_undangan';
-
-    protected array $uuidColumns = ['id_pengguna'];
 
     protected $fillable = ['id_pengguna', 'id_ruangan', 'status', 'waktu', 'catatan', 'tautan'];
 
@@ -34,6 +29,6 @@ class Undangan extends Model
 
     public function ruangan(): BelongsTo
     {
-        return $this->belongsTo(Ruangan::class, 'id_ruangan', 'id_ruangan');
+        return $this->belongsTo(Ruangan::class, 'id_runagan', 'id_ruangan');
     }
 }

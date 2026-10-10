@@ -3,7 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class PosisiObjek extends Model
 {
@@ -17,16 +17,8 @@ class PosisiObjek extends Model
         'rotasi_x', 'rotasi_y', 'rotasi_z',
     ];
 
-    protected function casts(): array
+    public function objek(): HasMany
     {
-        return [
-            'posisi_x' => 'double', 'posisi_y' => 'double', 'posisi_z' => 'double',
-            'rotasi_x' => 'double', 'rotasi_y' => 'double', 'rotasi_z' => 'double',
-        ];
-    }
-
-    public function objek(): HasOne
-    {
-        return $this->hasOne(Objek::class, 'id_posisi', 'id_posisi');
+        return $this->hasMany(Objek::class, 'id_posisi', 'id_posisi');
     }
 }

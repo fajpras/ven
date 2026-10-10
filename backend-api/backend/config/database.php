@@ -3,6 +3,26 @@
 use Illuminate\Support\Str;
 use Pdo\Mysql;
 
+$mysql = fn (string $prefix): array => [
+    'driver' => 'mysql',
+    'url' => null,
+    'host' => env('DB_HOST', '127.0.0.1'),
+    'port' => env('DB_PORT', '3306'),
+    'database' => env('DB_DATABASE', 'ven_null'),
+    'username' => env("DB_{$prefix}_USERNAME"),
+    'password' => env("DB_{$prefix}_PASSWORD"),
+    'unix_socket' => env('DB_SOCKET', ''),
+    'charset' => 'utf8mb4',
+    'collation' => 'utf8mb4_unicode_ci',
+    'prefix' => '',
+    'prefix_indexes' => true,
+    'strict' => true,
+    'engine' => null,
+    'options' => extension_loaded('pdo_mysql') ? array_filter([
+        PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
+    ]) : [],
+];
+
 return [
 
     /*
@@ -17,7 +37,7 @@ return [
     |
     */
 
-    'default' => env('DB_CONNECTION', 'sqlite'),
+    'default' => env('DB_CONNECTION', 'mysql'),
 
     /*
     |--------------------------------------------------------------------------
@@ -44,25 +64,10 @@ return [
             'transaction_mode' => 'DEFERRED',
         ],
 
-        'mysql' => [
-            'driver' => 'mysql',
-            'url' => env('DB_URL'),
-            'host' => env('DB_HOST', '127.0.0.1'),
-            'port' => env('DB_PORT', '3306'),
-            'database' => env('DB_DATABASE', 'laravel'),
-            'username' => env('DB_USERNAME', 'root'),
-            'password' => env('DB_PASSWORD', ''),
-            'unix_socket' => env('DB_SOCKET', ''),
-            'charset' => env('DB_CHARSET', 'utf8mb4'),
-            'collation' => env('DB_COLLATION', 'utf8mb4_unicode_ci'),
-            'prefix' => '',
-            'prefix_indexes' => true,
-            'strict' => true,
-            'engine' => null,
-            'options' => extension_loaded('pdo_mysql') ? array_filter([
-                Mysql::ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
-            ]) : [],
-        ],
+        'mysql' => $mysql('APP'),
+        'mysql_user' => $mysql('USER'),
+        'mysql_admin' => $mysql('ADMIN'),
+        'mysql_dba' => $mysql('DBA'),
 
         'mariadb' => [
             'driver' => 'mariadb',
@@ -99,19 +104,6 @@ return [
             'sslmode' => env('DB_SSLMODE', 'prefer'),
         ],
 
-        'pgsql_admin' => [
-            'driver' => 'pgsql',
-            'host' => env('DB_HOST', '127.0.0.1'),
-            'port' => env('DB_PORT', '5432'),
-            'database' => env('DB_DATABASE', 'pameran_db'),
-            'username' => env('DB_ADMIN_USERNAME', 'admin_db'),
-            'password' => env('DB_ADMIN_PASSWORD', ''),
-            'charset' => 'utf8',
-            'prefix' => '',
-            'prefix_indexes' => true,
-            'search_path' => 'public',
-            'sslmode' => 'prefer',
-        ],
 
         'sqlsrv' => [
             'driver' => 'sqlsrv',
@@ -124,8 +116,6 @@ return [
             'charset' => env('DB_CHARSET', 'utf8'),
             'prefix' => '',
             'prefix_indexes' => true,
-            // 'encrypt' => env('DB_ENCRYPT', 'yes'),
-            // 'trust_server_certificate' => env('DB_TRUST_SERVER_CERTIFICATE', 'false'),
         ],
 
     ],
@@ -145,6 +135,10 @@ return [
         'table' => 'migrations',
         'update_date_on_publish' => true,
     ],
+
+    'log_connection' => env('DB_LOG_CONNECTION', 'mysql'),
+
+    'ven_client_host' => env('VEN_DB_CLIENT_HOST', 'localhost'),
 
     /*
     |--------------------------------------------------------------------------

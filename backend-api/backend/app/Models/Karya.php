@@ -2,26 +2,30 @@
 
 namespace App\Models;
 
-use App\Models\Concerns\HasBinaryUuid;
+use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\URL;
 
 class Karya extends Model
 {
-    use HasBinaryUuid, SoftDeletes;
+    use HasUuids, SoftDeletes;
 
     protected $table = 'karya';
     protected $primaryKey = 'id_karya';
-    public $incrementing = false;
     protected $keyType = 'string';
-
-    protected array $uuidColumns = ['id_karya', 'id_pengguna'];
+    public $incrementing = false;
 
     protected $fillable = [
         'id_kategori', 'id_pengguna', 'id_pameran', 'id_objek',
         'judul', 'jenis', 'deskripsi', 'file',
     ];
+
+    protected $hidden = ['file'];
+
+    protected $appends = ['file_url'];
 
     protected function casts(): array
     {
@@ -30,6 +34,13 @@ class Karya extends Model
             'updated_at' => 'datetime',
             'deleted_at' => 'datetime',
         ];
+    }
+
+    protected function fileUrl(): Attribute
+    {
+        return Attribute::get(fn () => $this->file && $this->exists
+            ? URL::temporarySignedRoute('karya.berkas', now()->addMinutes(30), ['karya' => $this->id_karya])
+            : null);
     }
 
     public function kategori(): BelongsTo

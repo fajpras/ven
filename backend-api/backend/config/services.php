@@ -45,6 +45,21 @@ return [
         'key' => env('AI_API_KEY'),
         'url' => env('AI_API_URL', 'https://api.openai.com/v1/chat/completions'),
         'model' => env('AI_MODEL', 'gpt-4o-mini'),
+    ],    'google' => [
+        'client_id' => env('GOOGLE_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+        'redirect' => env('GOOGLE_REDIRECT_URI'),
+        'client_ids' => array_filter(explode(',', (string) env('GOOGLE_CLIENT_IDS', ''))),
+    ],
+    'livekit' => [
+        'url' => env('LIVEKIT_URL'),
+        'key' => env('LIVEKIT_API_KEY'),
+        'secret' => env('LIVEKIT_API_SECRET'),
+    ],
+    'ai' => [
+        'key' => env('AI_KEY'),
+        'url' => env('AI_URL'),
+        'model' => env('AI_MODEL'),
     ],
 
 ];

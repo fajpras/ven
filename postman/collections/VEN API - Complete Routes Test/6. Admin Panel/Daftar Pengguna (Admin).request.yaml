@@ -1,0 +1,8 @@
+$kind: http-request
+url: "{{base_url}}/api/admin/pengguna"
+method: GET
+auth:
+  type: bearer
+  credentials:
+    token: "{{admin_token}}"
+order: 1000
