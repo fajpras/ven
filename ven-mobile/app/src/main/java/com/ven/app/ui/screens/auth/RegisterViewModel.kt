@@ -140,7 +140,7 @@ class RegisterViewModel : ViewModel() {
         }
     }
 
-    fun submitRegisterWithOtp(context: Context) {
+    fun submitRegisterWithOtp() {
         val state = _uiState.value
         val otpCode = state.otp.trim()
 
@@ -161,11 +161,16 @@ class RegisterViewModel : ViewModel() {
                 otp = otpCode
             )
 
-            if (success) {
+            result.onSuccess {
                 _uiState.update { it.copy(isLoading = false) }
                 _events.send(RegisterEvent.NavigateToOnboarding)
-            } else {
-                _uiState.update { it.copy(isLoading = false, errorMessage = "Registrasi gagal, coba lagi") }
+            }.onFailure { exception ->
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        errorMessage = exception.message ?: "Registrasi gagal, coba lagi"
+                    )
+                }
             }
         }
     }
@@ -189,48 +194,30 @@ fun RegisterRoute(
         }
     }
 
-    fun registerWithGoogle(context: Context) {
-        viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, errorMessage = null) }
-
-            val googleResult = GoogleAuthHelper.getGoogleIdToken(context)
-
-            googleResult.onSuccess { idToken ->
-                val registerResult = ApiRegister.registerGoogle(idToken = idToken)
-
-                registerResult.onSuccess { authData ->
-                    val sessionManager = SessionManager.getInstance(context)
-                    sessionManager.saveToken(authData.token)
-                    sessionManager.saveUser(authData.pengguna)
-
-                    _uiState.update { it.copy(isLoading = false) }
-                    _events.send(RegisterEvent.NavigateToHome)
-                }.onFailure { regException ->
-                    val loginResult = ApiLogin.loginGoogle(idToken = idToken)
-                    loginResult.onSuccess { authData ->
-                        val sessionManager = SessionManager.getInstance(context)
-                        sessionManager.saveToken(authData.token)
-                        sessionManager.saveUser(authData.pengguna)
-
-                        _uiState.update { it.copy(isLoading = false) }
-                        _events.send(RegisterEvent.NavigateToHome)
-                    }.onFailure {
-                        _uiState.update {
-                            it.copy(
-                                isLoading = false,
-                                errorMessage = regException.message ?: "Gagal mendaftar dengan Google"
-                            )
-                        }
-                    }
-                }
-            }.onFailure { exception ->
-                _uiState.update {
-                    it.copy(
-                        isLoading = false,
-                        errorMessage = exception.message ?: "Autentikasi Google dibatalkan"
-                    )
-                }
-            }
-        }
+    if (state.isOtpDialogOpen) {
+        VerifyOtpScreen(
+            state = ForgotPasswordUiState(
+                email = state.email,
+                otp = state.otp,
+                isLoading = state.isLoading,
+                errorMessage = state.errorMessage,
+            ),
+            onOtpChange = viewModel::onOtpChange,
+            onVerifyClick = { viewModel.submitRegisterWithOtp() },
+            onResendClick = viewModel::resendOtp,
+            onBackClick = viewModel::dismissOtpDialog,
+        )
+        return
     }
+
+    RegisterScreen(
+        state = state,
+        onEmailChange = viewModel::onEmailChange,
+        onUsernameChange = viewModel::onUsernameChange,
+        onPasswordChange = viewModel::onPasswordChange,
+        onConfirmPasswordChange = viewModel::onConfirmPasswordChange,
+        onRegisterClick = viewModel::requestOtpAndOpenDialog,
+        onGoogleClick = onGoogleClick,
+        onLoginClick = onNavigateToLogin,
+    )
 }
