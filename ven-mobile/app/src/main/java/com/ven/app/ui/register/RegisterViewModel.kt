@@ -1,15 +1,14 @@
 package com.ven.app.ui.register
 
+import android.content.Context
 import android.util.Patterns
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.compose.viewModel
+import com.ven.app.data.api.ApiLogin
+import com.ven.app.data.api.ApiRegister
+import com.ven.app.data.api.SessionManager
+import com.ven.app.util.GoogleAuthHelper
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -34,12 +33,17 @@ object PasswordValidator {
 }
 
 data class RegisterUiState(
+    val name: String = "",
     val email: String = "",
     val username: String = "",
     val password: String = "",
     val confirmPassword: String = "",
+    val otp: String = "",
+    val isOtpDialogOpen: Boolean = false,
     val isLoading: Boolean = false,
+    val isSendingOtp: Boolean = false,
     val errorMessage: String? = null,
+    val infoMessage: String? = null
 ) {
     val isEmailValid: Boolean get() = Patterns.EMAIL_ADDRESS.matcher(email.trim()).matches()
     val isUsernameValid: Boolean get() = username.trim().length >= 3
@@ -63,6 +67,9 @@ class RegisterViewModel : ViewModel() {
     private val _events = Channel<RegisterEvent>(Channel.BUFFERED)
     val events = _events.receiveAsFlow()
 
+    fun onNameChange(value: String) =
+        _uiState.update { it.copy(name = value, errorMessage = null) }
+
     fun onEmailChange(value: String) =
         _uiState.update { it.copy(email = value, errorMessage = null) }
 
@@ -75,52 +82,145 @@ class RegisterViewModel : ViewModel() {
     fun onConfirmPasswordChange(value: String) =
         _uiState.update { it.copy(confirmPassword = value, errorMessage = null) }
 
-    fun onRegisterClick() {
+    fun onOtpChange(value: String) =
+        _uiState.update { it.copy(otp = value, errorMessage = null) }
+
+    fun dismissOtpDialog() =
+        _uiState.update { it.copy(isOtpDialogOpen = false, errorMessage = null) }
+
+    fun requestOtpAndOpenDialog() {
         val state = _uiState.value
         if (!state.canSubmit) return
 
         viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true, errorMessage = null, infoMessage = null) }
+
+            val result = ApiRegister.kirimOtp(state.email)
+
+            result.onSuccess { message ->
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        isOtpDialogOpen = true,
+                        infoMessage = message
+                    )
+                }
+            }.onFailure { exception ->
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        errorMessage = exception.message ?: "Gagal mengirim kode verifikasi"
+                    )
+                }
+            }
+        }
+    }
+
+    fun resendOtp() {
+        val email = _uiState.value.email
+        if (email.isBlank()) return
+
+        viewModelScope.launch {
+            _uiState.update { it.copy(isSendingOtp = true, errorMessage = null) }
+
+            val result = ApiRegister.kirimOtp(email)
+
+            result.onSuccess { message ->
+                _uiState.update {
+                    it.copy(isSendingOtp = false, infoMessage = message)
+                }
+            }.onFailure { exception ->
+                _uiState.update {
+                    it.copy(
+                        isSendingOtp = false,
+                        errorMessage = exception.message ?: "Gagal mengirim ulang kode"
+                    )
+                }
+            }
+        }
+    }
+
+    fun submitRegisterWithOtp(context: Context) {
+        val state = _uiState.value
+        val otpCode = state.otp.trim()
+
+        if (otpCode.length < 6) {
+            _uiState.update { it.copy(errorMessage = "Kode verifikasi harus 6 digit") }
+            return
+        }
+
+        viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, errorMessage = null) }
 
-            delay(1000)
-            val success = true
+            val displayName = state.name.trim().ifBlank { state.username.trim() }
+            val result = ApiRegister.register(
+                nama = displayName,
+                username = state.username.trim(),
+                email = state.email.trim(),
+                kataSandi = state.password,
+                otp = otpCode
+            )
 
-            if (success) {
-                _uiState.update { it.copy(isLoading = false) }
+            result.onSuccess { authData ->
+                val sessionManager = SessionManager.getInstance(context)
+                sessionManager.saveToken(authData.token)
+                sessionManager.saveUser(authData.pengguna)
+
+                _uiState.update { it.copy(isLoading = false, isOtpDialogOpen = false) }
                 _events.send(RegisterEvent.NavigateToHome)
-            } else {
-                _uiState.update { it.copy(isLoading = false, errorMessage = "Registrasi gagal, coba lagi") }
-            }
-        }
-    }
-}
-
-/** Penghubung antara RegisterViewModel dan RegisterScreen (stateless). */
-@Composable
-fun RegisterRoute(
-    onNavigateToHome: () -> Unit,
-    onNavigateToLogin: () -> Unit,
-    onGoogleClick: () -> Unit = {},
-    viewModel: RegisterViewModel = viewModel(),
-) {
-    val state by viewModel.uiState.collectAsStateWithLifecycle()
-
-    LaunchedEffect(Unit) {
-        viewModel.events.collect { event ->
-            when (event) {
-                RegisterEvent.NavigateToHome -> onNavigateToHome()
+            }.onFailure { exception ->
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        errorMessage = exception.message ?: "Registrasi gagal, coba lagi"
+                    )
+                }
             }
         }
     }
 
-    RegisterScreen(
-        state = state,
-        onEmailChange = viewModel::onEmailChange,
-        onUsernameChange = viewModel::onUsernameChange,
-        onPasswordChange = viewModel::onPasswordChange,
-        onConfirmPasswordChange = viewModel::onConfirmPasswordChange,
-        onRegisterClick = viewModel::onRegisterClick,
-        onGoogleClick = onGoogleClick,
-        onLoginClick = onNavigateToLogin,
-    )
+    fun registerWithGoogle(context: Context) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+
+            val googleResult = GoogleAuthHelper.getGoogleIdToken(context)
+
+            googleResult.onSuccess { idToken ->
+                val registerResult = ApiRegister.registerGoogle(idToken = idToken)
+
+                registerResult.onSuccess { authData ->
+                    val sessionManager = SessionManager.getInstance(context)
+                    sessionManager.saveToken(authData.token)
+                    sessionManager.saveUser(authData.pengguna)
+
+                    _uiState.update { it.copy(isLoading = false) }
+                    _events.send(RegisterEvent.NavigateToHome)
+                }.onFailure { regException ->
+                    val loginResult = ApiLogin.loginGoogle(idToken = idToken)
+                    loginResult.onSuccess { authData ->
+                        val sessionManager = SessionManager.getInstance(context)
+                        sessionManager.saveToken(authData.token)
+                        sessionManager.saveUser(authData.pengguna)
+
+                        _uiState.update { it.copy(isLoading = false) }
+                        _events.send(RegisterEvent.NavigateToHome)
+                    }.onFailure {
+                        _uiState.update {
+                            it.copy(
+                                isLoading = false,
+                                errorMessage = regException.message ?: "Gagal mendaftar dengan Google"
+                            )
+                        }
+                    }
+                }
+            }.onFailure { exception ->
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        errorMessage = exception.message ?: "Autentikasi Google dibatalkan"
+                    )
+                }
+            }
+        }
+    }
 }

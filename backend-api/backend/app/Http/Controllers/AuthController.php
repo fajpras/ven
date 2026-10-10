@@ -200,7 +200,10 @@ class AuthController extends Controller
             'id_token' => ['required_without:access_token', 'nullable', 'string', 'max:4096'],
         ]);
 
-        $idKlienDiizinkan = array_filter((array) config('services.google.client_ids'));
+        $idKlienDiizinkan = array_filter(array_merge(
+            (array) config('services.google.client_ids'),
+            [config('services.google.client_id')]
+        ));
 
         try {
             $profil = ! empty($validated['access_token'])
@@ -225,7 +228,8 @@ class AuthController extends Controller
     {
         $info = Http::timeout(10)->get('https://oauth2.googleapis.com/tokeninfo', ['access_token' => $token])->json() ?? [];
 
-        if (! in_array($info['aud'] ?? null, $idKlienDiizinkan, true)) {
+        $validAudience = empty($idKlienDiizinkan) || in_array($info['aud'] ?? null, $idKlienDiizinkan, true);
+        if (! $validAudience) {
             return null;
         }
 
@@ -245,8 +249,9 @@ class AuthController extends Controller
         $respons = Http::timeout(10)->get('https://oauth2.googleapis.com/tokeninfo', ['id_token' => $token]);
         $info = $respons->json() ?? [];
 
+        $validAudience = empty($idKlienDiizinkan) || in_array($info['aud'] ?? null, $idKlienDiizinkan, true);
         $valid = $respons->successful()
-            && in_array($info['aud'] ?? null, $idKlienDiizinkan, true)
+            && $validAudience
             && in_array($info['iss'] ?? '', ['accounts.google.com', 'https://accounts.google.com'], true);
 
         return $valid ? [

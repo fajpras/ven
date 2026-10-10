@@ -23,13 +23,19 @@ import com.ven.app.ui.screens.home.HomeUiState
 import com.ven.app.ui.screens.home.SampleHomeUiState
 import com.ven.app.ui.theme.VexTheme
 
+import androidx.compose.ui.platform.LocalContext
+import com.ven.app.data.api.SessionManager
+
 @Composable
 fun AppNavHost() {
+    val context = LocalContext.current
+    val sessionManager = remember { SessionManager.getInstance(context) }
+    val startDestination = if (sessionManager.isLoggedIn()) Screen.Home.route else Screen.Login.route
     val navController = rememberNavController()
 
     NavHost(
         navController = navController,
-        startDestination = Screen.Login.route,
+        startDestination = startDestination,
     ) {
         composable(Screen.Login.route) {
             LoginRoute(

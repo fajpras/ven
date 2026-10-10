@@ -17,3 +17,7 @@ local.properties
 # Android Studio & Kotlin
 .idea/
 .kotlin/
+
+# Environment files
+.env
+

@@ -1,35 +1,37 @@
 package com.ven.app.ui.login
 
+import android.content.Context
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ven.app.R
+import com.ven.app.data.api.ApiLogin
+import com.ven.app.data.api.SessionManager
 import com.ven.app.ui.components.PillTextField
 import com.ven.app.ui.theme.VexTheme
+import com.ven.app.util.GoogleAuthHelper
+import kotlinx.coroutines.launch
 
 private val PurpleButton = Color(0xFFBA18F5)
-private val FieldGray = Color(0xFFE6E6E6)
-private val HintGray = Color(0xFFBDBDBD)
 
 data class LoginUiState(
     val identifier: String = "",
@@ -39,6 +41,7 @@ data class LoginUiState(
 )
 
 class LoginViewModel : ViewModel() {
+
     var state by mutableStateOf(LoginUiState())
         private set
 
@@ -50,15 +53,65 @@ class LoginViewModel : ViewModel() {
         state = state.copy(password = value, errorMessage = null)
     }
 
-    fun login(onSuccess: () -> Unit) {
-        if (state.identifier.isBlank() || state.password.isBlank()) {
-            state = state.copy(errorMessage = "Email/Username and Password cannot be empty")
+    fun login(context: Context, onSuccess: () -> Unit) {
+        val identifier = state.identifier.trim()
+        val password = state.password
+
+        if (identifier.isBlank() || password.isBlank()) {
+            state = state.copy(errorMessage = "Email/Username dan Password tidak boleh kosong")
             return
         }
-        state = state.copy(isLoading = true, errorMessage = null)
-        // Simulate login
-        state = state.copy(isLoading = false)
-        onSuccess()
+
+        viewModelScope.launch {
+            state = state.copy(isLoading = true, errorMessage = null)
+
+            val result = ApiLogin.login(identitas = identifier, kataSandi = password)
+
+            result.onSuccess { authData ->
+                val sessionManager = SessionManager.getInstance(context)
+                sessionManager.saveToken(authData.token)
+                sessionManager.saveUser(authData.pengguna)
+
+                state = state.copy(isLoading = false)
+                onSuccess()
+            }.onFailure { exception ->
+                state = state.copy(
+                    isLoading = false,
+                    errorMessage = exception.message ?: "Login gagal, silakan periksa data Anda"
+                )
+            }
+        }
+    }
+
+    fun loginWithGoogle(context: Context, onSuccess: () -> Unit) {
+        viewModelScope.launch {
+            state = state.copy(isLoading = true, errorMessage = null)
+
+            val googleResult = GoogleAuthHelper.getGoogleIdToken(context)
+
+            googleResult.onSuccess { idToken ->
+                val loginResult = ApiLogin.loginGoogle(idToken = idToken)
+
+                loginResult.onSuccess { authData ->
+                    val sessionManager = SessionManager.getInstance(context)
+                    sessionManager.saveToken(authData.token)
+                    sessionManager.saveUser(authData.pengguna)
+
+                    state = state.copy(isLoading = false)
+                    onSuccess()
+                }.onFailure { exception ->
+                    state = state.copy(
+                        isLoading = false,
+                        errorMessage = exception.message ?: "Gagal masuk menggunakan Google"
+                    )
+                }
+            }.onFailure { exception ->
+                state = state.copy(
+                    isLoading = false,
+                    errorMessage = exception.message ?: "Autentikasi Google dibatalkan"
+                )
+            }
+        }
     }
 }
 
@@ -122,10 +175,10 @@ fun LoginScreen(
         )
 
         state.errorMessage?.let {
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(12.dp))
             Text(
                 text = it,
-                color = Color.Red,
+                color = MaterialTheme.colorScheme.error,
                 fontSize = 13.sp,
                 modifier = Modifier.fillMaxWidth()
             )
@@ -158,12 +211,13 @@ fun LoginScreen(
 
         Spacer(Modifier.height(24.dp))
 
-        HorizontalDivider(color = Color.Black, thickness = 1.dp)
+        HorizontalDivider(color = Color(0xFFE0E0E0), thickness = 1.dp)
 
         Spacer(Modifier.height(24.dp))
 
         OutlinedButton(
             onClick = onGoogleClick,
+            enabled = !state.isLoading,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(48.dp),
@@ -181,7 +235,7 @@ fun LoginScreen(
                         .align(Alignment.CenterStart)
                 )
                 Text(
-                    text = "Register with Google",
+                    text = "Sign in with Google",
                     fontSize = 16.sp,
                     modifier = Modifier.align(Alignment.Center)
                 )
@@ -222,14 +276,20 @@ fun LoginRoute(
     onNavigateToRegister: () -> Unit,
     onForgotPassword: () -> Unit = {}
 ) {
+    val context = LocalContext.current
     val viewModel: LoginViewModel = viewModel()
+
     LoginScreen(
         state = viewModel.state,
         onIdentifierChange = viewModel::onIdentifierChange,
         onPasswordChange = viewModel::onPasswordChange,
-        onLoginClick = { viewModel.login(onNavigateToHome) },
+        onLoginClick = {
+            viewModel.login(context = context, onSuccess = onNavigateToHome)
+        },
         onForgotPasswordClick = onForgotPassword,
-        onGoogleClick = {},
+        onGoogleClick = {
+            viewModel.loginWithGoogle(context = context, onSuccess = onNavigateToHome)
+        },
         onRegisterClick = onNavigateToRegister
     )
 }
