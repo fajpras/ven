@@ -1,29 +1,23 @@
 package com.ven.app.ui.screens.home
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.ven.app.R
+import com.ven.app.ui.components.feature.CarouselExhibitions
 import com.ven.app.ui.components.feature.EventBanner
 import com.ven.app.ui.components.feature.PostCard
 import com.ven.app.ui.components.layout.AppScaffold
@@ -43,7 +37,7 @@ import com.ven.app.ui.theme.VexTheme
  *    - Latar menyatu dengan kanvas (#1F1F1F), tanpa garis pembatas bawah.
  * 2. Seksi "Coming Soon":
  *    - Judul: "Coming Soon" (20sp SemiBold, padding horizontal 24dp).
- *    - Carousel horizontal poster pameran ([LazyRow] [EventBanner]), rasio 16:9, radius 8–12dp.
+ *    - Carousel horizontal poster pameran ([CarouselExhibitions] + [EventBanner]) dengan snap behavior, rasio 16:9, radius 8–12dp.
  *    - Garis pembatas 1dp warna border (#313131).
  * 3. Feed Karya ([PostCard]):
  *    - Header: @username di kiri, ikon kalender (Request Meeting) & ikon play (Virtual 3D Room) di kanan.
@@ -83,51 +77,20 @@ fun HomeScreen(
             // ---------------------------------------------------------
             if (uiState.comingSoonEvents.isNotEmpty()) {
                 item {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = VexSpace.s4, bottom = VexSpace.s4),
+                    CarouselExhibitions(
+                        title = stringResource(R.string.home_coming_soon),
                     ) {
-                        // Judul Seksi: "Coming Soon"
-                        Text(
-                            text = stringResource(R.string.home_coming_soon),
-                            style = MaterialTheme.typography.titleLarge.copy(
-                                fontWeight = FontWeight.SemiBold,
-                            ),
-                            color = colors.text,
-                            modifier = Modifier.padding(
-                                horizontal = VexSpace.s6,
-                                vertical = VexSpace.s2,
-                            ),
-                        )
-
-                        Spacer(modifier = Modifier.height(VexSpace.s2))
-
-                        // Carousel Poster Pameran
-                        LazyRow(
-                            contentPadding = PaddingValues(horizontal = VexSpace.s6),
-                            horizontalArrangement = Arrangement.spacedBy(VexSpace.s3),
-                        ) {
-                            items(
-                                items = uiState.comingSoonEvents,
-                                key = { it.id },
-                            ) { event ->
-                                EventBanner(
-                                    title = event.title,
-                                    dateText = event.dateText,
-                                    imageUrl = event.imageUrl,
-                                    onClick = { onBannerClick(event.id) },
-                                )
-                            }
+                        items(
+                            items = uiState.comingSoonEvents,
+                            key = { it.id },
+                        ) { event ->
+                            EventBanner(
+                                title = event.title,
+                                dateText = event.dateText,
+                                imageUrl = event.imageUrl,
+                                onClick = { onBannerClick(event.id) },
+                            )
                         }
-
-                        Spacer(modifier = Modifier.height(VexSpace.s4))
-
-                        // Garis Pembatas Seksi (1dp border #313131)
-                        HorizontalDivider(
-                            thickness = 1.dp,
-                            color = Color(0xFF313131),
-                        )
                     }
                 }
             }
@@ -142,6 +105,7 @@ fun HomeScreen(
                 ) { post ->
                     PostCard(
                         username = post.username,
+                        description = post.description,
                         imageUrl = post.imageUrl,
                         aspectRatio = post.aspectRatio,
                         onRequestMeetingClick = { onRequestMeetingClick(post.id) },
@@ -192,12 +156,14 @@ val SampleHomeUiState = HomeUiState(
             username = "Graaph",
             title = "Digital Painting Concept",
             pameranId = "ex1",
+            description = "Concept art eksplorasi arsitektur cyberpunk dan pencahayaan neon untuk kompetisi open source. Kunjungi showroom 3D di https://vex.art/exhibit/digital-concept untuk melihat detail tekstur dan aset interaktif! Jangan lupa tinggalkan feedback Anda sebelum expo dimulai.",
         ),
         PostItem(
             id = "p2",
             username = "StudioVex",
             title = "3D Environment Design",
             pameranId = "ex2",
+            description = "Desain lingkungan 3D untuk PBL EXPO 2026. Info lebih lanjut kunjungi https://vex.art/expo-2026",
         ),
     ),
 )

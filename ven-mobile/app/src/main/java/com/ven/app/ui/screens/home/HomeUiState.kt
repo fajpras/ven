@@ -24,6 +24,7 @@ data class PostItem(
     val imageUrl: String? = null,
     val pameranId: String? = null,
     val aspectRatio: Float = 4f / 5f,
+    val description: String = "",
 )
 
 /**

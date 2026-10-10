@@ -15,6 +15,7 @@ return new class extends Migration
             $table->foreign('id_model')->references('id_model')->on('model')->restrictOnDelete();
             $table->string('judul', 255);
             $table->string('banner', 255);
+            $table->char('warna', 7)->nullable();
             $table->enum('tipe', ['kecil', 'sedang', 'besar', 'acara']);
             $table->timestamp('created_at')->useCurrent();
             $table->timestamp('updated_at')->nullable()->useCurrentOnUpdate();

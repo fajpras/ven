@@ -12,8 +12,6 @@ return new class extends Migration
             $table->double('posisi_x')->nullable();
             $table->double('posisi_y')->nullable();
             $table->double('posisi_z')->nullable();
-            $table->double('rotasi_x')->nullable();
-            $table->double('rotasi_y')->nullable();
             $table->double('rotasi_z')->nullable();
         });
     }
