@@ -3,7 +3,7 @@
 namespace App\Services\Otp;
 
 use App\Contracts\PembuatKodeOtp;
-use App\Enums\HasilResetKataSandi;
+use App\Enums\HasilVerifikasiOtp;
 use App\Enums\TujuanOtp;
 use App\Exceptions\KesalahanOtp;
 use App\Mail\KodeOtpMail;
@@ -51,21 +51,21 @@ final class LayananOtp
     {
         [$hasil, $otp] = $this->periksa($tujuan, $email, $kode, $idPengguna);
 
-        if ($hasil === HasilResetKataSandi::Berhasil) {
+        if ($hasil === HasilVerifikasiOtp::Berhasil) {
             LogSistem::keamanan('otp_terverifikasi', $tujuan->value, 200, $idPengguna);
 
             return $otp;
         }
 
         LogSistem::keamanan(
-            $hasil === HasilResetKataSandi::Terkunci ? 'otp_terkunci' : 'otp_gagal',
+            $hasil === HasilVerifikasiOtp::Terkunci ? 'otp_terkunci' : 'otp_gagal',
             $tujuan->value,
-            $hasil === HasilResetKataSandi::Terkunci ? 429 : 422,
+            $hasil === HasilVerifikasiOtp::Terkunci ? 429 : 422,
             $idPengguna,
         );
 
         throw match ($hasil) {
-            HasilResetKataSandi::Terkunci => KesalahanOtp::terkunci(),
+            HasilVerifikasiOtp::Terkunci => KesalahanOtp::terkunci(),
             default => KesalahanOtp::tidakValid(),
         };
     }
@@ -81,7 +81,7 @@ final class LayananOtp
             ->first();
 
         if ($otp === null) {
-            return [HasilResetKataSandi::TidakDitemukan, null];
+            return [HasilVerifikasiOtp::TidakDitemukan, null];
         }
 
         $percobaanDicatat = ResetKataSandi::query()
@@ -91,16 +91,16 @@ final class LayananOtp
             ->increment('percobaan');
 
         if ($percobaanDicatat === 0) {
-            return [HasilResetKataSandi::Terkunci, $otp];
+            return [HasilVerifikasiOtp::Terkunci, $otp];
         }
 
         if (! hash_equals($otp->otp_hash, $this->buatSidik($tujuan, $email, $kode))) {
-            return [HasilResetKataSandi::KodeSalah, $otp];
+            return [HasilVerifikasiOtp::KodeSalah, $otp];
         }
 
         $dikonsumsi = $this->tandaiTerpakai($otp);
 
-        return [$dikonsumsi === 1 ? HasilResetKataSandi::Berhasil : HasilResetKataSandi::TidakDitemukan, $otp];
+        return [$dikonsumsi === 1 ? HasilVerifikasiOtp::Berhasil : HasilVerifikasiOtp::TidakDitemukan, $otp];
     }
 
     private function pastikanBolehMeminta(TujuanOtp $tujuan, string $email): void
