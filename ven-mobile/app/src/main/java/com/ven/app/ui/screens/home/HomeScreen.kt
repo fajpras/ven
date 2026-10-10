@@ -142,6 +142,7 @@ fun HomeScreen(
                 ) { post ->
                     PostCard(
                         username = post.username,
+                        description = post.description,
                         imageUrl = post.imageUrl,
                         aspectRatio = post.aspectRatio,
                         onRequestMeetingClick = { onRequestMeetingClick(post.id) },
@@ -192,12 +193,14 @@ val SampleHomeUiState = HomeUiState(
             username = "Graaph",
             title = "Digital Painting Concept",
             pameranId = "ex1",
+            description = "Concept art eksplorasi arsitektur cyberpunk dan pencahayaan neon untuk kompetisi open source. Kunjungi showroom 3D di https://vex.art/exhibit/digital-concept untuk melihat detail tekstur dan aset interaktif! Jangan lupa tinggalkan feedback Anda sebelum expo dimulai.",
         ),
         PostItem(
             id = "p2",
             username = "StudioVex",
             title = "3D Environment Design",
             pameranId = "ex2",
+            description = "Desain lingkungan 3D untuk PBL EXPO 2026. Info lebih lanjut kunjungi https://vex.art/expo-2026",
         ),
     ),
 )
