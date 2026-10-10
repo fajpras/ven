@@ -1,5 +1,6 @@
 package com.ven.app.ui.screens.auth
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -8,6 +9,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -18,10 +20,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.ven.app.R
 import com.ven.app.ui.components.layout.AuthLayout
+import com.ven.app.ui.components.ui.OtpInput
 import com.ven.app.ui.components.ui.VexButton
 import com.ven.app.ui.components.ui.VexButtonVariant
 import com.ven.app.ui.components.ui.VexPasswordField
@@ -45,9 +49,107 @@ fun RegisterScreen(
     onRegisterClick: () -> Unit,
     onGoogleClick: () -> Unit,
     onLoginClick: () -> Unit,
+    onOtpChange: (String) -> Unit = {},
+    onSubmitOtpClick: () -> Unit = {},
+    onResendOtpClick: () -> Unit = {},
+    onDismissOtpDialog: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val colors = VexTheme.colors
+
+    if (state.isOtpDialogOpen) {
+        AlertDialog(
+            onDismissRequest = onDismissOtpDialog,
+            title = {
+                Text(
+                    text = stringResource(R.string.verify_otp_title),
+                    style = MaterialTheme.typography.titleLarge,
+                    color = colors.text,
+                )
+            },
+            text = {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text(
+                        text = stringResource(R.string.verify_otp_subtitle, state.email),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = colors.textSecondary,
+                        textAlign = TextAlign.Center,
+                    )
+
+                    Spacer(Modifier.height(VexSpace.s4))
+
+                    OtpInput(
+                        value = state.otp,
+                        onValueChange = onOtpChange,
+                        digitCount = 6,
+                        isError = state.errorMessage != null,
+                        onOtpComplete = { onSubmitOtpClick() },
+                    )
+
+                    state.errorMessage?.let {
+                        Spacer(Modifier.height(VexSpace.s2))
+                        Text(
+                            text = it,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = colors.danger,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
+
+                    state.infoMessage?.let {
+                        Spacer(Modifier.height(VexSpace.s2))
+                        Text(
+                            text = it,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = colors.success,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
+
+                    Spacer(Modifier.height(VexSpace.s4))
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text(
+                            text = stringResource(R.string.verify_otp_didnt_receive),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = colors.textSecondary,
+                        )
+                        Spacer(Modifier.width(4.dp))
+                        VexButton(
+                            text = stringResource(R.string.verify_otp_resend),
+                            onClick = onResendOtpClick,
+                            variant = VexButtonVariant.TextLink,
+                            enabled = !state.isSendingOtp,
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                VexButton(
+                    text = stringResource(R.string.verify_otp_button),
+                    onClick = onSubmitOtpClick,
+                    variant = VexButtonVariant.Primary,
+                    loading = state.isLoading,
+                    enabled = state.otp.trim().length >= 6,
+                )
+            },
+            dismissButton = {
+                VexButton(
+                    text = "Batal",
+                    onClick = onDismissOtpDialog,
+                    variant = VexButtonVariant.Outline,
+                )
+            },
+            containerColor = colors.surface,
+        )
+    }
 
     AuthLayout(
         title = stringResource(R.string.register_title),

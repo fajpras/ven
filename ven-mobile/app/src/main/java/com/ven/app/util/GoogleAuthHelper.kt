@@ -16,6 +16,10 @@ object GoogleAuthHelper {
         context: Context,
         serverClientId: String = AppConfig.googleServerClientId
     ): Result<String> {
+        if (serverClientId.isBlank()) {
+            return Result.failure(Exception("Google Client ID belum dikonfigurasi di file .env"))
+        }
+
         return try {
             val credentialManager = CredentialManager.create(context)
             val googleIdOption = GetGoogleIdOption.Builder()

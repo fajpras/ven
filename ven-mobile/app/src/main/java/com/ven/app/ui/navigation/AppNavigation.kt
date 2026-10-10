@@ -38,9 +38,7 @@ import com.ven.app.ui.theme.VexTheme
  */
 @Composable
 fun AppNavHost() {
-    val context = LocalContext.current
-    val sessionManager = remember { SessionManager.getInstance(context) }
-    val startDestination = if (sessionManager.isLoggedIn()) Screen.Home.route else Screen.Login.route
+    val startDestination = Screen.Login.route
     val navController = rememberNavController()
     val forgotViewModel: ForgotPasswordViewModel = viewModel()
     val forgotState by forgotViewModel.uiState.collectAsStateWithLifecycle()

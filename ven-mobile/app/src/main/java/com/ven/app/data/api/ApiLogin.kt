@@ -8,9 +8,22 @@ import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.POST
 
+// KirimOtpRequest dipakai bersama dengan ApiRegister
+
 data class LoginRequest(
     @SerializedName("identitas")
     val identitas: String,
+
+    @SerializedName("kata_sandi")
+    val kataSandi: String
+)
+
+data class ResetKataSandiRequest(
+    @SerializedName("email")
+    val email: String,
+
+    @SerializedName("otp")
+    val otp: String,
 
     @SerializedName("kata_sandi")
     val kataSandi: String
@@ -30,6 +43,16 @@ interface ApiLoginService {
 
     @POST("auth/keluar")
     suspend fun logout(): Response<ApiResponse<Any>>
+
+    @POST("auth/lupa-kata-sandi")
+    suspend fun lupaKataSandi(
+        @Body request: KirimOtpRequest
+    ): Response<ApiResponse<Any>>
+
+    @POST("auth/reset-kata-sandi")
+    suspend fun resetKataSandi(
+        @Body request: ResetKataSandiRequest
+    ): Response<ApiResponse<Any>>
 }
 
 object ApiLogin {
@@ -88,4 +111,40 @@ object ApiLogin {
             Result.failure(Exception(e.localizedMessage ?: "Gagal terhubung ke server"))
         }
     }
+
+    suspend fun lupaKataSandi(email: String): Result<String> {
+        return try {
+            val response = service.lupaKataSandi(KirimOtpRequest(email = email.trim()))
+            if (response.isSuccessful) {
+                val message = response.body()?.message ?: "Jika email terdaftar, kode verifikasi telah dikirim."
+                Result.success(message)
+            } else {
+                val errorMsg = ApiClient.parseError(response.errorBody()?.string())
+                Result.failure(Exception(errorMsg))
+            }
+        } catch (e: Exception) {
+            Result.failure(Exception(e.localizedMessage ?: "Gagal terhubung ke server"))
+        }
+    }
+
+    suspend fun resetKataSandi(email: String, otp: String, kataSandiBaru: String): Result<String> {
+        return try {
+            val request = ResetKataSandiRequest(
+                email = email.trim(),
+                otp = otp.trim(),
+                kataSandi = kataSandiBaru
+            )
+            val response = service.resetKataSandi(request)
+            if (response.isSuccessful) {
+                val message = response.body()?.message ?: "Kata sandi berhasil diubah."
+                Result.success(message)
+            } else {
+                val errorMsg = ApiClient.parseError(response.errorBody()?.string())
+                Result.failure(Exception(errorMsg))
+            }
+        } catch (e: Exception) {
+            Result.failure(Exception(e.localizedMessage ?: "Gagal terhubung ke server"))
+        }
+    }
 }
+

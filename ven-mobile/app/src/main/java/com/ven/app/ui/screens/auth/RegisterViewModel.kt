@@ -1,9 +1,14 @@
 package com.ven.app.ui.screens.auth
 
 import android.content.Context
-import android.util.Patterns
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ven.app.data.api.ApiLogin
 import com.ven.app.data.api.ApiRegister
 import com.ven.app.data.api.SessionManager
@@ -26,14 +31,15 @@ object PasswordValidator {
         PasswordRule("Ada huruf besar (A-Z)", password.any { it.isUpperCase() }),
         PasswordRule("Ada huruf kecil (a-z)", password.any { it.isLowerCase() }),
         PasswordRule("Ada angka (0-9)", password.any { it.isDigit() }),
-        PasswordRule("Ada simbol (contoh: ! @ # $ %)", password.any { !it.isLetterOrDigit() }),
+        PasswordRule("Ada simbol (contoh: ! @ # \$ %)", password.any { !it.isLetterOrDigit() }),
     )
 
     fun isStrong(password: String): Boolean = rules(password).all { it.isMet }
 }
 
+private val EMAIL_REGEX = "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}\$".toRegex()
+
 data class RegisterUiState(
-    val name: String = "",
     val email: String = "",
     val username: String = "",
     val password: String = "",
@@ -43,9 +49,9 @@ data class RegisterUiState(
     val isLoading: Boolean = false,
     val isSendingOtp: Boolean = false,
     val errorMessage: String? = null,
-    val infoMessage: String? = null
+    val infoMessage: String? = null,
 ) {
-    val isEmailValid: Boolean get() = Patterns.EMAIL_ADDRESS.matcher(email.trim()).matches()
+    val isEmailValid: Boolean get() = EMAIL_REGEX.matches(email.trim())
     val isUsernameValid: Boolean get() = username.trim().length >= 3
     val isPasswordStrong: Boolean get() = PasswordValidator.isStrong(password)
     val isPasswordMatch: Boolean get() = password == confirmPassword
@@ -67,9 +73,6 @@ class RegisterViewModel : ViewModel() {
     private val _events = Channel<RegisterEvent>(Channel.BUFFERED)
     val events = _events.receiveAsFlow()
 
-    fun onNameChange(value: String) =
-        _uiState.update { it.copy(name = value, errorMessage = null) }
-
     fun onEmailChange(value: String) =
         _uiState.update { it.copy(email = value, errorMessage = null) }
 
@@ -86,8 +89,9 @@ class RegisterViewModel : ViewModel() {
         _uiState.update { it.copy(otp = value, errorMessage = null) }
 
     fun dismissOtpDialog() =
-        _uiState.update { it.copy(isOtpDialogOpen = false, errorMessage = null) }
+        _uiState.update { it.copy(isOtpDialogOpen = false, otp = "", errorMessage = null) }
 
+    /** Langkah 1: Validasi form lalu kirim OTP ke email */
     fun requestOtpAndOpenDialog() {
         val state = _uiState.value
         if (!state.canSubmit) return
@@ -116,6 +120,7 @@ class RegisterViewModel : ViewModel() {
         }
     }
 
+    /** Kirim ulang OTP dari dalam dialog */
     fun resendOtp() {
         val email = _uiState.value.email
         if (email.isBlank()) return
@@ -126,9 +131,7 @@ class RegisterViewModel : ViewModel() {
             val result = ApiRegister.kirimOtp(email)
 
             result.onSuccess { message ->
-                _uiState.update {
-                    it.copy(isSendingOtp = false, infoMessage = message)
-                }
+                _uiState.update { it.copy(isSendingOtp = false, infoMessage = message) }
             }.onFailure { exception ->
                 _uiState.update {
                     it.copy(
@@ -140,11 +143,10 @@ class RegisterViewModel : ViewModel() {
         }
     }
 
+    /** Langkah 2: Kirim OTP + data registrasi ke backend */
     fun submitRegisterWithOtp(context: Context) {
         val state = _uiState.value
-        val otpCode = state.otp.trim()
-
-        if (otpCode.length < 6) {
+        if (state.otp.trim().length < 6) {
             _uiState.update { it.copy(errorMessage = "Kode verifikasi harus 6 digit") }
             return
         }
@@ -152,43 +154,34 @@ class RegisterViewModel : ViewModel() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, errorMessage = null) }
 
-            val displayName = state.name.trim().ifBlank { state.username.trim() }
+            val displayName = state.username.trim()
             val result = ApiRegister.register(
                 nama = displayName,
-                username = state.username.trim(),
+                username = displayName,
                 email = state.email.trim(),
                 kataSandi = state.password,
-                otp = otpCode
+                otp = state.otp.trim()
             )
 
-            if (success) {
-                _uiState.update { it.copy(isLoading = false) }
+            result.onSuccess { authData ->
+                val sessionManager = SessionManager.getInstance(context)
+                sessionManager.saveToken(authData.token)
+                sessionManager.saveUser(authData.pengguna)
+
+                _uiState.update { it.copy(isLoading = false, isOtpDialogOpen = false) }
                 _events.send(RegisterEvent.NavigateToOnboarding)
-            } else {
-                _uiState.update { it.copy(isLoading = false, errorMessage = "Registrasi gagal, coba lagi") }
-            }
-        }
-    }
-}
-
-/** Penghubung antara RegisterViewModel dan RegisterScreen (stateless). */
-@Composable
-fun RegisterRoute(
-    onNavigateToOnboarding: () -> Unit,
-    onNavigateToLogin: () -> Unit,
-    onGoogleClick: () -> Unit = onNavigateToOnboarding,
-    viewModel: RegisterViewModel = viewModel(),
-) {
-    val state by viewModel.uiState.collectAsStateWithLifecycle()
-
-    LaunchedEffect(Unit) {
-        viewModel.events.collect { event ->
-            when (event) {
-                RegisterEvent.NavigateToOnboarding -> onNavigateToOnboarding()
+            }.onFailure { exception ->
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        errorMessage = exception.message ?: "Registrasi gagal, coba lagi"
+                    )
+                }
             }
         }
     }
 
+    /** Daftar menggunakan akun Google */
     fun registerWithGoogle(context: Context) {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, errorMessage = null) }
@@ -196,6 +189,7 @@ fun RegisterRoute(
             val googleResult = GoogleAuthHelper.getGoogleIdToken(context)
 
             googleResult.onSuccess { idToken ->
+                // Coba daftar dulu, jika sudah ada akun langsung login
                 val registerResult = ApiRegister.registerGoogle(idToken = idToken)
 
                 registerResult.onSuccess { authData ->
@@ -204,8 +198,9 @@ fun RegisterRoute(
                     sessionManager.saveUser(authData.pengguna)
 
                     _uiState.update { it.copy(isLoading = false) }
-                    _events.send(RegisterEvent.NavigateToHome)
-                }.onFailure { regException ->
+                    _events.send(RegisterEvent.NavigateToOnboarding)
+                }.onFailure {
+                    // Akun mungkin sudah terdaftar, coba login Google
                     val loginResult = ApiLogin.loginGoogle(idToken = idToken)
                     loginResult.onSuccess { authData ->
                         val sessionManager = SessionManager.getInstance(context)
@@ -213,12 +208,12 @@ fun RegisterRoute(
                         sessionManager.saveUser(authData.pengguna)
 
                         _uiState.update { it.copy(isLoading = false) }
-                        _events.send(RegisterEvent.NavigateToHome)
-                    }.onFailure {
+                        _events.send(RegisterEvent.NavigateToOnboarding)
+                    }.onFailure { loginException ->
                         _uiState.update {
                             it.copy(
                                 isLoading = false,
-                                errorMessage = regException.message ?: "Gagal mendaftar dengan Google"
+                                errorMessage = loginException.message ?: "Gagal mendaftar dengan Google"
                             )
                         }
                     }
@@ -233,4 +228,39 @@ fun RegisterRoute(
             }
         }
     }
+}
+
+/** Penghubung antara RegisterViewModel dan RegisterScreen (stateless). */
+@Composable
+fun RegisterRoute(
+    onNavigateToOnboarding: () -> Unit,
+    onNavigateToLogin: () -> Unit,
+    onGoogleClick: () -> Unit = onNavigateToOnboarding,
+    viewModel: RegisterViewModel = viewModel(),
+) {
+    val context = LocalContext.current
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+
+    LaunchedEffect(Unit) {
+        viewModel.events.collect { event ->
+            when (event) {
+                RegisterEvent.NavigateToOnboarding -> onNavigateToOnboarding()
+            }
+        }
+    }
+
+    RegisterScreen(
+        state = state,
+        onEmailChange = viewModel::onEmailChange,
+        onUsernameChange = viewModel::onUsernameChange,
+        onPasswordChange = viewModel::onPasswordChange,
+        onConfirmPasswordChange = viewModel::onConfirmPasswordChange,
+        onRegisterClick = viewModel::requestOtpAndOpenDialog,
+        onGoogleClick = { viewModel.registerWithGoogle(context) },
+        onLoginClick = onNavigateToLogin,
+        onOtpChange = viewModel::onOtpChange,
+        onSubmitOtpClick = { viewModel.submitRegisterWithOtp(context) },
+        onResendOtpClick = viewModel::resendOtp,
+        onDismissOtpDialog = viewModel::dismissOtpDialog,
+    )
 }

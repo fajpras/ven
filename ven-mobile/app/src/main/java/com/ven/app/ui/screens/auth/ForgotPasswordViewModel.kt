@@ -1,6 +1,5 @@
 package com.ven.app.ui.screens.auth
 
-import android.util.Patterns
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Job
@@ -12,6 +11,8 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+private val EMAIL_REGEX = "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}\$".toRegex()
+
 data class ForgotPasswordUiState(
     val email: String = "",
     val otp: String = "",
@@ -21,7 +22,7 @@ data class ForgotPasswordUiState(
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
 ) {
-    val isEmailValid: Boolean get() = Patterns.EMAIL_ADDRESS.matcher(email.trim()).matches()
+    val isEmailValid: Boolean get() = EMAIL_REGEX.matches(email.trim())
     val isOtpComplete: Boolean get() = otp.length == 6
     val isPasswordStrong: Boolean get() = PasswordValidator.isStrong(newPassword)
     val isPasswordMatch: Boolean get() = newPassword == confirmPassword
