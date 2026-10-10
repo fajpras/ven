@@ -1,4 +1,4 @@
-package com.ven.app.ui.register
+package com.ven.app.ui.screens.auth
 
 import android.util.Patterns
 import androidx.compose.runtime.Composable
@@ -52,7 +52,7 @@ data class RegisterUiState(
 }
 
 sealed interface RegisterEvent {
-    data object NavigateToHome : RegisterEvent
+    data object NavigateToOnboarding : RegisterEvent
 }
 
 class RegisterViewModel : ViewModel() {
@@ -87,7 +87,7 @@ class RegisterViewModel : ViewModel() {
 
             if (success) {
                 _uiState.update { it.copy(isLoading = false) }
-                _events.send(RegisterEvent.NavigateToHome)
+                _events.send(RegisterEvent.NavigateToOnboarding)
             } else {
                 _uiState.update { it.copy(isLoading = false, errorMessage = "Registrasi gagal, coba lagi") }
             }
@@ -98,9 +98,9 @@ class RegisterViewModel : ViewModel() {
 /** Penghubung antara RegisterViewModel dan RegisterScreen (stateless). */
 @Composable
 fun RegisterRoute(
-    onNavigateToHome: () -> Unit,
+    onNavigateToOnboarding: () -> Unit,
     onNavigateToLogin: () -> Unit,
-    onGoogleClick: () -> Unit = {},
+    onGoogleClick: () -> Unit = onNavigateToOnboarding,
     viewModel: RegisterViewModel = viewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -108,7 +108,7 @@ fun RegisterRoute(
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
             when (event) {
-                RegisterEvent.NavigateToHome -> onNavigateToHome()
+                RegisterEvent.NavigateToOnboarding -> onNavigateToOnboarding()
             }
         }
     }
