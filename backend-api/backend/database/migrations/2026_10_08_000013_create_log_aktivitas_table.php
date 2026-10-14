@@ -7,7 +7,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('log_aktifitas', function (Blueprint $table) {
+        Schema::create('log_aktivitas', function (Blueprint $table) {
             $table->bigIncrements('id_log');
             $table->uuid('id_pengguna')->nullable()->index();
             $table->foreign('id_pengguna')->references('id_pengguna')->on('pengguna')->nullOnDelete();
@@ -23,6 +23,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('log_aktifitas');
+        Schema::dropIfExists('log_aktivitas');
     }
 };

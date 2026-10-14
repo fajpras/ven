@@ -18,7 +18,7 @@ return new class extends Migration
             $table->string('nomor_hp', 20)->nullable()->unique();
             $table->string('foto_profil', 255)->nullable();
             $table->enum('role', ['admin', 'pengguna'])->default('pengguna');
-            $table->enum('status', ['aktif', 'nonaktifkan', 'ditanggungkan'])->default('aktif');
+            $table->enum('status', ['aktif', 'nonaktifkan', 'ditangguhkan'])->default('aktif');
             $table->timestamp('created_at')->useCurrent();
             $table->timestamp('updated_at')->nullable()->useCurrentOnUpdate();
             $table->timestamp('deleted_at')->nullable();
