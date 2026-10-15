@@ -81,9 +81,9 @@ class Pengguna extends Authenticatable
         return $this->hasMany(Undangan::class, 'id_pengguna', 'id_pengguna');
     }
 
-    public function logAktifitas(): HasMany
+    public function logaktivitas(): HasMany
     {
-        return $this->hasMany(LogAktifitas::class, 'id_pengguna', 'id_pengguna');
+        return $this->hasMany(Logaktivitas::class, 'id_pengguna', 'id_pengguna');
     }
 
     public function logKeamanan(): HasMany
@@ -107,7 +107,7 @@ class Pengguna extends Authenticatable
 
         $status = match ($sanksi?->jenis_sanksi) {
             'diblokir' => 'nonaktifkan',
-            'ditanggungkan' => 'ditanggungkan',
+            'ditangguhkan' => 'ditangguhkan',
             default => 'aktif',
         };
 

@@ -14,7 +14,7 @@ return new class extends Migration
             'sanksi_akun' => $baca, 'kategori' => $baca, 'model' => $baca, 'objek' => $baca,
             'posisi_objek' => $baca, 'pameran' => $baca, 'ruangan' => $baca, 'karya' => $baca,
             'undangan' => $baca, 'pengguna_kategori' => $baca,
-            'log_aktifitas' => ['INSERT'], 'log_keamanan' => ['INSERT'],
+            'log_aktivitas' => ['INSERT'], 'log_keamanan' => ['INSERT'],
         ];
     }
 
@@ -45,7 +45,7 @@ return new class extends Migration
             'karya' => ['SELECT', 'UPDATE (deleted_at, updated_at)'],
             'pameran' => ['SELECT', 'UPDATE (deleted_at)'],
             'personal_access_tokens' => ['SELECT', 'DELETE'],
-            'log_aktifitas' => ['SELECT'],
+            'log_aktivitas' => ['SELECT'],
             'log_keamanan' => ['SELECT'],
             'kategori' => $baca, 'model' => $baca, 'objek' => $baca, 'posisi_objek' => $baca,
             'ruangan' => $baca, 'pengguna_kategori' => $baca, 'undangan' => $baca,
@@ -80,7 +80,7 @@ return new class extends Migration
         $app = "'".env('DB_APP_USERNAME', 'ven_app')."'@'{$host}'";
 
         $db = DB::getDatabaseName();
-        foreach (['log_aktifitas', 'log_keamanan'] as $tabel) {
+        foreach (['log_aktivitas', 'log_keamanan'] as $tabel) {
             foreach (['`user_role`', '`admin_role`'] as $role) {
                 try { DB::unprepared("REVOKE INSERT ON `{$db}`.`{$tabel}` FROM {$role}"); } catch (\Throwable $e) {}
             }

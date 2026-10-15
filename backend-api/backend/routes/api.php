@@ -93,8 +93,8 @@ Route::middleware(CatatKeamanan::class)->group(function () {
             });
 
             Route::controller(Admin\LogController::class)->prefix('log')->group(function () {
-                Route::get('aktifitas', 'aktifitasIndex');
-                Route::get('aktifitas/{log}', 'aktifitasShow');
+                Route::get('aktivitas', 'aktivitasIndex');
+                Route::get('aktivitas/{log}', 'aktivitasShow');
                 Route::get('keamanan', 'keamananIndex');
                 Route::get('keamanan/{log}', 'keamananShow');
             });

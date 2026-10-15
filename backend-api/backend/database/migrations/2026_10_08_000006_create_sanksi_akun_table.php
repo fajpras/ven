@@ -12,7 +12,7 @@ return new class extends Migration
             $table->bigIncrements('id_sanksi');
             $table->uuid('id_pengguna')->index();
             $table->foreign('id_pengguna')->references('id_pengguna')->on('pengguna')->cascadeOnDelete();
-            $table->enum('jenis_sanksi', ['ditanggungkan', 'diblokir']);
+            $table->enum('jenis_sanksi', ['ditangguhkan', 'diblokir']);
             $table->string('alasan', 255);
             $table->timestamp('mulai');
             $table->timestamp('berakhir')->nullable();

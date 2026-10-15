@@ -49,7 +49,7 @@ class PenggunaSanksiSuksesTest extends TestCase
         $target->forceFill(['status' => 'aktif'])->save();
 
         $payload = [
-            'jenis_sanksi' => 'ditanggungkan', 
+            'jenis_sanksi' => 'ditangguhkan', 
             'alasan'       => 'Melanggar syarat dan ketentuan.',
             'mulai'        => now()->toDateTimeString(),
             'permanen'     => false,
@@ -62,13 +62,13 @@ class PenggunaSanksiSuksesTest extends TestCase
         $response->assertStatus(201);
         $this->assertDatabaseHas('sanksi_akun', [
             'id_pengguna'  => $target->id_pengguna,
-            'jenis_sanksi' => 'ditanggungkan',
+            'jenis_sanksi' => 'ditangguhkan',
             'alasan'       => 'Melanggar syarat dan ketentuan.',
         ], 'mysql');
 
         $this->assertDatabaseHas('pengguna', [
             'id_pengguna' => $target->id_pengguna,
-            'status'      => 'ditanggungkan',
+            'status'      => 'ditangguhkan',
         ], 'mysql');
 
     }

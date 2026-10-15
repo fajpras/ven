@@ -57,7 +57,7 @@ class PenggunaSeeder extends Seeder
             'kata_sandi'     => Hash::make('password123'),
             'deskripsi'      => 'Akun contoh untuk pengujian fitur sanksi dan tata tertib.',
             'role'           => 'pengguna',
-            'status'         => 'ditanggungkan',
+            'status'         => 'ditangguhkan',
         ]);
 
         // Optional: Assign Minat Kategori ke Pengguna (jika data Kategori sudah di-seed)

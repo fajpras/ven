@@ -1,5 +1,5 @@
 $kind: http-request
-url: "{{base_url}}/api/admin/log/aktifitas"
+url: "{{base_url}}/api/admin/log/aktivitas"
 method: GET
 auth:
   type: bearer

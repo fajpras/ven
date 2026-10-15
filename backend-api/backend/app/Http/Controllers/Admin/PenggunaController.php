@@ -16,7 +16,7 @@ class PenggunaController extends Controller
     {
         $request->validate([
             'cari' => ['nullable', 'string', 'max:100'],
-            'status' => ['nullable', Rule::in(['aktif', 'ditanggungkan', 'nonaktifkan'])],
+            'status' => ['nullable', Rule::in(['aktif', 'ditangguhkan', 'nonaktifkan'])],
         ]);
 
         $pengguna = Pengguna::query()
@@ -40,7 +40,7 @@ class PenggunaController extends Controller
     {
         $request->validate([
             'id_pengguna' => ['nullable', 'uuid'],
-            'jenis_sanksi' => ['nullable', Rule::in(['ditanggungkan', 'diblokir'])],
+            'jenis_sanksi' => ['nullable', Rule::in(['ditangguhkan', 'diblokir'])],
         ]);
 
         $sanksi = SanksiAkun::with('pengguna:id_pengguna,nama,email')
@@ -63,7 +63,7 @@ class PenggunaController extends Controller
         $request->merge(['mulai' => $request->input('mulai', now()->toDateTimeString())]);
 
         $validated = $request->validate([
-            'jenis_sanksi' => ['required', Rule::in(['ditanggungkan', 'diblokir'])],
+            'jenis_sanksi' => ['required', Rule::in(['ditangguhkan', 'diblokir'])],
             'alasan' => ['required', 'string', 'max:255'],
             'mulai' => ['required', 'date'],
             'permanen' => ['required', 'boolean'],
@@ -95,7 +95,7 @@ class PenggunaController extends Controller
     public function sanksiUpdate(Request $request, SanksiAkun $sanksi)
     {
         $validated = $request->validate([
-            'jenis_sanksi' => ['sometimes', Rule::in(['ditanggungkan', 'diblokir'])],
+            'jenis_sanksi' => ['sometimes', Rule::in(['ditangguhkan', 'diblokir'])],
             'alasan' => ['sometimes', 'string', 'max:255'],
             'mulai' => ['sometimes', 'date'],
             'berakhir' => ['sometimes', 'nullable', 'date'],
