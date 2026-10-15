@@ -1,6 +1,6 @@
-# design.md: VEN / VEX (Virtual Exhibition), Android (Kotlin + Jetpack Compose)
+# design.md: VEN / VEX (Virtual Exhibition), Android (Kotlin + Jetpack Compose) & Admin Web Panel
 
-> **Versi:** 0.5.0 (Update AI Assistant: Wireframe Dark Mode §8.12, AiChatScreen, AiChatEmptyState, ChatBubbleUser, ChatMessageAi, AiChatInput, ChatHistoryDrawer, ChatHistoryItem, MVI Architecture & Backend API Integration)
+> **Versi:** 0.6.2 (Update Perbaikan UI Admin Panel: Layout Topbar Offset Clearance `pt-8`, Compact List Row Density `py-3.5`, & Custom Pill Pagination Component §13.8)
 > **Pembaca utama:** AI/developer yang mengimplementasikan UI.
 > **Penanda:**
 > - `[OBSERVED]` = diambil langsung dari wireframe/Figma.
@@ -37,20 +37,26 @@
 
 ## 3. Struktur Proyek & Arsitektur Sistem
 
-Proyek **VEN (Virtual Exhibition)** menggunakan arsitektur modular yang memisahkan **Backend API** dan **Mobile Client**. Laravel difungsikan murni sebagai **RESTful Backend API**, sedangkan antarmuka pengguna dibangun sepenuhnya sebagai aplikasi Android native menggunakan **Kotlin + Jetpack Compose**.
+Proyek **VEN (Virtual Exhibition)** menggunakan arsitektur terintegrasi yang memadukan **Backend RESTful API & Admin Web Panel** di dalam Laravel, serta **Mobile Client** Android. Laravel difungsikan ganda sebagai penyedia **RESTful API** untuk aplikasi mobile dan **Web Dashboard Admin** berbasis Blade Views yang dikompilasi dengan **Vite + Tailwind CSS v4**. Antarmuka mobile dibangun sebagai aplikasi Android native (**Kotlin + Jetpack Compose**).
 
 ### 3.1 Struktur Repositori Keseluruhan (`ven`)
 
 ```
 ven/
 ├── backend-api/
-│   └── backend/                     # BACKEND: Laravel 11 (Headless REST API)
+│   └── backend/                     # BACKEND & ADMIN WEB: Laravel 12 + Blade + Vite + Tailwind CSS v4
 │       ├── app/
-│       │   ├── Http/Controllers/    # Endpoint API (Auth, Karya, Pameran, Objek, AI, Undangan, dll.)
-│       │   ├── Models/              # Eloquent Models (User, Karya, Pameran, Objek, Model3D, dll.)
-│       │   └── Middleware/          # Sanctum Authentication & Admin Middleware
+│       │   ├── Http/Controllers/    # Endpoint API & Web Admin Controllers (Admin\Web\*)
+│       │   ├── Models/              # Eloquent Models (Pengguna, Karya, Pameran, Objek, SanksiAkun, LogAktifitas)
+│       │   └── Middleware/          # Sanctum Authentication & HanyaAdmin Middleware
+│       ├── public/
+│       │   └── assets/admin/        # Static SVG assets (balok-1.svg, balok-2.svg, logo-ven.svg, icon-*.svg)
+│       ├── resources/
+│       │   ├── css/app.css          # Tailwind CSS v4 & custom floating keyframes
+│       │   └── views/admin/         # FRONTEND: Admin Blade Views (layouts, auth, accounts, posts, exhibitions, logs)
 │       ├── routes/
-│       │   └── api.php              # Definisi route RESTful API
+│       │   ├── api.php              # Definisi route RESTful API (/api/admin/*)
+│       │   └── web.php              # Definisi route Web Admin Panel (/admin/*)
 │       ├── database/
 │       │   └── migrations/          # Skema database relasional
 │       └── storage/app/public/      # Media storage (gambar karya, foto profil, model 3D)
@@ -1542,7 +1548,383 @@ Account status, History, Theme, Language, Privacy policy, Help, detail/tampilan 
 
 ---
 
+## 13. Spesifikasi Lengkap: VEN Admin Web Panel (Desktop - Light & Dark Mode)
+
+> **Observasi Mockup:** Divalidasi langsung dari 9 berkas desain antarmuka `D:\front-mobile\admin/`:
+> - `Login (Desktop).png`: Halaman autentikasi administrator dengan kartu tengah berlatar kubus 3D melayang.
+> - `Frame 13214.png` (Light) & `Frame 13218.png` (Dark): **Account Management Screen**.
+> - `Frame 13215.png` (Light) & `Frame 13219.png` (Dark): **Post Moderation Screen**.
+> - `Frame 13216.png` (Light) & `Frame 13220.png` (Dark): **Exhibition Management Screen**.
+> - `Frame 13217.png` (Light) & `Frame 13221.png` (Dark): **Activity Log Screen**.
+>
+> **Aset Vektor Terkait:** Kubus isometrik login dari `D:\front-mobile\icon\xml_icon\balok-1.xml` dan `balok-2.xml`, serta ikon sidebar dari `profile.xml`, `post_fill.xml`, `exhibition_fill.xml`, `history.xml`, dan `logo_ven.xml`.
+
+---
+
+### 13.1 Konteks & Prinsip Desain Admin Web
+
+1. **Target Platform:** Desktop Web Application dengan orientasi layar lebar (resolusi acuan `1920 × 1080` dan `1440 × 900`).
+2. **Standarisasi Bahasa Antarmuka (100% English UI):**  
+   Seluruh teks antarmuka yang dibuat atau disajikan oleh sistem pada seluruh layar admin **wajib menggunakan Bahasa Inggris** (mis. *"Sign In"*, *"Forgot Password?"*, *"Email Address"*, *"Account"*, *"Posts"*, *"Exhibitions"*, *"Activity Log"*, *"Suspend"*, *"Delete"*, *"View Details"*, dsb.), menggantikan teks placeholder bahasa Indonesia pada mockup asli.
+3. **Dukungan Tema Ganda (Dual Theme: Dark & Light Mode):**  
+   Seluruh layar dashboard dirancang memiliki pasangan tema Light dan Dark yang simetris dan dapat ditukar seketika melalui ikon switcher tema (Matahari/Bulan) pada sudut kanan Top Bar.
+4. **Keputusan Desain Khusus (Penghapusan Elemen "Active"):**  
+   - Dropdown filter status *"Active"* di samping search bar pada halaman Account **dihapus**.
+   - Kolom dan teks label *"status Active"* pada setiap baris data pengguna **dihapus**.
+   - Baris akun hanya menampilkan informasi esensial: Avatar, Username, Full Name, Jumlah Post, Jumlah Exhibition, Join Date, dan Tombol Aksi Suspend.
+5. **Karakter Visual:**  
+   Minimalis, sudut membulat halus (*pill-shaped* untuk search bar dan tombol aksi, *rounded-2xl* untuk card), kontras tinggi, dan tata letak data yang terstruktur rapi.
+
+---
+
+### 13.2 Desain Token & Palet Warna Semantik
+
+| Token Semantik | Light Mode | Dark Mode | Fungsi & Keterangan |
+|---|---|---|---|
+| `admin.bg` | `#FFFFFF` | `#121212` | Latar belakang kanvas utama dashboard |
+| `admin.surface` | `#FFFFFF` | `#1E1E20` | Latar kartu / item baris tabel data |
+| `admin.surfaceInput` | `#EBEBEB` | `#27272A` | Latar search bar pill dan form input |
+| `admin.border` | `#E2E8F0` | `#2E2E33` | Garis pemisah (*divider*) antar baris data (tinggi 1px) |
+| `admin.text` | `#0F172A` | `#FFFFFF` | Teks judul halaman, nama pengguna, title pameran/karya |
+| `admin.textMuted` | `#64748B` | `#94A3B8` | Label metadata kolom kecil (`username`, `post`, `created at`) |
+| `admin.primary` | `#BA18F5` | `#BA18F5` | Warna aksen brand VEN, active indicator sidebar, link detail |
+| `admin.primaryGradient`| `linear-gradient(90deg, #BA18F5, #D257FF)` | Gradasi tombol Sign In login desktop |
+| `admin.danger` | `#FF1E1E` | `#FF1E1E` | Tombol aksi berbahaya: `Suspend` dan `Delete` (pill solid) |
+| `admin.sidebarBg` | `#FFFFFF` | `#121212` | Latar sidebar kiri (terpisah garis vertikal tipis) |
+| `admin.sidebarActive` | `#BA18F5` | `#BA18F5` | Kotak rounded ungu penanda menu aktif di sidebar |
+
+---
+
+### 13.3 Desain & Geometri Kubus 3D Floating (`balok-1.xml` & `balok-2.xml`)
+
+Halaman Login Desktop memiliki ciri visual khas berupa **kubus isometrik putih melayang** di atas latar lingkaran gradasi ungu konsentris.
+
+```
+       [ balok-2 (kecil melayang kiri) ]       [ balok-2 (kecil melayang kanan) ]
+                 \                                     /
+           +-------------------------------------------------+
+           |                                                 |
+           |             [ CARD LOGIN DESKTOP ]              |
+           |             - Email Address                     |
+           |             - Password                          |
+           |             - Forgot Password?                  |
+           |             - [ Sign In Button ]                |
+           |                                                 |
+           +-------------------------------------------------+
+                 /                                     \
+    [ balok-1 (besar kiri bawah) ]          [ balok-1 (besar kanan bawah) ]
+```
+
+#### A. Analisis Anatomi Vektor
+1. **`balok-1.xml` (Balok Isometrik Besar - Foreground):**
+   - **Ukuran Asli:** `width: 592dp`, `height: 317dp`, `viewport: 592 × 317`.
+   - **Facet Geometri:**
+     - Facet Utama / Bidang Atas: `fillColor="#FFFFFFFF"` (Putih solid).
+     - Facet Sisi Kiri: `fillColor="#FFFFFFFF"`.
+     - Facet Sisi Kanan / Bayangan (Depth): `fillColor="#FFEBEBEB"` (Abu-abu terang penegas volume 3D).
+     - Garis Tepi Kontur (Bevel Outline): `strokeColor="#FFEBEBEB"`, `strokeWidth="3px"`.
+   - **Clipping Alamiah:** Sisi bawah balok terpotong rapi oleh batas kanvas viewport (`overflow: hidden`).
+2. **`balok-2.xml` (Balok Isometrik Kecil - Midground):**
+   - **Ukuran Asli:** `width: 201dp`, `height: 194dp`, `viewport: 201 × 194`.
+   - **Facet Geometri:**
+     - Facet Atas: `fillColor="#FFFFFFFF"`.
+     - Facet Samping: `fillColor="#FFFFFFFF"`.
+     - Facet Bayangan: `fillColor="#FFEBEBEB"`.
+     - Outline: `strokeColor="#FFEBEBEB"`, `strokeWidth="3px"`.
+
+#### B. Konversi Format Web (SVG)
+Aset Android Vector ini dikonversi 1:1 menjadi berkas SVG standar web:
+- `public/assets/balok-1.svg`: Menggunakan root tag `<svg viewBox="0 0 592 317" fill="none" xmlns="http://www.w3.org/2000/svg">`.
+- `public/assets/balok-2.svg`: Menggunakan root tag `<svg viewBox="0 0 201 194" fill="none" xmlns="http://www.w3.org/2000/svg">`.
+
+#### C. Tata Letak & Efek Floating pada Layar Login
+- **Latar Belakang:** Lingkaran busur konsentris bertingkat dengan gradasi ungu:
+  - Lingkaran Luar: `#C084FC` (opacity 30%)
+  - Lingkaran Tengah: `#A855F7` (opacity 60%)
+  - Lingkaran Dalam: `#8B5CF6` / `#7E22CE` (solid)
+- **Koordinat 4 Kubus:**
+  1. *Kiri Bawah:* `balok-1.svg`, posisi `bottom: -6%`, `left: -4%`, lebar `~420px`, z-index 10.
+  2. *Kanan Bawah:* `balok-1.svg`, posisi `bottom: -6%`, `right: -4%`, lebar `~420px`, rotasi horizontal simetris (`transform: scaleX(-1)`), z-index 10.
+  3. *Kiri Tengah:* `balok-2.svg`, posisi `top: 48%`, `left: 8%`, lebar `~150px`, rotasi `-8deg`, z-index 5.
+  4. *Kanan Tengah:* `balok-2.svg`, posisi `top: 50%`, `right: 8%`, lebar `~150px`, rotasi `12deg`, z-index 5.
+- **Animasi Subtle Floating (CSS Keyframes):** Balok diberi animasi gerak melayang halus naik-turun (`translateY(0)` ke `translateY(-12px)`) durasi 4–6 detik dengan timing `ease-in-out infinite alternate`.
+
+---
+
+### 13.4 Kerangka Shell Layout Admin (`AdminLayout`)
+
+Seluruh halaman admin (setelah login) menggunakan layout dashboard terpadu:
+
+```
++----+-------------------------------------------------------------------------------+
+|LOGO|  [Page Title: e.g. Account]                         [Theme Toggle: Sun/Moon]  |
+|    +-------------------------------------------------------------------------------+
+|[1] |  [ Search Bar (Pill) ]                                                        |
+|    |                                                                               |
+|[2] |  ---------------------------------------------------------------------------  |
+|    |  [ROW 1: Avatar | Username | Name | Post | Exhibition | Join Date | Suspend]   |
+|[3] |  ---------------------------------------------------------------------------  |
+|    |  [ROW 2: Avatar | Username | Name | Post | Exhibition | Join Date | Suspend]   |
+|[4] |  ---------------------------------------------------------------------------  |
++----+-------------------------------------------------------------------------------+
+```
+
+1. **Sidebar Kiri (Fixed `w-20` / 80px):**
+   - Border vertikal kanan 1px (`admin.border`).
+   - Paling atas: Logo VEN ungu (`logo_ven.xml`).
+   - 4 Ikon Navigasi Menu Vertikal (Icon-only, tanpa teks label):
+     1. **Account:** Ikon profile lingkaran (`account_status.xml` / `profile.xml`).
+     2. **Posts:** Ikon gambar/galeri persegi (`post_fill.xml`).
+     3. **Exhibitions:** Ikon kubus 3D isometrik (`exhibition_fill.xml`).
+     4. **Activity Log:** Ikon jam/riwayat melingkar (`history.xml`).
+   - **Indikator Aktif:** Kotak persegi membulat warna ungu brand solid (`#BA18F5`, radius 14px, ukuran 44×44px) dengan ikon di dalamnya berwarna putih solid (`#FFFFFF`). Menu non-aktif menampilkan ikon warna netral (`#000000` di light mode, `#FFFFFF` di dark mode) dengan efek hover latar lembut.
+2. **Top Bar Header:**
+   - Tinggi 70px, menyatu dengan kanvas.
+   - Sisi Kiri: Judul halaman aktif dalam teks tebal (22sp SemiBold, font sans-serif, warna `admin.text`).
+   - Sisi Kanan: Tombol toggle tema (Matahari di Dark Mode untuk pindah ke Light, Bulan di Light Mode untuk pindah ke Dark).
+3. **Area Konten Utama:**
+   - Padding horizontal lega (32px–48px), scrollable vertikal.
+   - Search bar pill di bagian atas konten dengan placeholder spesifik.
+
+---
+
+### 13.5 Katalog Spesifikasi Detail 5 Halaman Admin
+
+#### 13.5.1 Halaman Login (`Login (Desktop).png`)
+- **Struktur Halaman:** Full-screen tanpa sidebar, dipusatkan vertikal dan horizontal.
+- **Card Kontainer Tengah:**
+  - Lebar: `420px–460px`, latar putih solid `#FFFFFF`, sudut melengkung `rounded-3xl` (24px), bayangan lembut (`shadow-2xl`), padding 36px, z-index 20.
+- **Elemen Form (100% English):**
+  1. **Input Email:**
+     - Label terintegrasi placeholder: `"Email"`.
+     - Bentuk: Rounded rectangle (radius 10px), border 1px solid `#CBD5E1`, latar `#F1F5F9`, tinggi 48px, teks input 14px.
+  2. **Input Password:**
+     - Label terintegrasi placeholder: `"Password"`.
+     - Fitur: Toggle tombol lihat/sembunyikan password di sisi kanan.
+  3. **Tautan Lupa Sandi:**
+     - Teks: `"Forgot Password?"`, rata kanan, warna `#334155`, ukuran 13px, efek hover underline.
+  4. **Tombol Masuk (Primary CTA):**
+     - Teks: **`"Sign In"`** (putih, bold 16px).
+     - Bentuk: Rounded pill (`rounded-xl` / 12px), lebar penuh (100%), tinggi 48px.
+     - Latar: Gradasi ungu-ke-magenta halus (`linear-gradient(90deg, #BA18F5, #D257FF)`).
+     - State: Hover scale subtle (1.01), loading spinner saat request berlangsung, disabled saat email/password kosong.
+
+---
+
+#### 13.5.2 Halaman Account (`Frame 13214.png` [Light] & `Frame 13218.png` [Dark])
+- **Judul TopBar:** `"Account"`
+- **Search Bar:**
+  - Bentuk pill (`rounded-full`), tinggi 44px, lebar 100% (atau max-w-4xl).
+  - Latar: `#EBEBEB` (Light) / `#2A2A2D` (Dark).
+  - Ikon kaca pembesar di sisi kiri + placeholder: `"Search by name, username, or email..."`.
+- **Perubahan Spesifik Sesuai Arahan:**
+  - ❌ **Dropdown filter "Active" di kanan atas search bar DIHAPUS.**
+  - ❌ **Kolom dan teks label "status Active" pada baris data DIHAPUS.**
+- **Struktur Baris Data Pengguna (`AccountRowItem`):**
+  - Setiap baris dibatasi divider horizontal 1px (`admin.border`). Padding vertikal 16px.
+  - Susunan kolom horizontal dari kiri ke kanan:
+    1. **Avatar:** Foto profil lingkaran diameter 56px (`rounded-full object-cover`). Fallback avatar inisial jika null.
+    2. **Username:** Label kecil atas `username` (12sp `admin.textMuted`) + nilai `@username` (15sp Medium `admin.text`).
+    3. **Name:** Label kecil atas `name` (12sp `admin.textMuted`) + nilai nama lengkap (mis. *Terra Faqih Satria Madjid*, 15sp SemiBold `admin.text`).
+    4. **Post:** Label kecil atas `post` (12sp `admin.textMuted`) + jumlah karya (mis. *2*, 15sp Medium `admin.text`).
+    5. **Exhibition:** Label kecil atas `exhibition` (12sp `admin.textMuted`) + jumlah pameran (mis. *1*, 15sp Medium `admin.text`).
+    6. **Join Date:** Label kecil atas `join date` (12sp `admin.textMuted`) + tanggal bergabung format `DD/MM/YY` (mis. *29/09/26*, 15sp Medium `admin.text`).
+    7. **Tombol Aksi Suspend:**
+       - Teks: **`"Suspend"`** (putih, SemiBold 14px).
+       - Bentuk: Rounded pill (`rounded-full`), padding horizontal 24px, tinggi 38px.
+       - Warna Latar: Merah solid `admin.danger` (`#FF1E1E`).
+- **Modal Konfirmasi Suspend (`SuspendUserModal`):**
+  - Terbuka saat tombol `"Suspend"` ditekan.
+  - Berisi: Nama & email akun yang akan disanksi.
+  - Form:
+    - `Sanction Type`: Dropdown pilihan (`Suspended` / `Blocked`).
+    - `Duration`: Pilihan durasi preset (`24 Hours`, `7 Days`, `30 Days`, atau `Permanent`).
+    - `Reason`: Textarea alasan penjatuhan sanksi (wajib diisi, maksimal 255 karakter).
+  - Aksi: Tombol `"Confirm Suspend"` (merah) dan `"Cancel"` (abu-abu).
+
+---
+
+#### 13.5.3 Halaman Post (`Frame 13215.png` [Light] & `Frame 13219.png` [Dark])
+- **Judul TopBar:** `"Post"`
+- **Search & Filter Bar:**
+  - Baris horizontal: Search bar pill di sisi kiri + **Category Filter Dropdown** di sisi kanan.
+  - Dropdown Kategori: Kustom popover pill (bukan native browser `<select>`), lebar tombol trigger dan panel popover menu diselaraskan presisi 100% sama panjang (`w-full sm:w-[260px]`), menampilkan kategori terpilih (mis. *"All Categories"*, *"Internet of Things"*), chevron panah yang berotasi mulus 180°, menu melayang dengan sudut melengkung `rounded-2xl`, bayangan `shadow-xl`, opsi berlatar `hover:bg-gray-100 dark:hover:bg-zinc-800`, indikator aktif ungu `#BA18F5` dengan ikon centang (*checkmark*), serta penutupan otomatis saat klik di luar area (*click-outside*).
+- **Grid Moderasi Karya (2 Kolom):**
+  - Layout 2 kolom grid responsif (`grid grid-cols-1 xl:grid-cols-2 gap-8`).
+  - **Anatomi Kartu Karya (`ModerationPostCard`):**
+    - Sisi Kiri: Gambar poster karya (format potret rasio 3:4, lebar ≈ 160px, tinggi ≈ 220px, sudut melengkung `rounded-xl`, `object-cover`).
+    - Sisi Kanan:
+      - Baris Atas: Title karya tebal (18sp Bold `admin.text`, mis. *"PBL EXPO"* atau *"Platform Batik AI"*).
+      - Baris Kedua: Username pembuat karya (14sp `admin.textMuted`, mis. `@shaf.one` atau `@gra._.aph`).
+      - Baris Ketiga: Cuplikan deskripsi karya (13sp `admin.text`, line-clamp 3, mis. *"Karya ini merupakan karya untuk PBL EXPO yang mana dapat menampilkan banyak karya para peserta lainnya"*).
+      - Baris Bawah: Tombol aksi **`"Delete"`** (pill merah solid `#FF1E1E`, teks putih SemiBold 14px, padding horizontal 28px, tinggi 38px).
+- **Dialog Konfirmasi Hapus Post (`DeleteConfirmModal`):**
+  - Pop-up konfirmasi pencegahan: *"Are you sure you want to delete this artwork? This will remove the post from public feeds."*
+  - Tombol: `"Delete Post"` (merah) & `"Cancel"`.
+
+---
+
+#### 13.5.4 Halaman Exhibition (`Frame 13216.png` [Light] & `Frame 13220.png` [Dark])
+- **Judul TopBar:** `"Exhibition"`
+- **Search Bar:**
+  - Bentuk pill lebar penuh, placeholder: `"Search exhibition by title or owner..."`.
+- **Daftar Pameran (List Rows):**
+  - Setiap baris dibatasi divider 1px (`admin.border`), padding vertikal 18px.
+  - Susunan kolom horizontal:
+    1. **Banner Thumbnail:** Gambar banner pameran format landscape (rasio 16:9, lebar ≈ 160px, tinggi ≈ 90px, sudut melengkung `rounded-lg`, `object-cover`).
+    2. **Title:** Label kecil `title` + nilai nama pameran (16sp SemiBold `admin.text`, mis. *"PBL EXPO"*, *"OSC"*).
+    3. **Owner:** Label kecil `owner` + nilai username pemilik pameran (14sp `admin.text`, mis. `@gra._.aph`, `@shaf.one`).
+    4. **Post:** Label kecil `post` + jumlah karya di dalam pameran (14sp `admin.text`, mis. *2*, *1*).
+    5. **Created At:** Label kecil `created at` + format tanggal `DD/MM/YY` (14sp `admin.text`, mis. *29/09/26*).
+    6. **Tombol Aksi Delete:**
+       - Teks: **`"Delete"`** (putih SemiBold 14px).
+       - Bentuk: Rounded pill (`rounded-full`), latar merah solid `#FF1E1E`, padding horizontal 28px, tinggi 38px.
+- **Dialog Konfirmasi Hapus Pameran:**
+  - Pop-up konfirmasi moderasi pameran sebelum mengeksekusi endpoint soft delete.
+
+---
+
+#### 13.5.5 Halaman Activity Log (`Frame 13217.png` [Light] & `Frame 13221.png` [Dark])
+- **Judul TopBar:** `"Activity log"`
+- **Search Bar:**
+  - Bentuk pill, placeholder: `"Search activity logs..."`.
+- **Daftar Log Audit (Activity Feed Rows):**
+  - Setiap baris dibatasi divider horizontal 1px (`admin.border`), padding vertikal 16px.
+  - Susunan kolom horizontal:
+    1. **Deskripsi Aksi:** Teks lengkap tindakan admin (14sp Medium `admin.text`, mis. *"Admin 1 deleted artwork titled Value Exchange Network"* atau *"Admin 1 has suspended user Daffa for 24 hours"*).
+    2. **Tanggal Eksekusi:** Format tanggal ringkas di sisi kanan (`29/09/26`, 14sp `admin.textMuted`).
+    3. **Tombol Tautan Detail:**
+       - Teks: **`"Detail"`** (warna ungu brand `admin.primary` `#BA18F5`, 14sp Medium, clickable).
+- **Drawer / Modal Detail Aktivitas (`ActivityDetailModal`):**
+  - Terbuka saat tautan `"Detail"` diklik.
+  - Menampilkan metadata audit teknis:
+    - `Log ID` & `Timestamp` lengkap (ISO 8601 / format lokal).
+    - `Actor`: Admin Name, Admin ID, IP Address, dan User Agent.
+    - `Action Target`: Resource type (`Pengguna`, `Karya`, `Pameran`), Resource UUID/ID, dan Action Type (`DELETE`, `SUSPEND`, `RESTORE`).
+    - `Payload Snapshot`: Data nilai sebelum dan sesudah perubahan (*Audit Diff JSON*).
+
+---
+
+### 13.6 Pemetaan Kontrak Backend Laravel API (`/api/admin/*`)
+
+Frontend web admin mengonsumsi endpoint yang telah tersedia pada backend Laravel (`backend-api/backend/routes/api.php`) dengan otentikasi Bearer Token Sanctum dan middleware `HanyaAdmin`:
+
+| Modul Layar Admin | Metode HTTP | Endpoint Backend | Parameter & Payload | Keterangan |
+|---|---|---|---|---|
+| **Auth** | `POST` | `/api/auth/masuk` | `{ "email": string, "kata_sandi": string }` | Autentikasi admin, memperoleh token Sanctum |
+| **Auth** | `POST` | `/api/auth/keluar` | Header `Authorization: Bearer <token>` | Logout sesi administrator |
+| **Account** | `GET` | `/api/admin/pengguna` | `?cari={query}&page={page}` | Mengambil daftar pengguna terpaginasi (24 item/halaman) |
+| **Account** | `GET` | `/api/admin/pengguna/{id}` | UUID pengguna | Detail akun lengkap beserta riwayat sanksi |
+| **Account** | `POST` | `/api/admin/pengguna/{id}/sanksi` | `{ "jenis_sanksi": "ditanggungkan"\|"diblokir", "alasan": string, "mulai": date, "permanen": bool, "berakhir": date? }` | Eksekusi suspend pengguna |
+| **Account** | `DELETE`| `/api/admin/sanksi/{sanksiId}` | ID sanksi | Mencabut penangguhan / sanksi akun |
+| **Post** | `GET` | `/api/admin/karya` | `?cari={query}&kategori={kategori}&page={page}` | Mengambil daftar karya terpaginasi untuk moderasi |
+| **Post** | `DELETE`| `/api/admin/karya/{karyaUuid}` | UUID karya | Menghapus (soft delete) karya pelanggar kebijakan |
+| **Post** | `POST` | `/api/admin/karya/{karyaUuid}/pulihkan` | UUID karya | Memulihkan kembali karya yang telah dihapus |
+| **Exhibition**| `GET` | `/api/admin/pameran` | `?cari={query}&page={page}` | Mengambil daftar pameran virtual |
+| **Exhibition**| `DELETE`| `/api/admin/pameran/{pameranId}`| ID integer pameran | Menghapus pameran virtual |
+| **Exhibition**| `POST` | `/api/admin/pameran/{pameranId}/pulihkan`| ID pameran | Memulihkan pameran virtual |
+| **Activity Log**| `GET`| `/api/admin/log/aktifitas` | `?cari={query}&page={page}` | Mengambil daftar riwayat aksi admin |
+| **Activity Log**| `GET`| `/api/admin/log/aktifitas/{id}` | ID log | Detail audit trail teknis tindakan admin |
+
+---
+
+### 13.7 Arsitektur Berkas & Struktur Folder Admin Web Panel (Blade + Vite + Tailwind CSS v4)
+
+Seluruh antarmuka website admin diorganisasikan langsung di dalam backend Laravel (`backend-api/backend/`):
+
+📂 **`C:\laragon\www\ven\backend-api\backend/`**
+
+```text
+backend-api/backend/
+├── public/
+│   └── assets/admin/
+│       ├── balok-1.svg               # Kubus 3D isometrik besar foreground (dari balok-1.xml)
+│       ├── balok-2.svg               # Kubus 3D isometrik kecil melayang (dari balok-2.xml)
+│       ├── logo-ven.svg              # Logo VEN ungu brand (dari logo_ven.xml)
+│       ├── icon-account.svg          # Ikon menu navigasi Account
+│       ├── icon-post.svg             # Ikon menu navigasi Post
+│       ├── icon-exhibition.svg       # Ikon menu navigasi Exhibition
+│       ├── icon-history.svg          # Ikon menu navigasi Activity Log
+│       ├── icon-search.svg           # Ikon leading search bar
+│       └── icon-theme.svg            # Ikon switcher tema Light / Dark
+│
+├── resources/
+│   ├── css/
+│   │   └── app.css                   # Tailwind CSS v4 + @variant dark + keyframe animasi balok
+│   ├── js/
+│   │   └── app.js                    # Inisialisasi Vite frontend
+│   └── views/
+│       └── admin/                    # KUMPULAN BLADE VIEWS ADMIN
+│           ├── layouts/
+│           │   ├── app.blade.php     # Layout induk: Sidebar w-20 fixed, Topbar h-20, & container konten
+│           │   ├── sidebar.blade.php # 4 menu ikon (Account, Post, Exhibition, Log) dengan active purple pill
+│           │   └── topbar.blade.php  # Judul dinamis + tombol switcher Sun/Moon + logout
+│           ├── auth/
+│           │   └── login.blade.php   # Login desktop (lingkaran gradasi ungu + floating balok-1 & balok-2)
+│           ├── accounts/
+│           │   └── index.blade.php   # Manajemen Akun (Active filter & status DIHAPUS, Suspend button + Modal)
+│           ├── posts/
+│           │   └── index.blade.php   # Moderasi Karya (Grid responsif 2-kolom, filter kategori, Delete + Modal)
+│           ├── exhibitions/
+│           │   └── index.blade.php   # Pameran Virtual (List rasio 16:9, Delete + Modal)
+│           └── logs/
+│               └── index.blade.php   # Riwayat Log Aktivitas (Audit trail feed, Detail purple link + Modal)
+│
+├── app/Http/Controllers/Admin/Web/
+│   ├── AdminAuthController.php       # Controller login/logout sesi web admin
+│   ├── AdminAccountController.php    # Controller akun (query Pengguna + suspend sanksi + fallback)
+│   ├── AdminPostController.php       # Controller moderasi karya (query Karya + delete + fallback)
+│   ├── AdminExhibitionController.php # Controller pameran (query Pameran + delete + fallback)
+│   └── AdminLogController.php        # Controller riwayat log (query LogAktifitas + audit + fallback)
+│
+├── routes/
+│   ├── web.php                       # Rute web portal /admin/* (login, accounts, posts, exhibitions, logs)
+│   └── api.php                       # Rute REST API /api/admin/* untuk konsumsi headless client
+├── package.json                      # Tailwind CSS v4, Vite 8, laravel-vite-plugin
+└── vite.config.js                    # Konfigurasi bundler Vite
+```
+
+---
+
+### 13.8 Spesifikasi Perbaikan UI: Clearance, Density, & Pagination Kustom
+
+Untuk mengoptimalkan ergonomi dan estetika desktop admin panel, ditetapkan aturan baku berikut:
+
+1. **Clearance Layout & Topbar Offset**:
+   - Komponen Topbar memiliki tinggi `h-20` (80px) dengan sifat `sticky top-0 z-20` dan efek `backdrop-blur-md`.
+   - Kontainer `<main>` **wajib** menyertakan padding atas `pt-8` (32px) agar seluruh elemen search bar tidak berbenturan atau terpotong oleh batas bawah header saat di-scroll.
+2. **Kerapatan Baris List (Compact Row Density)**:
+   - Baris daftar pada layar Account, Exhibition, dan Post disetel ke **`py-3.5`** (14px padding vertikal) dengan avatar/thumbnail ramping (`w-11 h-11` untuk profil pengguna, `150×75px` untuk pameran 16:9).
+   - Layar Activity Log disetel ke **`py-3`** (12px padding vertikal) dengan teks audit trail `text-sm`.
+   - Tombol aksi primer (*Suspend* dan *Delete*) menggunakan tinggi standar `h-9 px-6 rounded-full text-xs font-semibold`.
+3. **Komponen Pagination Kustom (`admin.layouts.pagination`)**:
+   - Menyajikan informasi rentang data dinamis: *"Showing X to Y of Z results"*.
+   - Tombol navigasi Previous (`<`) dan Next (`>`) berbentuk pill sirkular (`w-9 h-9 rounded-full`) dengan efek state disabled transparan saat berada di batas halaman awal/akhir.
+   - Indikator halaman aktif disorot dengan warna aksen ungu brand VEN (`bg-[#BA18F5] text-white shadow-md shadow-purple-500/25`), sedangkan halaman lain interaktif dengan hover background ringan.
+   - Parameter limit halaman disetel default `4` data per-halaman pada Account, Post (2×2 grid), dan Exhibition, serta `5` pada Activity Log.
+
+---
+
 ## Changelog
+- **0.6.2**: Perbaikan Ergonomi & Layout **VEN Admin Web Panel (§13.8)**:
+  - **Custom Popover Category Dropdown**: Mengganti elemen native browser `<select>` pada layar Post dengan custom pill popover dropdown (`rounded-2xl`, `shadow-xl`, checkmark centang aktif ungu `#BA18F5`, chevron rotasi 180°, dan event click-outside / ESC close) agar konsisten 100% dengan bahasa desain VEN.
+  - **Layout Safe Clearance**: Menambahkan `pt-8` pada `<main>` master layout untuk mencegah search bar terpotong/tertutup oleh `h-20` sticky topbar.
+  - **Compact List Row Density**: Menyesuaikan padding baris list dari `py-6` menjadi `py-3.5` serta memperkecil avatar ke `w-11 h-11` agar tampilan lebih ramping dan memuat lebih banyak data per layar.
+  - **Komponen Pagination Kustom**: Mengimplementasikan `admin.layouts.pagination` dengan styling pill ungu `#BA18F5`, prev/next chevron, dan counter ringkasan data.
+  - **Aktivasi Pagination di Seluruh Layar**: Mengonfigurasi limit default per-page (4 item per halaman) pada seluruh Web Controller agar pagination langsung aktif dan dapat diuji navigasinya.
+- **0.6.1**: Relokasi & Integrasi Penuh **Admin Web Panel ke dalam `backend-api/backend`**:
+  - **Relokasi Arsitektur**: Memindahkan seluruh antarmuka admin dari direktori root terpisah ke dalam ekosistem internal Laravel backend (`backend-api/backend/resources/views/admin/`) memanfaatkan engine templating Blade terintegrasi dengan Vite dan Tailwind CSS v4.
+  - **Manajemen Aset Vektor**: Menempatkan aset SVG ikon dan kubus 3D isometrik di `backend-api/backend/public/assets/admin/`.
+  - **Arsitektur Web Controller Dedicated**: Menambahkan `AdminAuthController`, `AdminAccountController`, `AdminPostController`, `AdminExhibitionController`, dan `AdminLogController` di `app/Http/Controllers/Admin/Web/` dengan integrasi langsung model Eloquent serta fallback mockup graceful saat database lokal offline.
+  - **Pembaruan Web Routing**: Memetakan grup rute `/admin/*` di `routes/web.php` untuk login, akun (tanpa filter/status Active), moderasi karya, pameran virtual, dan riwayat aktivitas.
+- **0.6.0**: Spesifikasi Lengkap **VEN Admin Web Panel Desktop (Light & Dark Mode) (§13)**:
+  - **Observasi 9 Berkas Desain**: Mengintegrasikan seluruh rancangan dari `D:\front-mobile\admin/` (`Login (Desktop).png`, `Frame 13214` s.d. `13221`).
+  - **Standarisasi 100% English UI**: Seluruh teks antarmuka yang dibuat sistem dibakukan ke dalam Bahasa Inggris.
+  - **Penghapusan Elemen "Active"**: Menghilangkan dropdown filter "Active" dan label "status Active" pada layar Account sesuai arahan terbaru.
+  - **Analisis & Konversi Kubus 3D Login**: Menguraikan spesifikasi geometri `balok-1.xml` dan `balok-2.xml`, konversi ke SVG murni, serta tata letak 4 kuadran melayang di atas latar lingkaran gradasi ungu konsentris.
+  - **Katalog 5 Layar Dashboard**: Menyusun spesifikasi teknis untuk Login Desktop, Account Management, Post Moderation, Exhibition Management, dan Activity Log.
+  - **Sinkronisasi Kontrak REST API Laravel**: Memetakan seluruh rute `/api/admin/*` (`PenggunaController`, `ModerasiController`, `LogController`) ke dalam antarmuka admin.
+  - **Arsitektur Direktori `ven-admin`**: Menetapkan struktur direktori monorepo baru `C:\laragon\www\ven\ven-admin/` berbasis React + Vite + Tailwind CSS + TypeScript.
 - **0.5.0**: Analisis Mendalam & Spesifikasi Lengkap **Halaman AI Assistant / AI Chat Dark Mode (§8.12)**:
   - **Observasi 4 Wireframe**: Mengintegrasikan seluruh rancangan dari `D:\front-mobile\dark-mode\ai\` (`Wireframe - AI Chat.png` [Empty State], `Wireframe - AI Chat-1.png` [Conversation State], `Wireframe - AI Chat-2.png` [History Drawer], `Wireframe - AI Chat-3.png` [Input Active / Typing]).
   - **Dua State Tampilan Utama**: Mengatur tata letak dinamis `Empty State` (watermark sparkle besar putih ±8% di tengah-atas, input pill vertikal di tengah, label "AI assistant") dan `Conversation State` (input pill berpindah ke bawah di atas BottomNav, kanvas berubah menjadi `LazyColumn` percakapan auto-scroll).
