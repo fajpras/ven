@@ -62,4 +62,8 @@ return [
         'model' => env('AI_MODEL'),
     ],
 
+    'ven' => [
+        'encryption_key' => env('VEN_CUSTOM_KEY'),
+    ],
+
 ];

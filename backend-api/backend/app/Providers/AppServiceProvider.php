@@ -12,6 +12,7 @@ use App\Models\Ruangan;
 use App\Models\SanksiAkun;
 use App\Models\Undangan;
 use App\Observers\AktivitasObserver;
+use App\Services\Crypto\LayananEnkripsi;
 use App\Services\Otp\LayananOtp;
 use App\Services\Otp\PembuatKodeAcak;
 use Illuminate\Contracts\Foundation\Application;
@@ -27,6 +28,10 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(LayananOtp::class, fn (Application $app): LayananOtp => new LayananOtp(
             $app->make(PembuatKodeOtp::class),
             (string) $app['config']->get('app.key'),
+        ));
+
+        $this->app->singleton(LayananEnkripsi::class, fn (Application $app): LayananEnkripsi => new LayananEnkripsi(
+            (string) $app['config']->get('services.ven.encryption_key'),
         ));
     }
 

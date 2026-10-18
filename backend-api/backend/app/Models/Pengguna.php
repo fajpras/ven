@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Services\Crypto\LayananEnkripsi;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -28,7 +30,7 @@ class Pengguna extends Authenticatable
         'email', 'foto_profil', 'role', 'status',
     ];
 
-    protected $hidden = ['kata_sandi', 'google_id'];
+    protected $hidden = ['kata_sandi', 'google_id', 'google_id_bidx'];
 
     protected $attributes = ['status' => 'aktif'];
 
@@ -40,6 +42,30 @@ class Pengguna extends Authenticatable
             'updated_at' => 'datetime',
             'deleted_at' => 'datetime',
         ];
+    }
+
+    /**
+     * google_id disimpan sebagai ciphertext AES-256-GCM; accessor mengembalikan
+     * nilai asli, mutator mengenkripsi sekaligus mengisi blind index untuk lookup.
+     */
+    protected function googleId(): Attribute
+    {
+        return Attribute::make(
+            get: fn (?string $nilai): ?string => $this->layananEnkripsi()->dekripsi($nilai),
+            set: function (?string $nilai): array {
+                $layanan = $this->layananEnkripsi();
+
+                return [
+                    'google_id' => $layanan->enkripsi($nilai),
+                    'google_id_bidx' => $layanan->blindIndex($nilai),
+                ];
+            },
+        );
+    }
+
+    private function layananEnkripsi(): LayananEnkripsi
+    {
+        return app(LayananEnkripsi::class);
     }
 
     public function getAuthPasswordName(): string

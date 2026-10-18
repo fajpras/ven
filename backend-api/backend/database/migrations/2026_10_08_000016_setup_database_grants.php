@@ -1,4 +1,5 @@
 <?php
+
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 
@@ -7,8 +8,9 @@ return new class extends Migration
     private function hakApp(): array
     {
         $baca = ['SELECT'];
+
         return [
-            'pengguna' => ['SELECT', 'INSERT', 'UPDATE (kata_sandi, google_id, foto_profil, status, updated_at)'],
+            'pengguna' => ['SELECT', 'INSERT', 'UPDATE (kata_sandi, google_id, google_id_bidx, foto_profil, status, updated_at)'],
             'reset_kata_sandi' => ['SELECT', 'INSERT', 'UPDATE (percobaan, used_at)'],
             'personal_access_tokens' => ['SELECT', 'INSERT', 'UPDATE (last_used_at, updated_at)', 'DELETE'],
             'sanksi_akun' => $baca, 'kategori' => $baca, 'model' => $baca, 'objek' => $baca,
@@ -21,6 +23,7 @@ return new class extends Migration
     private function hakUser(): array
     {
         $baca = ['SELECT'];
+
         return [
             'pengguna' => ['SELECT', 'UPDATE (nama, nama_panggilan, deskripsi, foto_profil, email, kata_sandi, status, updated_at)'],
             'pengguna_kategori' => ['SELECT', 'INSERT', 'UPDATE', 'DELETE'],
@@ -39,6 +42,7 @@ return new class extends Migration
     private function hakAdmin(): array
     {
         $baca = ['SELECT'];
+
         return [
             'pengguna' => ['SELECT', 'UPDATE (status, updated_at)'],
             'sanksi_akun' => ['SELECT', 'INSERT', 'UPDATE'],
@@ -56,7 +60,7 @@ return new class extends Migration
     {
         $db = DB::getDatabaseName();
         foreach ($hak as $tabel => $privs) {
-            $this->jalankan("GRANT ".implode(', ', $privs)." ON `{$db}`.`{$tabel}` TO {$penerima}", $penerima);
+            $this->jalankan('GRANT '.implode(', ', $privs)." ON `{$db}`.`{$tabel}` TO {$penerima}", $penerima);
         }
     }
 
@@ -64,10 +68,10 @@ return new class extends Migration
     {
         try {
             DB::unprepared($sql);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             throw new RuntimeException(
                 "Gagal memberi hak ke {$penerima}. Pastikan database/setup/setup-mysql.sh sudah dijalankan "
-                ."dan migrasi dijalankan dengan --database=mysql_dba. Detail: ".$e->getMessage(),
+                .'dan migrasi dijalankan dengan --database=mysql_dba. Detail: '.$e->getMessage(),
                 0,
                 $e,
             );
@@ -82,13 +86,16 @@ return new class extends Migration
         $db = DB::getDatabaseName();
         foreach (['log_aktivitas', 'log_keamanan'] as $tabel) {
             foreach (['`user_role`', '`admin_role`'] as $role) {
-                try { DB::unprepared("REVOKE INSERT ON `{$db}`.`{$tabel}` FROM {$role}"); } catch (\Throwable $e) {}
+                try {
+                    DB::unprepared("REVOKE INSERT ON `{$db}`.`{$tabel}` FROM {$role}");
+                } catch (Throwable $e) {
+                }
             }
         }
 
         $this->terapkan($this->hakApp(), $app);
-        $this->terapkan($this->hakUser(), "`user_role`");
-        $this->terapkan($this->hakAdmin(), "`admin_role`");
+        $this->terapkan($this->hakUser(), '`user_role`');
+        $this->terapkan($this->hakAdmin(), '`admin_role`');
     }
 
     public function down(): void
@@ -98,12 +105,12 @@ return new class extends Migration
         $app = "'".env('DB_APP_USERNAME', 'ven_app')."'@'{$host}'";
 
         foreach ([[$this->hakApp(), $app],
-         [$this->hakUser(), '`user_role`'],
-         [$this->hakAdmin(), '`admin_role`']] as [$hak, $penerima]) {
+            [$this->hakUser(), '`user_role`'],
+            [$this->hakAdmin(), '`admin_role`']] as [$hak, $penerima]) {
             foreach (array_keys($hak) as $tabel) {
                 try {
                     DB::unprepared("REVOKE ALL PRIVILEGES ON `{$db}`.`{$tabel}` FROM {$penerima}");
-                } catch (\Throwable) {
+                } catch (Throwable) {
                 }
             }
         }

@@ -9,6 +9,7 @@ use App\Http\Requests\Auth\LupaKataSandiRequest;
 use App\Http\Requests\Auth\RegistrasiRequest;
 use App\Http\Requests\Auth\ResetKataSandiRequest;
 use App\Models\Pengguna;
+use App\Services\Crypto\LayananEnkripsi;
 use App\Services\LogSistem;
 use App\Services\Otp\LayananOtp;
 use Illuminate\Auth\Events\Failed;
@@ -27,7 +28,10 @@ use Throwable;
 
 class AuthController extends Controller
 {
-    public function __construct(private readonly LayananOtp $layananOtp) {}
+    public function __construct(
+        private readonly LayananOtp $layananOtp,
+        private readonly LayananEnkripsi $enkripsi,
+    ) {}
 
     public function kirimOtpRegistrasi(KirimOtpRegistrasiRequest $request): JsonResponse
     {
@@ -98,7 +102,9 @@ class AuthController extends Controller
             return $google;
         }
 
-        $sudahAda = Pengguna::where('google_id', $google['sub'])->orWhere('email', $google['email'])->exists();
+        $sudahAda = Pengguna::where('google_id_bidx', $this->enkripsi->blindIndex($google['sub']))
+            ->orWhere('email', $google['email'])
+            ->exists();
 
         if ($sudahAda) {
             return $this->error('Akun sudah terdaftar, silakan masuk.', 409);
@@ -124,7 +130,7 @@ class AuthController extends Controller
             return $google;
         }
 
-        $pengguna = Pengguna::where('google_id', $google['sub'])->first()
+        $pengguna = Pengguna::where('google_id_bidx', $this->enkripsi->blindIndex($google['sub']))->first()
             ?? Pengguna::where('email', $google['email'])->first();
 
         if (! $pengguna) {
