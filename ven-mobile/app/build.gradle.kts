@@ -12,7 +12,7 @@ if (envFile.exists()) {
 }
 
 val envBaseUrl: String =
-    envProperties.getProperty("BASE_URL") ?: "http://localhost:8000/api/"
+    envProperties.getProperty("BASE_URL") ?: "http://10.0.2.2:8000/api/"
 
 val envGoogleClientId: String =
     envProperties.getProperty("GOOGLE_SERVER_CLIENT_ID") ?: ""

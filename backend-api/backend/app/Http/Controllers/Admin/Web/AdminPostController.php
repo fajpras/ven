@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin\Web;
 
 use App\Http\Controllers\Controller;
 use App\Models\Karya;
+use App\Models\Kategori;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -21,7 +22,7 @@ class AdminPostController extends Controller
             $karya = Karya::query()
                 ->with(['pengguna', 'kategori'])
                 ->when($cari, function ($q) use ($cari) {
-                    $pattern = '%' . addcslashes($cari, '%_') . '%';
+                    $pattern = '%'.addcslashes($cari, '%_').'%';
                     $q->where(function ($sub) use ($pattern) {
                         $sub->where('judul', 'like', $pattern)
                             ->orWhere('deskripsi', 'like', $pattern);
@@ -36,7 +37,7 @@ class AdminPostController extends Controller
                 ->paginate($perPage);
 
             try {
-                $kategoriList = \App\Models\Kategori::pluck('kategori')->filter()->values()->toArray();
+                $kategoriList = Kategori::pluck('kategori')->filter()->values()->toArray();
                 if (empty($kategoriList)) {
                     $kategoriList = ['Internet of Things', 'Virtual Reality', 'Artificial Intelligence', 'Game Development', 'Graphic Design'];
                 }
@@ -46,37 +47,37 @@ class AdminPostController extends Controller
         } catch (\Throwable $e) {
             // Graceful mockup fallback matching Figma screenshots
             $mockPosts = collect([
-                (object)[
+                (object) [
                     'id_karya' => 'karya-1',
                     'judul' => 'VR Headset Concept',
                     'deskripsi' => 'Next-generation spatial computing hardware designed for immersive virtual galleries and collaborative creative spaces.',
                     'file_url' => 'https://images.unsplash.com/photo-1593508512255-86ab42a8e620?w=600&auto=format&fit=crop&q=80',
-                    'pengguna' => (object)['nama_panggilan' => 'adriel_d', 'nama' => 'Adriel'],
-                    'kategori' => (object)['nama_kategori' => 'Virtual Reality'],
+                    'pengguna' => (object) ['nama_panggilan' => 'adriel_d', 'nama' => 'Adriel'],
+                    'kategori' => (object) ['nama_kategori' => 'Virtual Reality'],
                 ],
-                (object)[
+                (object) [
                     'id_karya' => 'karya-2',
                     'judul' => 'Cyberpunk Alleyway 2077',
                     'deskripsi' => 'Detailed 3D environment featuring volumetric neon lighting, wet asphalt reflections, and modular architectural assets.',
                     'file_url' => 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&auto=format&fit=crop&q=80',
-                    'pengguna' => (object)['nama_panggilan' => 'bintang_art', 'nama' => 'Bintang'],
-                    'kategori' => (object)['nama_kategori' => 'Game Development'],
+                    'pengguna' => (object) ['nama_panggilan' => 'bintang_art', 'nama' => 'Bintang'],
+                    'kategori' => (object) ['nama_kategori' => 'Game Development'],
                 ],
-                (object)[
+                (object) [
                     'id_karya' => 'karya-3',
                     'judul' => 'Digital Sculpt: Flora Deity',
                     'deskripsi' => 'Organic character design exploring symbiosis between mythological figures and botanical structures in ZBrush.',
                     'file_url' => 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600&auto=format&fit=crop&q=80',
-                    'pengguna' => (object)['nama_panggilan' => 'clari_craft', 'nama' => 'Clarissa'],
-                    'kategori' => (object)['nama_kategori' => 'Graphic Design'],
+                    'pengguna' => (object) ['nama_panggilan' => 'clari_craft', 'nama' => 'Clarissa'],
+                    'kategori' => (object) ['nama_kategori' => 'Graphic Design'],
                 ],
-                (object)[
+                (object) [
                     'id_karya' => 'karya-4',
                     'judul' => 'Smart Greenhouse Sensor Array',
                     'deskripsi' => 'Automated climate telemetry dashboard connected to ESP32 nodes with real-time moisture and sunlight monitoring.',
                     'file_url' => 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=600&auto=format&fit=crop&q=80',
-                    'pengguna' => (object)['nama_panggilan' => 'david_dev', 'nama' => 'David'],
-                    'kategori' => (object)['nama_kategori' => 'Internet of Things'],
+                    'pengguna' => (object) ['nama_panggilan' => 'david_dev', 'nama' => 'David'],
+                    'kategori' => (object) ['nama_kategori' => 'Internet of Things'],
                 ],
             ]);
 
@@ -115,11 +116,20 @@ class AdminPostController extends Controller
     {
         try {
             $post = Karya::find($id);
-            if ($post) {
-                $post->delete();
+
+            if (! $post) {
+                return redirect()
+                    ->route('admin.posts')
+                    ->with('error', 'Artwork post could not be found. Nothing was removed.');
             }
+
+            $post->delete();
         } catch (\Throwable $e) {
-            // Log or ignore if preview mode
+            report($e);
+
+            return redirect()
+                ->route('admin.posts')
+                ->with('error', 'Failed to remove the artwork post. Please check the application logs.');
         }
 
         return redirect()->route('admin.posts')->with('success', 'Artwork post was successfully removed from public feeds.');

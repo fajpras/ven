@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Models\Logaktivitas;
+use App\Models\LogAktivitas;
 use App\Models\LogKeamanan;
 use Throwable;
 
@@ -16,11 +16,11 @@ class LogSistem
     public static function aktivitas(string $entitas, ?string $jenis, string $pesan, string $status = 'berhasil', ?string $idPengguna = null, ?string $aksi = null): void
     {
         try {
-            Logaktivitas::on(self::koneksi())->create([
+            LogAktivitas::on(self::koneksi())->create([
                 'id_pengguna' => $idPengguna ?? self::aktor(),
                 'entitas' => $entitas,
-                'jenis' => in_array($jenis, Logaktivitas::JENIS, true) ? $jenis : null,
-                'aksi' => in_array($aksi, Logaktivitas::AKSI, true) ? $aksi : null,
+                'jenis' => in_array($jenis, LogAktivitas::JENIS, true) ? $jenis : null,
+                'aksi' => in_array($aksi, LogAktivitas::AKSI, true) ? $aksi : null,
                 'status' => $status,
                 'pesan' => mb_substr($pesan, 0, 255),
                 'ip_address' => request()?->ip(),

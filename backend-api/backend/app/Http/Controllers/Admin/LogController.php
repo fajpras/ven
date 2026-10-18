@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Logaktivitas;
+use App\Models\LogAktivitas;
 use App\Models\LogKeamanan;
 use Illuminate\Http\Request;
 use Spatie\QueryBuilder\AllowedFilter;
@@ -15,7 +15,7 @@ class LogController extends Controller
     {
         $request->validate(['filter.id_pengguna' => ['nullable', 'uuid']]);
 
-        $log = QueryBuilder::for(Logaktivitas::class)
+        $log = QueryBuilder::for(LogAktivitas::class)
             ->allowedFilters(['entitas', 'status', 'jenis', 'aksi', ...$this->filterUmum()])
             ->allowedSorts(['waktu', 'id_log'])
             ->defaultSort('-id_log')
@@ -24,7 +24,7 @@ class LogController extends Controller
         return $this->ok($log);
     }
 
-    public function aktivitasShow(Logaktivitas $log)
+    public function aktivitasShow(LogAktivitas $log)
     {
         return $this->ok($log->load('pengguna'));
     }

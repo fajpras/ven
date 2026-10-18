@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Admin\Web;
 
 use App\Http\Controllers\Controller;
-use App\Models\LogAktifitas;
+use App\Models\LogAktivitas;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Carbon;
@@ -17,10 +17,10 @@ class AdminLogController extends Controller
         $perPage = (int) $request->query('per_page', 5);
 
         try {
-            $logs = LogAktifitas::query()
+            $logs = LogAktivitas::query()
                 ->with(['pengguna'])
                 ->when($cari, function ($q) use ($cari) {
-                    $pattern = '%' . addcslashes($cari, '%_') . '%';
+                    $pattern = '%'.addcslashes($cari, '%_').'%';
                     $q->where(function ($sub) use ($pattern) {
                         $sub->where('pesan', 'like', $pattern)
                             ->orWhere('entitas', 'like', $pattern)
@@ -32,7 +32,7 @@ class AdminLogController extends Controller
         } catch (\Throwable $e) {
             // Graceful mockup fallback matching Figma screenshots
             $mockLogs = collect([
-                (object)[
+                (object) [
                     'id_log' => 101,
                     'pesan' => 'Admin suspended account @spam_bot_99 due to violation of community guidelines',
                     'deskripsi' => 'Admin suspended account @spam_bot_99 due to violation of community guidelines',
@@ -43,9 +43,9 @@ class AdminLogController extends Controller
                     'ip_address' => '192.168.1.10',
                     'user_agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
                     'waktu' => Carbon::create(2026, 9, 29, 14, 25),
-                    'pengguna' => (object)['nama' => 'Admin 1'],
+                    'pengguna' => (object) ['nama' => 'Admin 1'],
                 ],
-                (object)[
+                (object) [
                     'id_log' => 102,
                     'pesan' => 'Admin deleted artwork "Infringing 3D Model #404" flagged by copyright owner',
                     'deskripsi' => 'Admin deleted artwork "Infringing 3D Model #404" flagged by copyright owner',
@@ -56,9 +56,9 @@ class AdminLogController extends Controller
                     'ip_address' => '192.168.1.10',
                     'user_agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
                     'waktu' => Carbon::create(2026, 9, 29, 11, 10),
-                    'pengguna' => (object)['nama' => 'Admin 1'],
+                    'pengguna' => (object) ['nama' => 'Admin 1'],
                 ],
-                (object)[
+                (object) [
                     'id_log' => 103,
                     'pesan' => 'Admin unpinned exhibition "Glitch Artifacts" following completion of featured period',
                     'deskripsi' => 'Admin unpinned exhibition "Glitch Artifacts" following completion of featured period',
@@ -69,9 +69,9 @@ class AdminLogController extends Controller
                     'ip_address' => '127.0.0.1',
                     'user_agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
                     'waktu' => Carbon::create(2026, 9, 29, 9, 45),
-                    'pengguna' => (object)['nama' => 'Admin 1'],
+                    'pengguna' => (object) ['nama' => 'Admin 1'],
                 ],
-                (object)[
+                (object) [
                     'id_log' => 104,
                     'pesan' => 'System automatically revoked session for inactive token #tok_9821',
                     'deskripsi' => 'System automatically revoked session for inactive token #tok_9821',
@@ -82,7 +82,7 @@ class AdminLogController extends Controller
                     'ip_address' => '10.0.0.1',
                     'user_agent' => 'Internal Worker',
                     'waktu' => Carbon::create(2026, 9, 28, 23, 59),
-                    'pengguna' => (object)['nama' => 'System Guardian'],
+                    'pengguna' => (object) ['nama' => 'System Guardian'],
                 ],
             ]);
 

@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\Web\AdminAuthController;
 use App\Http\Controllers\Admin\Web\AdminExhibitionController;
 use App\Http\Controllers\Admin\Web\AdminLogController;
 use App\Http\Controllers\Admin\Web\AdminPostController;
+use App\Http\Middleware\HanyaAdminWeb;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -14,22 +15,25 @@ Route::get('/', function () {
 // Admin Authentication Routes
 Route::prefix('admin')->group(function () {
     Route::get('/login', [AdminAuthController::class, 'showLoginForm'])->name('admin.login');
-    Route::post('/login', [AdminAuthController::class, 'login'])->name('admin.login.submit');
-    Route::post('/logout', [AdminAuthController::class, 'logout'])->name('admin.logout');
-
-    Route::get('/', function () {
-        return redirect()->route('admin.accounts');
-    });
+    Route::post('/login', [AdminAuthController::class, 'login'])->middleware('throttle:5,1')->name('admin.login.submit');
 
     // Admin Protected Views
-    Route::get('/accounts', [AdminAccountController::class, 'index'])->name('admin.accounts');
-    Route::post('/accounts/{id}/suspend', [AdminAccountController::class, 'suspend'])->name('admin.accounts.suspend');
+    Route::middleware(HanyaAdminWeb::class)->group(function () {
+        Route::post('/logout', [AdminAuthController::class, 'logout'])->name('admin.logout');
 
-    Route::get('/posts', [AdminPostController::class, 'index'])->name('admin.posts');
-    Route::delete('/posts/{id}', [AdminPostController::class, 'destroy'])->name('admin.posts.destroy');
+        Route::get('/', function () {
+            return redirect()->route('admin.accounts');
+        });
 
-    Route::get('/exhibitions', [AdminExhibitionController::class, 'index'])->name('admin.exhibitions');
-    Route::delete('/exhibitions/{id}', [AdminExhibitionController::class, 'destroy'])->name('admin.exhibitions.destroy');
+        Route::get('/accounts', [AdminAccountController::class, 'index'])->name('admin.accounts');
+        Route::post('/accounts/{id}/suspend', [AdminAccountController::class, 'suspend'])->name('admin.accounts.suspend');
 
-    Route::get('/activity-log', [AdminLogController::class, 'index'])->name('admin.logs');
+        Route::get('/posts', [AdminPostController::class, 'index'])->name('admin.posts');
+        Route::delete('/posts/{id}', [AdminPostController::class, 'destroy'])->name('admin.posts.destroy');
+
+        Route::get('/exhibitions', [AdminExhibitionController::class, 'index'])->name('admin.exhibitions');
+        Route::delete('/exhibitions/{id}', [AdminExhibitionController::class, 'destroy'])->name('admin.exhibitions.destroy');
+
+        Route::get('/activity-log', [AdminLogController::class, 'index'])->name('admin.logs');
+    });
 });

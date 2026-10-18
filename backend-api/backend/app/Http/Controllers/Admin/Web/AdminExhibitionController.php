@@ -22,7 +22,7 @@ class AdminExhibitionController extends Controller
                 ->with(['pengguna'])
                 ->withCount(['ruangan', 'karya'])
                 ->when($cari, function ($q) use ($cari) {
-                    $pattern = '%' . addcslashes($cari, '%_') . '%';
+                    $pattern = '%'.addcslashes($cari, '%_').'%';
                     $q->where(function ($sub) use ($pattern) {
                         $sub->where('judul', 'like', $pattern);
                     });
@@ -32,32 +32,32 @@ class AdminExhibitionController extends Controller
         } catch (\Throwable $e) {
             // Graceful mockup fallback matching Figma screenshots
             $mockExhibitions = collect([
-                (object)[
+                (object) [
                     'id_pameran' => 1,
                     'judul' => 'Neo Tokyo 2099 Virtual Expo',
                     'banner' => null,
                     'banner_url' => 'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=600&auto=format&fit=crop&q=80',
                     'karya_count' => 18,
                     'created_at' => Carbon::create(2026, 9, 29),
-                    'pengguna' => (object)['nama_panggilan' => 'bintang_art', 'nama' => 'Bintang'],
+                    'pengguna' => (object) ['nama_panggilan' => 'bintang_art', 'nama' => 'Bintang'],
                 ],
-                (object)[
+                (object) [
                     'id_pameran' => 2,
                     'judul' => 'Solitude & Space Retrospective',
                     'banner' => null,
                     'banner_url' => 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=600&auto=format&fit=crop&q=80',
                     'karya_count' => 24,
                     'created_at' => Carbon::create(2026, 9, 29),
-                    'pengguna' => (object)['nama_panggilan' => 'adriel_d', 'nama' => 'Adriel'],
+                    'pengguna' => (object) ['nama_panggilan' => 'adriel_d', 'nama' => 'Adriel'],
                 ],
-                (object)[
+                (object) [
                     'id_pameran' => 3,
                     'judul' => 'Flora & Future Tech Showcase',
                     'banner' => null,
                     'banner_url' => 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=600&auto=format&fit=crop&q=80',
                     'karya_count' => 12,
                     'created_at' => Carbon::create(2026, 9, 29),
-                    'pengguna' => (object)['nama_panggilan' => 'clari_craft', 'nama' => 'Clarissa'],
+                    'pengguna' => (object) ['nama_panggilan' => 'clari_craft', 'nama' => 'Clarissa'],
                 ],
             ]);
 
@@ -86,11 +86,20 @@ class AdminExhibitionController extends Controller
     {
         try {
             $exhibit = Pameran::find($id);
-            if ($exhibit) {
-                $exhibit->delete();
+
+            if (! $exhibit) {
+                return redirect()
+                    ->route('admin.exhibitions')
+                    ->with('error', 'Virtual exhibition could not be found. Nothing was removed.');
             }
+
+            $exhibit->delete();
         } catch (\Throwable $e) {
-            // Log or ignore if preview mode
+            report($e);
+
+            return redirect()
+                ->route('admin.exhibitions')
+                ->with('error', 'Failed to take down the virtual exhibition. Please check the application logs.');
         }
 
         return redirect()->route('admin.exhibitions')->with('success', 'Virtual exhibition was successfully taken down.');

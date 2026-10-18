@@ -47,8 +47,8 @@ ven/
 │   └── backend/                     # BACKEND & ADMIN WEB: Laravel 12 + Blade + Vite + Tailwind CSS v4
 │       ├── app/
 │       │   ├── Http/Controllers/    # Endpoint API & Web Admin Controllers (Admin\Web\*)
-│       │   ├── Models/              # Eloquent Models (Pengguna, Karya, Pameran, Objek, SanksiAkun, LogAktifitas)
-│       │   └── Middleware/          # Sanctum Authentication & HanyaAdmin Middleware
+│       │   ├── Models/              # Eloquent Models (Pengguna, Karya, Pameran, Objek, SanksiAkun, LogAktivitas)
+│       │   └── Middleware/          # Sanctum Authentication, HanyaAdmin & HanyaAdminWeb Middleware
 │       ├── public/
 │       │   └── assets/admin/        # Static SVG assets (balok-1.svg, balok-2.svg, logo-ven.svg, icon-*.svg)
 │       ├── resources/
@@ -1815,7 +1815,7 @@ Frontend web admin mengonsumsi endpoint yang telah tersedia pada backend Laravel
 | **Auth** | `POST` | `/api/auth/keluar` | Header `Authorization: Bearer <token>` | Logout sesi administrator |
 | **Account** | `GET` | `/api/admin/pengguna` | `?cari={query}&page={page}` | Mengambil daftar pengguna terpaginasi (24 item/halaman) |
 | **Account** | `GET` | `/api/admin/pengguna/{id}` | UUID pengguna | Detail akun lengkap beserta riwayat sanksi |
-| **Account** | `POST` | `/api/admin/pengguna/{id}/sanksi` | `{ "jenis_sanksi": "ditanggungkan"\|"diblokir", "alasan": string, "mulai": date, "permanen": bool, "berakhir": date? }` | Eksekusi suspend pengguna |
+| **Account** | `POST` | `/api/admin/pengguna/{id}/sanksi` | `{ "jenis_sanksi": "ditangguhkan"\|"diblokir", "alasan": string, "mulai": date, "permanen": bool, "berakhir": date? }` | Eksekusi suspend pengguna |
 | **Account** | `DELETE`| `/api/admin/sanksi/{sanksiId}` | ID sanksi | Mencabut penangguhan / sanksi akun |
 | **Post** | `GET` | `/api/admin/karya` | `?cari={query}&kategori={kategori}&page={page}` | Mengambil daftar karya terpaginasi untuk moderasi |
 | **Post** | `DELETE`| `/api/admin/karya/{karyaUuid}` | UUID karya | Menghapus (soft delete) karya pelanggar kebijakan |
@@ -1823,8 +1823,8 @@ Frontend web admin mengonsumsi endpoint yang telah tersedia pada backend Laravel
 | **Exhibition**| `GET` | `/api/admin/pameran` | `?cari={query}&page={page}` | Mengambil daftar pameran virtual |
 | **Exhibition**| `DELETE`| `/api/admin/pameran/{pameranId}`| ID integer pameran | Menghapus pameran virtual |
 | **Exhibition**| `POST` | `/api/admin/pameran/{pameranId}/pulihkan`| ID pameran | Memulihkan pameran virtual |
-| **Activity Log**| `GET`| `/api/admin/log/aktifitas` | `?cari={query}&page={page}` | Mengambil daftar riwayat aksi admin |
-| **Activity Log**| `GET`| `/api/admin/log/aktifitas/{id}` | ID log | Detail audit trail teknis tindakan admin |
+| **Activity Log**| `GET`| `/api/admin/log/aktivitas` | `?cari={query}&page={page}` | Mengambil daftar riwayat aksi admin |
+| **Activity Log**| `GET`| `/api/admin/log/aktivitas/{id}` | ID log | Detail audit trail teknis tindakan admin |
 
 ---
 
@@ -1875,7 +1875,7 @@ backend-api/backend/
 │   ├── AdminAccountController.php    # Controller akun (query Pengguna + suspend sanksi + fallback)
 │   ├── AdminPostController.php       # Controller moderasi karya (query Karya + delete + fallback)
 │   ├── AdminExhibitionController.php # Controller pameran (query Pameran + delete + fallback)
-│   └── AdminLogController.php        # Controller riwayat log (query LogAktifitas + audit + fallback)
+│   └── AdminLogController.php        # Controller riwayat log (query LogAktivitas + audit + fallback)
 │
 ├── routes/
 │   ├── web.php                       # Rute web portal /admin/* (login, accounts, posts, exhibitions, logs)

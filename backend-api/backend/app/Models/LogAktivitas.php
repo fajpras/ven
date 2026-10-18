@@ -5,14 +5,16 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class Logaktivitas extends Model
+class LogAktivitas extends Model
 {
     public const JENIS = ['pameran', 'karya', 'pengguna'];
-    public const AKSI  = ['tambah', 'edit', 'hapus'];
+
+    public const AKSI = ['tambah', 'edit', 'hapus'];
 
     public $timestamps = false;
 
     protected $table = 'log_aktivitas';
+
     protected $primaryKey = 'id_log';
 
     protected $fillable = [

@@ -16,8 +16,11 @@ class Pengguna extends Authenticatable
     use HasApiTokens, HasFactory, HasUuids, SoftDeletes;
 
     protected $table = 'pengguna';
+
     protected $primaryKey = 'id_pengguna';
+
     protected $keyType = 'string';
+
     public $incrementing = false;
 
     protected $fillable = [
@@ -81,9 +84,9 @@ class Pengguna extends Authenticatable
         return $this->hasMany(Undangan::class, 'id_pengguna', 'id_pengguna');
     }
 
-    public function logaktivitas(): HasMany
+    public function logAktivitas(): HasMany
     {
-        return $this->hasMany(Logaktivitas::class, 'id_pengguna', 'id_pengguna');
+        return $this->hasMany(LogAktivitas::class, 'id_pengguna', 'id_pengguna');
     }
 
     public function logKeamanan(): HasMany

@@ -102,7 +102,7 @@
             <div>
                 <label class="block text-xs font-semibold uppercase text-gray-500 dark:text-zinc-400 mb-2">Sanction Type</label>
                 <select name="jenis_sanksi" class="w-full h-11 px-4 rounded-xl bg-gray-100 dark:bg-zinc-800 text-[#0F172A] dark:text-white text-sm outline-none border border-transparent focus:border-[#BA18F5]">
-                    <option value="ditanggungkan">Suspension (Temporary)</option>
+                    <option value="ditangguhkan">Suspension (Temporary)</option>
                     <option value="diblokir">Permanent Ban (Blocked)</option>
                 </select>
             </div>

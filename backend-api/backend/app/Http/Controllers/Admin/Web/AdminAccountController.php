@@ -22,7 +22,7 @@ class AdminAccountController extends Controller
             $pengguna = Pengguna::query()
                 ->withCount(['karya', 'pameran'])
                 ->when($cari, function ($q) use ($cari) {
-                    $pattern = '%' . addcslashes($cari, '%_') . '%';
+                    $pattern = '%'.addcslashes($cari, '%_').'%';
                     $q->where(function ($sub) use ($pattern) {
                         $sub->where('nama', 'like', $pattern)
                             ->orWhere('nama_panggilan', 'like', $pattern)
@@ -34,7 +34,7 @@ class AdminAccountController extends Controller
         } catch (\Throwable $e) {
             // Graceful mockup fallback when database connection is unavailable
             $mockUsers = collect([
-                (object)[
+                (object) [
                     'id_pengguna' => 'user-1',
                     'nama' => 'Adriel',
                     'nama_panggilan' => 'adriel_d',
@@ -44,7 +44,7 @@ class AdminAccountController extends Controller
                     'pameran_count' => 3,
                     'created_at' => Carbon::create(2026, 9, 29),
                 ],
-                (object)[
+                (object) [
                     'id_pengguna' => 'user-2',
                     'nama' => 'Bintang',
                     'nama_panggilan' => 'bintang_art',
@@ -54,7 +54,7 @@ class AdminAccountController extends Controller
                     'pameran_count' => 2,
                     'created_at' => Carbon::create(2026, 9, 29),
                 ],
-                (object)[
+                (object) [
                     'id_pengguna' => 'user-3',
                     'nama' => 'Clarissa',
                     'nama_panggilan' => 'clari_craft',
@@ -64,7 +64,7 @@ class AdminAccountController extends Controller
                     'pameran_count' => 4,
                     'created_at' => Carbon::create(2026, 9, 29),
                 ],
-                (object)[
+                (object) [
                     'id_pengguna' => 'user-4',
                     'nama' => 'David',
                     'nama_panggilan' => 'david_dev',
@@ -74,7 +74,7 @@ class AdminAccountController extends Controller
                     'pameran_count' => 1,
                     'created_at' => Carbon::create(2026, 9, 29),
                 ],
-                (object)[
+                (object) [
                     'id_pengguna' => 'user-5',
                     'nama' => 'Elena',
                     'nama_panggilan' => 'elena_vr',
@@ -110,37 +110,44 @@ class AdminAccountController extends Controller
 
     public function suspend(Request $request, string $id): RedirectResponse
     {
-        $request->validate([
-            'jenis_sanksi' => ['required', 'in:ditanggungkan,diblokir'],
+        $validated = $request->validate([
+            'jenis_sanksi' => ['required', 'in:ditangguhkan,diblokir'],
             'alasan' => ['required', 'string', 'max:255'],
             'duration' => ['required', 'string'],
         ]);
 
         try {
             $user = Pengguna::find($id);
-            if ($user) {
-                $days = match ($request->duration) {
-                    '24h' => 1,
-                    '7d' => 7,
-                    '30d' => 30,
-                    default => null,
-                };
 
-                $berakhir = $days ? now()->addDays($days) : null;
-
-                SanksiAkun::create([
-                    'id_pengguna' => $user->id_pengguna,
-                    'jenis_sanksi' => $request->jenis_sanksi,
-                    'alasan' => $request->alasan,
-                    'mulai' => now(),
-                    'berakhir' => $berakhir,
-                ]);
-
-                $user->status = $request->jenis_sanksi === 'diblokir' ? 'nonaktifkan' : 'ditanggungkan';
-                $user->save();
+            if (! $user) {
+                return redirect()
+                    ->route('admin.accounts')
+                    ->with('error', 'User account could not be found. No sanction was applied.');
             }
+
+            $days = match ($validated['duration']) {
+                '24h' => 1,
+                '7d' => 7,
+                '30d' => 30,
+                default => null,
+            };
+
+            SanksiAkun::create([
+                'id_pengguna' => $user->id_pengguna,
+                'jenis_sanksi' => $validated['jenis_sanksi'],
+                'alasan' => $validated['alasan'],
+                'mulai' => now(),
+                'berakhir' => $days ? now()->addDays($days) : null,
+            ]);
+
+            $user->status = $validated['jenis_sanksi'] === 'diblokir' ? 'nonaktifkan' : 'ditangguhkan';
+            $user->save();
         } catch (\Throwable $e) {
-            // Log or ignore if in mock/preview mode
+            report($e);
+
+            return redirect()
+                ->route('admin.accounts')
+                ->with('error', 'Failed to apply the suspension. Please check the application logs.');
         }
 
         return redirect()->route('admin.accounts')->with('success', 'User account suspension policy has been successfully applied.');
