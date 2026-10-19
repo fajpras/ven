@@ -193,4 +193,55 @@
     <string name="ai_chat_error_rate_limit">You have reached the maximum requests limit. Please wait a moment.</string>
     <string name="ai_chat_retry">Retry</string>
     <string name="ai_chat_sparkle_desc">AI Assistant Sparkle</string>
+
+    <!-- Create Content Strings (§8.13 Create Post) -->
+    <string name="create_post_title">New Post</string>
+    <string name="create_post_next">Next</string>
+    <string name="create_post_action">Post</string>
+    <string name="create_post_recents">Recents</string>
+    <string name="create_post_tab_post">Post</string>
+    <string name="create_post_tab_exhibit">Exhibit</string>
+    <string name="create_post_title_label">Title</string>
+    <string name="create_post_title_placeholder">type your title...</string>
+    <string name="create_post_category_label">Category</string>
+    <string name="create_post_product_link_label">Product Link</string>
+    <string name="create_post_optional">optional</string>
+    <string name="create_post_product_link_placeholder">https://google.com</string>
+    <string name="create_post_description_label">Description</string>
+    <string name="create_post_description_placeholder">type your description...</string>
+    <string name="create_post_close_desc">Close</string>
+    <string name="create_post_back_desc">Back</string>
+    <string name="create_post_success">Post created successfully</string>
+
+    <!-- Create Exhibit Strings (§8.14 Create Exhibit) -->
+    <string name="create_exhibit_title">New Exhibit</string>
+    <string name="create_exhibit_template_small">Small</string>
+    <string name="create_exhibit_template_medium">Medium</string>
+    <string name="create_exhibit_template_big">Big</string>
+    <string name="create_exhibit_template_event">Event</string>
+    <string name="create_exhibit_post_count">%1$d Post</string>
+    <string name="create_exhibit_room_preview_desc">%1$s exhibit room template preview</string>
+    <string name="create_exhibit_editor_back">Back</string>
+    <string name="create_exhibit_tool_details">Exhibit Details</string>
+    <string name="create_exhibit_tool_panels">Panels</string>
+    <string name="create_exhibit_tool_furniture">Furniture</string>
+    <string name="create_exhibit_tool_color">Wall Color</string>
+    <string name="create_exhibit_panel_count">%1$d/%2$d panels</string>
+    <string name="create_exhibit_check_title_desc">title &amp; description</string>
+    <string name="create_exhibit_check_panel">a panel</string>
+    <string name="create_exhibit_publish_action">Publish</string>
+    <string name="create_exhibit_publish_success">Exhibit published successfully</string>
+    <string name="create_exhibit_cover_banner">Cover Banner</string>
+    <string name="create_exhibit_cover_placeholder">Tap to upload cover banner (16:9)</string>
+    <string name="create_exhibit_name_label">Title</string>
+    <string name="create_exhibit_name_placeholder">e.g. My Virtual Solo Exhibition</string>
+    <string name="create_exhibit_desc_label">Description</string>
+    <string name="create_exhibit_desc_placeholder">Describe your exhibition theme and story...</string>
+    <string name="create_exhibit_save_details">Save Details</string>
+    <string name="create_exhibit_sheet_panels_title">Assign Works to Panels</string>
+    <string name="create_exhibit_panel_slot_title">Panel %1$d</string>
+    <string name="create_exhibit_panel_empty">Empty slot</string>
+    <string name="create_exhibit_panel_select_prompt">Select a post to place on this panel</string>
+    <string name="create_exhibit_sheet_furniture_title">Decorations &amp; Objects</string>
+    <string name="create_exhibit_sheet_color_title">Room Wall Color</string>
 </resources>

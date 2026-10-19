@@ -15,7 +15,7 @@ import com.ven.app.R
 import com.ven.app.ui.theme.VexSize
 
 @Immutable
-data class VexIconPair(@DrawableRes val outline: Int, @DrawableRes val filled: Int)
+data class VexIconPair(@param:DrawableRes val outline: Int, @param:DrawableRes val filled: Int)
 
 object VexIcons {
     // Navigation icons (outline + filled pairs)
@@ -42,7 +42,7 @@ object VexIcons {
     @DrawableRes val History = R.drawable.ic_action_history
     @DrawableRes val ChevronLeft = R.drawable.ic_action_chevron_left
     @DrawableRes val ChevronRight = R.drawable.ic_action_chevron_right
-    @DrawableRes val ChevronDown = 0      // TODO: R.drawable.ic_action_chevron_down
+    @DrawableRes val ChevronDown = R.drawable.ic_action_chevron_down
     @DrawableRes val Search = R.drawable.ic_nav_explore_outline
     @DrawableRes val Filter = R.drawable.ic_action_filter
     @DrawableRes val ScheduleAction = R.drawable.ic_nav_schedule_outline
@@ -67,12 +67,12 @@ object VexIcons {
     @DrawableRes val SettingsLogout = R.drawable.ic_settings_logout
 
     // Editor icons
-    @DrawableRes val EditorText = 0
-    @DrawableRes val EditorPanel = 0
-    @DrawableRes val EditorFurniture = 0
+    @DrawableRes val EditorText = 0 // Rendered via typography "Aa"
+    @DrawableRes val EditorPanel = R.drawable.ic_panel
+    @DrawableRes val EditorFurniture = R.drawable.ic_furniture
 
     // Status icons
-    @DrawableRes val StatusCheckFilled = 0
+    @DrawableRes val StatusCheckFilled = R.drawable.ic_action_check
     @DrawableRes val StatusCircleOutline = 0
 
     // Logos

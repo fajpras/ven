@@ -180,4 +180,55 @@
     <string name="explore_empty_history">Belum ada riwayat pencarian</string>
     <string name="explore_empty_discovery">Belum ada konten untuk dijelajahi</string>
     <string name="explore_posts_title">Postingan</string>
+
+    <!-- Create Content Strings (§8.13 Create Post) -->
+    <string name="create_post_title">Postingan Baru</string>
+    <string name="create_post_next">Berikutnya</string>
+    <string name="create_post_action">Posting</string>
+    <string name="create_post_recents">Terkini</string>
+    <string name="create_post_tab_post">Postingan</string>
+    <string name="create_post_tab_exhibit">Pameran</string>
+    <string name="create_post_title_label">Judul</string>
+    <string name="create_post_title_placeholder">masukkan judul...</string>
+    <string name="create_post_category_label">Kategori</string>
+    <string name="create_post_product_link_label">Tautan Produk</string>
+    <string name="create_post_optional">opsional</string>
+    <string name="create_post_product_link_placeholder">https://google.com</string>
+    <string name="create_post_description_label">Deskripsi</string>
+    <string name="create_post_description_placeholder">tulis deskripsi anda...</string>
+    <string name="create_post_close_desc">Tutup</string>
+    <string name="create_post_back_desc">Kembali</string>
+    <string name="create_post_success">Postingan berhasil dibuat</string>
+
+    <!-- Create Exhibit Strings (§8.14 Create Exhibit) -->
+    <string name="create_exhibit_title">Pameran Baru</string>
+    <string name="create_exhibit_template_small">Kecil</string>
+    <string name="create_exhibit_template_medium">Sedang</string>
+    <string name="create_exhibit_template_big">Besar</string>
+    <string name="create_exhibit_template_event">Acara</string>
+    <string name="create_exhibit_post_count">%1$d Karya</string>
+    <string name="create_exhibit_room_preview_desc">Pratinjau template ruang pameran %1$s</string>
+    <string name="create_exhibit_editor_back">Kembali</string>
+    <string name="create_exhibit_tool_details">Detail Pameran</string>
+    <string name="create_exhibit_tool_panels">Panel Karya</string>
+    <string name="create_exhibit_tool_furniture">Furnitur</string>
+    <string name="create_exhibit_tool_color">Warna Dinding</string>
+    <string name="create_exhibit_panel_count">%1$d/%2$d panel</string>
+    <string name="create_exhibit_check_title_desc">judul &amp; deskripsi</string>
+    <string name="create_exhibit_check_panel">satu panel</string>
+    <string name="create_exhibit_publish_action">Publikasikan</string>
+    <string name="create_exhibit_publish_success">Pameran berhasil dipublikasikan</string>
+    <string name="create_exhibit_cover_banner">Banner Sampul</string>
+    <string name="create_exhibit_cover_placeholder">Ketuk untuk unggah banner sampul (16:9)</string>
+    <string name="create_exhibit_name_label">Judul</string>
+    <string name="create_exhibit_name_placeholder">mis. Pameran Solo Virtualku</string>
+    <string name="create_exhibit_desc_label">Deskripsi</string>
+    <string name="create_exhibit_desc_placeholder">Tuliskan cerita dan tema pameran Anda...</string>
+    <string name="create_exhibit_save_details">Simpan Detail</string>
+    <string name="create_exhibit_sheet_panels_title">Atur Karya pada Panel</string>
+    <string name="create_exhibit_panel_slot_title">Slot Panel %1$d</string>
+    <string name="create_exhibit_panel_empty">Slot kosong</string>
+    <string name="create_exhibit_panel_select_prompt">Pilih karya untuk dipajang pada panel ini</string>
+    <string name="create_exhibit_sheet_furniture_title">Dekorasi &amp; Objek 3D</string>
+    <string name="create_exhibit_sheet_color_title">Warna Dinding Ruangan</string>
 </resources>

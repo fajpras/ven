@@ -32,6 +32,9 @@ import com.ven.app.ui.screens.auth.LoginRoute
 import com.ven.app.ui.screens.auth.RegisterRoute
 import com.ven.app.ui.screens.auth.ResetPasswordScreen
 import com.ven.app.ui.screens.auth.VerifyOtpScreen
+import com.ven.app.ui.screens.create.exhibit.CreateExhibitTemplateScreen
+import com.ven.app.ui.screens.create.exhibit.editor.CreateExhibitEditorScreen
+import com.ven.app.ui.screens.create.post.CreatePostScreen
 import com.ven.app.ui.screens.explore.ExploreScreen
 import com.ven.app.ui.screens.explore.PostsFeedScreen
 import com.ven.app.ui.screens.explore.dummyPostsFeed
@@ -221,6 +224,65 @@ fun AppNavHost(showExplore: Boolean = false) {
                 },
                 onNavigateToPostsFeed = { postId ->
                     navController.navigate(Screen.PostsFeed.createRoute(postId))
+                },
+                onNavigateToCreatePost = {
+                    navController.navigate(Screen.CreatePost.route)
+                },
+            )
+        }
+
+        // -------------------------------------------------------------
+        // 5a. Create Content Flow: Create Post (Media Picker & Details Form)
+        // -------------------------------------------------------------
+        composable(Screen.CreatePost.route) {
+            CreatePostScreen(
+                onCloseClick = { navController.popBackStack() },
+                onPostSuccess = {
+                    navController.popBackStack()
+                },
+                onNavigateToExhibit = {
+                    navController.navigate(Screen.CreateExhibit.route) {
+                        popUpTo(Screen.CreatePost.route) { inclusive = true }
+                        launchSingleTop = true
+                    }
+                },
+            )
+        }
+
+        // -------------------------------------------------------------
+        // 5a-2. Create Content Flow: Create Exhibit (Template Picker)
+        // -------------------------------------------------------------
+        composable(Screen.CreateExhibit.route) {
+            CreateExhibitTemplateScreen(
+                onCloseClick = { navController.popBackStack() },
+                onNavigateToPost = {
+                    navController.navigate(Screen.CreatePost.route) {
+                        popUpTo(Screen.CreateExhibit.route) { inclusive = true }
+                        launchSingleTop = true
+                    }
+                },
+                onTemplateSelected = { template ->
+                    navController.navigate(Screen.CreateExhibitEditor.createRoute(template.id))
+                },
+            )
+        }
+
+        // -------------------------------------------------------------
+        // 5a-3. Create Content Flow: Create Exhibit (3D Canvas Editor & 4 Tool Sheets)
+        // -------------------------------------------------------------
+        composable(
+            route = Screen.CreateExhibitEditor.route,
+            arguments = listOf(
+                navArgument("templateId") {
+                    type = NavType.StringType
+                    defaultValue = "tpl_small"
+                },
+            ),
+        ) {
+            CreateExhibitEditorScreen(
+                onBackClick = { navController.popBackStack() },
+                onPublishSuccess = {
+                    navController.popBackStack(Screen.CreateExhibit.route, inclusive = true)
                 },
             )
         }
@@ -425,6 +487,7 @@ fun MainHomeScreen(
     onRequestMeetingClick: (postId: String) -> Unit = {},
     onNavigateToSettings: () -> Unit = {},
     onNavigateToPostsFeed: (postId: String) -> Unit = {},
+    onNavigateToCreatePost: () -> Unit = {},
 ) {
     var currentTab by remember { mutableStateOf(initialTab) }
     var profileState by remember { mutableStateOf(dummyProfileUiState) }
@@ -434,7 +497,7 @@ fun MainHomeScreen(
             HomeScreen(
                 uiState = uiState,
                 onTabSelected = { currentTab = it },
-                onCreateClick = { /* TODO: handle create click */ },
+                onCreateClick = onNavigateToCreatePost,
                 onRequestMeetingClick = onRequestMeetingClick,
                 onView3dClick = { /* TODO: handle view 3D */ },
                 onBannerClick = { /* TODO: handle banner click */ },
@@ -460,7 +523,7 @@ fun MainHomeScreen(
             ProfileScreen(
                 uiState = profileState,
                 onTabSelected = { currentTab = it },
-                onCreateClick = { /* TODO: handle create click */ },
+                onCreateClick = onNavigateToCreatePost,
                 onMenuClick = onNavigateToSettings,
                 onProfileTabChange = { profileState = profileState.copy(selectedTab = it) },
                 onSkillSheetToggle = { profileState = profileState.copy(isSkillSheetOpen = it) },

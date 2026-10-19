@@ -1,6 +1,7 @@
 package com.ven.app.ui.components.layout
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,6 +18,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -217,6 +219,91 @@ object VexTopBar {
                         size = VexSize.icon,
                         tint = colors.text,
                     )
+                }
+            }
+
+            if (showDivider) {
+                HorizontalDivider(
+                    thickness = 1.dp,
+                    color = colors.border,
+                )
+            }
+        }
+    }
+
+    @Composable
+    fun Create(
+        title: String,
+        actionText: String = "",
+        onActionClick: () -> Unit = {},
+        onCloseOrBackClick: () -> Unit,
+        modifier: Modifier = Modifier,
+        isBack: Boolean = false,
+        actionEnabled: Boolean = true,
+        showDivider: Boolean = false,
+    ) {
+        val colors = VexTheme.colors
+
+        Column(
+            modifier = modifier
+                .fillMaxWidth()
+                .background(colors.bg)
+                .statusBarsPadding(),
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(VexSize.topBar),
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = VexSpace.s4),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        IconButton(onClick = onCloseOrBackClick) {
+                            VexIcon(
+                                id = if (isBack) VexIcons.Back else VexIcons.Close,
+                                contentDescription = if (isBack) {
+                                    stringResource(R.string.create_post_back_desc)
+                                } else {
+                                    stringResource(R.string.create_post_close_desc)
+                                },
+                                size = VexSize.icon,
+                                tint = colors.text,
+                            )
+                        }
+
+                        Text(
+                            text = title,
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                fontWeight = FontWeight.SemiBold,
+                            ),
+                            color = colors.text,
+                            modifier = Modifier.padding(start = VexSpace.s2),
+                        )
+                    }
+
+                    if (actionText.isNotEmpty()) {
+                        Text(
+                            text = actionText,
+                            style = MaterialTheme.typography.titleSmall.copy(
+                                fontWeight = FontWeight.SemiBold,
+                            ),
+                            color = if (actionEnabled) colors.primaryText else colors.textMuted,
+                            modifier = Modifier
+                                .clickable(
+                                    enabled = actionEnabled,
+                                    role = Role.Button,
+                                    onClick = onActionClick,
+                                )
+                                .padding(horizontal = VexSpace.s3, vertical = VexSpace.s2),
+                        )
+                    }
                 }
             }
 

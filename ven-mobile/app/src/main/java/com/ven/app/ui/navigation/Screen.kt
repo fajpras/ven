@@ -30,6 +30,9 @@ sealed class Screen(val route: String) {
     // Create Content Flow
     data object CreatePost : Screen("create_post")
     data object CreateExhibit : Screen("create_exhibit")
+    data object CreateExhibitEditor : Screen("create_exhibit_editor/{templateId}") {
+        fun createRoute(templateId: String) = "create_exhibit_editor/$templateId"
+    }
 
     // SubPage Flow
     data object RequestMeeting : Screen("request_meeting/{postId}") {

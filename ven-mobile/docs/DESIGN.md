@@ -1,6 +1,6 @@
 # design.md: VEN / VEX (Virtual Exhibition), Android (Kotlin + Jetpack Compose) & Admin Web Panel
 
-> **Versi:** 0.6.2 (Update Perbaikan UI Admin Panel: Layout Topbar Offset Clearance `pt-8`, Compact List Row Density `py-3.5`, & Custom Pill Pagination Component §13.8)
+> **Versi:** 0.6.7 (Penyempurnaan Ergonomi & Interaktivitas Alur Create Exhibit: BackHandler Sheet, Checklist Click-to-Open, dan Integrasi Aset Poster Riil)
 > **Pembaca utama:** AI/developer yang mengimplementasikan UI.
 > **Penanda:**
 > - `[OBSERVED]` = diambil langsung dari wireframe/Figma.
@@ -1423,26 +1423,92 @@ Halaman AI Assistant dibangun menggunakan pola **Model-View-Intent (MVI)** reakt
     - Jika kuota tercapai atau server AI pihak ketiga mengalami kendala, backend mengembalikan pesan ramah: *"Maaf, layanan AI sedang tidak tersedia. Coba lagi nanti."*
     - Frontend menangkap error dan menyajikan umpan balik yang jelas dengan tombol aksi *Retry*.
 
-### 8.13 Create Post `[OBSERVED]` (CreateFlow, tanpa bottom nav)
-Dua langkah. Di langkah 1 ada **SegmentedPill "Post | Exhibit"** melayang di bawah tengah (lebar ≈ 245dp, tinggi ≈ 54dp, di atas inset bawah); mengganti ke "Exhibit" membuka §8.14.
-1. **Pilih media:** TopBar `Create` ("X" + "New Post" kiri, **"Next"** `primaryText` kanan) → pratinjau besar (lebar penuh, potret ±4:5) dari item terpilih → label "Recents" (`titleMedium`) → `MediaGrid` 3 kolom, 2dp dari galeri. Gunakan Photo Picker/izin media; state izin ditolak `[TODO]`.
-2. **Detail:** TopBar `Create` (panah + "New Post", **"Post"** `primaryText`) → pita pratinjau (tinggi ±262dp, gambar *contain* di tengah, latar abu gelap) → field `Boxed` berlabel di atas (`titleSmall`/medium, jarak antar field ±16dp):
-   - **Title** (teks)
-   - **Category** (`VexDropdown`, daftar kategori §8.1)
-   - **Product Link** + label kanan "optional" (`textSecondary`), validasi URL
-   - **Description** (`VexTextArea`, placeholder "type your description...")
-- "Post" disabled sampai Title & Category terisi `[ASSUMPTION]`; loading saat unggah; error unggah + retry. Setelah sukses kembali ke Profile/Home `[TODO]`.
+### 8.13 Create Post `[OBSERVED: Figma node 4256:704 & 4256:861]` (CreateFlow, tanpa bottom nav)
 
-### 8.14 Create Exhibit `[OBSERVED]`
-1. **Pilih template (New Exhibit):** TopBar `Create` ("X" + "New Exhibit"), daftar vertikal kartu: judul kiri (`titleMedium`) + kapasitas kanan (`textSecondary`, mis. "9 Post"), pratinjau isometrik 3D di bawahnya (radius 8dp, latar abu gelap bergrid). Template: **Small (9)**, **Medium (14)**, **Big (21)**, **Event (±50/60 `[TODO angka pasti, tertutup toggle]`)**. SegmentedPill "Post | Exhibit" melayang di bawah (Exhibit terpilih). Tap kartu → editor.
-2. **Editor:**
-   - **Canvas 3D** memenuhi bagian atas, sisi bawah melengkung 28dp, latar abu gelap bergrid. Engine/gesture (orbit, zoom) `[TODO]`.
-   - **Panah kembali** kiri-atas (putih). **Kolom 4 `FloatingToolButton`** (lingkaran 48dp, fill `surface`, jarak 16dp) di kanan-atas: **Aa** (judul & deskripsi exhibit), **panel** (tambah/atur panel karya), **furnitur** (ikon kursi sofa; dekorasi), **warna** (lingkaran berisi warna terpilih + ring putih; ganti warna dinding).
-   - **Penghitung** kiri-bawah canvas: ikon panel + "4/9 panels" (14sp putih). Panel = slot pajangan untuk post; total = kapasitas template.
-   - **Checklist syarat publish** di bawah canvas: baris berisi ikon check-lingkaran terisi + teks, **hijau (`success`)** bila terpenuhi: "title & description", "a panel". Belum terpenuhi → ikon kosong + `textMuted` `[ASSUMPTION]`.
-   - **Publish** (Primary, penuh, margin 20dp). Disabled sampai semua syarat hijau `[ASSUMPTION]`.
-   - Warna ungu kubus di canvas adalah *warna exhibit pilihan pengguna*, **bukan** token UI.
-- State: loading model 3D, error render, konfirmasi bila keluar dengan perubahan belum tersimpan `[ASSUMPTION]`.
+Alur pembuatan postingan karya baru (`CreatePostScreen`), terbagi menjadi 2 langkah terintegrasi:
+
+#### 8.13.1 Langkah 1: Media Picker (`Figma node 4256:704`)
+- **TopBar (`VexTopBar.Create`):**
+  - Sisi Kiri: Ikon silang / Close (`ic_action_close`, 24dp, warna `colors.text`) untuk membatalkan dan menutup alur.
+  - Sisi Kiri-Tengah: Teks judul **"New Post"** (`titleMedium` SemiBold 600, warna `colors.text`).
+  - Sisi Kanan: Aksi teks **"Next"** (`titleSmall` SemiBold 600, warna `colors.primaryText` / `#BA18F5`), selalu aktif untuk melangkah ke formulir detail.
+- **Kanvas & Konten:**
+  - **Pratinjau Media Terpilih (Besar):** Bagian atas menampilkan gambar karya yang sedang dipilih dalam rasio potret (~4:5), memenuhi lebar layar, dengan `ContentScale.Crop`.
+  - **Label Seksi "Recents":** Teks judul seksi **"Recents"** (`titleMedium` SemiBold, warna `colors.text`), padding horizontal 24dp, atas 16dp, bawah 12dp.
+  - **Grid Galeri Media (`MediaGrid`):** Grid 3 kolom, celah 2dp antar tile, rasio poster potret (`VexAspect.poster`). Mengetuk salah satu tile media langsung memperbarui pratinjau besar di bagian atas.
+- **Pill Navigasi Mengambang (`SegmentedPill`):**
+  - Komponen pill melayang di posisi tengah-bawah kanvas: `width: 245dp`, `height: 52dp`, radius `VexRadius.full` (100dp), berlatar `colors.surface` dengan garis tepi 1dp `colors.border` dan bayangan lembut.
+  - Menampilkan dua opsi: **"Post"** (terpilih: teks tebal warna `colors.text`) dan **"Exhibit"** (tidak terpilih: teks warna `colors.textMuted`).
+  - Mengetuk "Exhibit" mengarahkan pengguna ke alur pembuatan pameran virtual 3D (§8.14).
+
+#### 8.13.2 Langkah 2: Details Form (`Figma node 4256:861`)
+- **TopBar (`VexTopBar.Create`):**
+  - Sisi Kiri: Ikon panah kembali (`ic_action_back`, 24dp, warna `colors.text`) untuk kembali ke Langkah 1 (Media Picker).
+  - Sisi Kiri-Tengah: Teks judul **"New Post"** (`titleMedium` SemiBold 600, warna `colors.text`).
+  - Sisi Kanan: Aksi teks **"Post"** (`titleSmall` SemiBold 600, warna `colors.primaryText`), berstatus *enabled* hanya bila field Title dan Category telah terisi valid.
+- **Pita Pratinjau Media:**
+  - Kontainer horizontal di bagian atas formulir: tinggi 260dp, lebar penuh, latar belakang `colors.surfaceInput` (`#E5E5E5` di Light Mode, `#363636` di Dark Mode).
+  - Gambar karya terpilih ditempatkan presisi di tengah kontainer dengan `ContentScale.Fit` dan padding vertikal 12dp.
+- **Formulir Metadata (Scrollable + Insets):**
+  - Padding horizontal 24dp (`VexSpace.s6`), jarak vertikal antar field 16dp (`VexSpace.s4`), dilengkapi `navigationBarsPadding().imePadding()` agar formulir terangkat ergonomis saat keyboard aktif.
+  1. **Title:**
+     - Label: **"Title"** (`titleSmall` SemiBold).
+     - Field: `VexTextField` varian `Boxed` (radius 8dp, fill `surfaceInput`, outline `borderInput`), placeholder *"type your title..."*.
+  2. **Category:**
+     - Label: **"Category"** (`titleSmall` SemiBold).
+     - Field: `VexDropdown` varian `Boxed` dengan ikon `ic_action_chevron_down` di kanan. Menampilkan 14 kategori standar VEN (§4.3 & §8.1).
+  3. **Product Link:**
+     - Baris Header: Label **"Product Link"** di kiri + label keterangan **"optional"** di kanan (`bodyMedium`, warna `colors.textMuted`).
+     - Field: `VexTextField` varian `Boxed`, placeholder *"https://google.com"*, `KeyboardType.Uri`.
+  4. **Description:**
+     - Label: **"Description"** (`titleSmall` SemiBold).
+     - Field: `VexTextArea` varian `Boxed` multiline, tinggi minimal 175dp, placeholder *"type your description..."*.
+- **Integrasi Navigasi & Aksi Submit:**
+  - Menekan "Post" mengeksekusi penyimpanan karya dan memicu navigasi kembali ke Home/Profile.
+  - Komponen terhubung penuh pada `AppNavHost` via rute `Screen.CreatePost`. Tombol "+" pada TopBar Home dan Profile secara langsung membuka alur ini.
+
+### 8.14 Create Exhibit `[OBSERVED: Figma node 4256:704]`
+
+Alur pembuatan ruang pameran virtual 3D baru (`CreateExhibitScreen`), terbagi menjadi:
+
+#### 8.14.1 Langkah 1: Pemilihan Template Pameran (`New Exhibit` - Figma node 4256:704)
+- **TopBar (`VexTopBar.Create`):**
+  - Sisi Kiri: Ikon silang / Close (`ic_action_close`, 24dp, warna `colors.text`) untuk menutup alur.
+  - Sisi Kiri-Tengah: Teks judul **"New Exhibit"** (`titleMedium` SemiBold 600, warna `colors.text`).
+  - Sisi Kanan: Bersih tanpa tombol teks aksi.
+- **Daftar Template Ruangan Isometrik 3D (`LazyColumn`):**
+  - Padding horizontal 24dp (`VexSpace.s6`), jarak antar kartu 24dp, padding bawah 96dp agar kartu paling bawah tidak tertutup `SegmentedPill`.
+  - Terdiri dari 4 pilihan template resmi:
+    1. **Small:** Kapasitas **9 Post** (lebar ruang proporsional $0.95\times$)
+    2. **Medium:** Kapasitas **14 Post** (lebar ruang proporsional $1.0\times$)
+    3. **Big:** Kapasitas **21 Post** (lebar ruang proporsional $1.08\times$)
+    4. **Event:** Kapasitas **60 Post** (lebar ruang proporsional $1.15\times$, terkonfirmasi resmi dari wireframe `node 4256-704`)
+  - **Anatomi Kartu Template (`ExhibitTemplateCard`):**
+    - Baris Header: Nama template di kiri (`titleMedium` SemiBold, warna `colors.text`) + Jumlah kapasitas di kanan (mis. *"9 Post"*, `bodyMedium`, warna `colors.textMuted`).
+    - Kartu Visualisasi Isometrik (`IsometricRoomPreview`):
+      - Tinggi 176dp, sudut membulat 12dp (`VexRadius.md`), kanvas latar belakang gelap `#262626` dengan garis grid isometrik 3D dan garis sumbu axis halus (merah/hijau).
+      - Menampilkan model ruang kuboid 3D beratap terbuka dengan dinding ungu Brand VEN (`#6C3BE8`), lantai putih terang (`#F5F5FA`), panggung aksen tengah (`#E4E4ED`), dan efek pencahayaan/bevel isometrik presisi.
+      - Klik interaktif pada kartu template membawa pengguna langsung masuk ke **Layar Editor 3D Canvas** (§8.14.2).
+- **Pill Navigasi Mengambang (`SegmentedPill`):**
+  - Mengambang di tengah bawah layar (`width: 245dp`, `height: 52dp`, radius `VexRadius.full` 100dp).
+  - Opsi **"Exhibit"** aktif terpilih (teks tebal warna `colors.text`).
+  - Opsi **"Post"** tidak terpilih: mengetuk "Post" menavigasikan pengguna kembali ke alur pembuatan postingan karya baru (`CreatePostScreen` §8.13).
+
+#### 8.14.2 Langkah 2: Editor 3D Canvas & 4 Tool Bottom Sheets
+- **Canvas 3D:** Memenuhi bagian atas kanvas, sudut bawah melengkung 28dp, latar abu gelap bergrid isometrik.
+- **Kontrol Header & Alat Melayang:**
+  - Panah kembali `←` di sisi kiri-atas kanvas.
+  - Kolom vertikal 4 tombol alat melayang (`FloatingToolButton`, lingkaran 48dp, latar `surface`) di kanan-atas:
+    1. **Aa (Details):** Membuka sheet metadata untuk mengisi Thumbnail banner 16:9, Title ("My Exhibition 1"), dan Description.
+    2. **Panel (Karya):** Membuka sheet pemilihan karya (Poster | Video) dengan pagination dots dan penempatan slot panel.
+    3. **Furnitur (Dekorasi):** Membuka sheet objek 3D (Light, Chair, Plant, Others) dengan penghitung objek.
+    4. **Color (Warna Dinding):** Membuka sheet palet lingkaran warna untuk mengganti warna tema dinding ruangan secara real-time.
+- **Indikator & Checklist Syarat Publish:**
+  - Penghitung panel di kiri-bawah canvas: *"0/9 panels"* (berubah menjadi misal *"4/9 panels"* saat karya terpasang).
+  - Di bawah canvas: checklist syarat penerbitan pameran:
+    - `title & description` (merah ✕ saat kosong, hijau ✓ saat terisi)
+    - `a panel` (merah ✕ saat belum ada panel terpasang, hijau ✓ jika minimal 1 panel terisi)
+  - Tombol CTA **"Publish"** (Pill ungu BrandPurple, lebar penuh): Disabled saat syarat belum terpenuhi, aktif saat kedua syarat berwarna hijau.
 
 ### 8.15 Belum ada wireframe `[TODO]`
 Account status, History, Theme, Language, Privacy policy, Help, detail/tampilan exhibit (mode melihat), halaman Join Room, pilih panel/furnitur/warna di editor.
@@ -1906,6 +1972,57 @@ Untuk mengoptimalkan ergonomi dan estetika desktop admin panel, ditetapkan atura
 ---
 
 ## Changelog
+- **0.6.7**: Penyempurnaan Ergonomi & Interaktivitas **Alur Create Exhibit (§8.14)**:
+  - **Sistem `BackHandler` Bertingkat di Layar Editor 3D**:
+    - Menangani gesture / tombol back hardware Android secara cerdas: jika ada bottom sheet yang sedang terbuka (Details, Panels, Furniture, atau Color), menekan back akan menutup sheet tersebut terlebih dahulu; jika seluruh sheet tertutup, barulah menavigasi kembali ke layar pemilihan template.
+  - **Checklist Persyaratan Click-to-Open Interaktif**:
+    - Baris checklist persyaratan penerbitan di bawah kanvas kini dapat diketuk langsung (`clickable` dengan ripple):
+      - Mengetuk baris `title & description` langsung membuka `ExhibitDetailsBottomSheet`.
+      - Mengetuk baris `a panel` langsung membuka `ExhibitPanelsBottomSheet`.
+  - **Integrasi Aset Karya Riil pada Panel**:
+    - Menghubungkan library karya seni sampel dengan drawable lokal (`poster_1.webp`, `poster_2.webp`, `poster_3.webp`), sehingga kartu karya pada bottom sheet panel langsung menampilkan thumbnail visual karya asli.
+- **0.6.6**: Penyelarasan Penuh **Tema Terang & Gelap (Dual Theming / Light & Dark Mode)** untuk Seluruh Rangkaian Create Flow:
+  - **Pratinjau Studio Isometrik 3D Adaptif (`IsometricRoomPreview` & `Exhibit3dCanvas`)**:
+    - Mode Gelap: Kanvas studio gelap `#262626` / `#222226` dengan garis grid isometrik `#333333` dan lantai panggung putih bersih.
+    - Mode Terang: Kanvas studio terang elegan `#EFEFF4` dengan garis grid halus `#DCDCE5`, lantai dalam putih cerah, dan kontras bevel yang pas.
+  - **Elemen Kontrol & Alat Melayang**:
+    - Tombol Back lingkaran adaptif: transparan gelap berikon putih di Mode Gelap, dan `surface` putih dengan border halus serta ikon gelap di Mode Terang.
+    - Floating pill penghitung panel (*"0/9 panels"*): latar transparan gelap berikon putih di Mode Gelap, dan latar `surface` putih ber-border dengan teks gelap di Mode Terang.
+    - Floating tool buttons (Aa, Panel, Furniture, Color): latar `surface` dengan shadow dan elevasi konsisten di kedua tema.
+  - **Checklist Penerbitan**:
+    - Menggunakan token warna semantik sistem `colors.success` (hijau) dan `colors.danger` (merah), serta teks dinamis `colors.text` dan `colors.textMuted`.
+  - **4 Tool Bottom Sheets**:
+    - Penyelarasan penuh `ExhibitDetailsBottomSheet`, `ExhibitPanelsBottomSheet`, `ExhibitFurnitureBottomSheet`, dan `ExhibitColorBottomSheet` menggunakan container semantik `colors.surface`, `colors.surfaceInput`, dan `colors.border`.
+    - Pilihan ring aktif pada swatches warna dinding beradaptasi putih di Mode Gelap dan hitam di Mode Terang.
+  - **Kelengkapan `@Preview`**:
+    - Menambahkan `@Preview` Dark dan Light lengkap untuk setiap komponen dan bottom sheet agar dapat diverifikasi langsung di Compose Preview Android Studio.
+- **0.6.5**: Implementasi Lengkap **Alur Pembuatan Ruang Pameran Virtual (Create Exhibit: Template Picker & 3D Canvas Editor) (§8.14)**:
+  - **Langkah 1 (Template Picker - New Exhibit)**:
+    - Membangun antarmuka pemilihan template ruang beratap terbuka berdasarkan wireframe Figma `node 4256:704`.
+    - 4 ukuran resmi: **Small (9 Post)**, **Medium (14 Post)**, **Big (21 Post)**, dan **Event (60 Post)**.
+    - Komponen pratinjau isometrik 3D ruang kuboid beratap terbuka dengan lantai dalam bertekstur panggung, dinding beraksen ungu Brand, latar grid gelap, dan garis sumbu axis halus (`IsometricRoomPreview`).
+    - Sinkronisasi `SegmentedPill` melayang di bagian bawah dengan transisi bolak-balik antara Post dan Exhibit.
+  - **Langkah 2 (3D Canvas Editor & 4 Tool Bottom Sheets)**:
+    - Kanvas isometrik 3D interaktif (`Exhibit3dCanvas`) memenuhi bagian atas layar, sudut bawah melengkung 28dp (`VexRadius.xl`), rendering dinding sesuai warna tema, visualisasi panel karya terpasang pada dinding, tombol panah kembali di kiri-atas, dan indikator penghitung panel `"X/N panels"` di kiri-bawah.
+    - Kolom 4 tombol alat melayang vertikal di kanan-atas kanvas (`FloatingToolButton`, 48dp lingkaran, latar `surface`):
+      1. **Aa (Details)**: Membuka `ExhibitDetailsBottomSheet` untuk upload banner cover 16:9, input judul pameran, dan deskripsi pameran.
+      2. **Panel (Karya)**: Membuka `ExhibitPanelsBottomSheet` untuk memilih slot panel ruangan (carousel slot) dan menugaskan postingan/karya seni pengguna.
+      3. **Furnitur (Dekorasi)**: Membuka `ExhibitFurnitureBottomSheet` untuk menambah atau mengurangi objek dekorasi 3D (Spotlight, Lounge Chair, Indoor Plant, Gallery Bench) dengan stepper dinamis.
+      4. **Color (Warna Dinding)**: Membuka `ExhibitColorBottomSheet` dengan palet 6 warna ruangan terkurasi (VEX Purple, Midnight Blue, Emerald Teal, Crimson Red, Studio Charcoal, Warm Ochre) untuk pengubahan warna secara langsung.
+  - **Sistem Validasi & Checklist Penerbitan (Publish)**:
+    - Komponen `ExhibitPublishChecklist` di bawah kanvas dengan 2 syarat mandiri: `title & description` dan `a panel` (indikator hijau ✓ saat terpenuhi dan merah ✕ saat belum).
+    - Tombol CTA "Publish" dengan status disabled saat syarat belum lengkap dan otomatis aktif saat kedua syarat hijau.
+  - **Arsitektur Navigasi & Token**:
+    - Mendaftarkan rute `Screen.CreateExhibit` dan `Screen.CreateExhibitEditor` pada `AppNavHost`.
+    - Mendaftarkan vektor ikon `ic_panel.xml` dan `ic_furniture.xml` ke dalam `VexIcons`.
+    - Mengintegrasikan seluruh teks ke dalam `res/values/strings.xml` dan `res/values-in/strings.xml`.
+- **0.6.3**: Implementasi Lengkap **Alur Create Post (Langkah 1: Media Picker & Langkah 2: Details Form) (§8.13)**:
+  - **Observasi Desain Figma**: Mengintegrasikan rancangan langsung dari node `4256:704` (Langkah 1: Media Picker) dan `4256:861` (Langkah 2: Details Form).
+  - **Komponen SegmentedPill**: Membangun `SegmentedPill` melayang di tengah bawah kanvas (`245 × 52dp`, radius `VexRadius.full`) dengan toggle "Post" & "Exhibit".
+  - **Komponen Form Kustom**: Mengimplementasikan `VexDropdown` (Boxed + Chevron Down untuk 14 kategori standar VEN), `VexTextArea` (Boxed multiline min 175dp untuk Description), dan varian `VexTopBar.Create` (dengan ikon Close/Back di kiri dan aksi teks Next/Post ungu di kanan).
+  - **Langkah 1 (Media Picker)**: Pratinjau besar media terpilih, label seksi "Recents", grid 3 kolom (`LazyVerticalGrid`), dan overlay sorotan aktif.
+  - **Langkah 2 (Details Form)**: Pita pratinjau landscape centered berlatar `surfaceInput`, input Title Boxed, dropdown Category, baris Product Link + label "optional", dan input Description.
+  - **Navigasi Terintegrasi**: Menghubungkan rute `Screen.CreatePost` di `AppNavHost` dan menyambungkan tombol "+" pada TopBar `HomeScreen` serta `ProfileScreen`.
 - **0.6.2**: Perbaikan Ergonomi & Layout **VEN Admin Web Panel (§13.8)**:
   - **Custom Popover Category Dropdown**: Mengganti elemen native browser `<select>` pada layar Post dengan custom pill popover dropdown (`rounded-2xl`, `shadow-xl`, checkmark centang aktif ungu `#BA18F5`, chevron rotasi 180°, dan event click-outside / ESC close) agar konsisten 100% dengan bahasa desain VEN.
   - **Layout Safe Clearance**: Menambahkan `pt-8` pada `<main>` master layout untuk mencegah search bar terpotong/tertutup oleh `h-20` sticky topbar.
