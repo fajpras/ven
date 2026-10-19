@@ -27,7 +27,7 @@ class Pengguna extends Authenticatable
 
     protected $fillable = [
         'nama', 'nama_panggilan', 'kata_sandi', 'deskripsi', 'google_id',
-        'email', 'foto_profil', 'role', 'status',
+        'email', 'foto_profil', 'role', 'status', 'onboarding_selesai',
     ];
 
     protected $hidden = ['kata_sandi', 'google_id', 'google_id_bidx'];
@@ -38,6 +38,7 @@ class Pengguna extends Authenticatable
     {
         return [
             'kata_sandi' => 'hashed',
+            'onboarding_selesai' => 'boolean',
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
             'deleted_at' => 'datetime',

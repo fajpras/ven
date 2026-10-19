@@ -154,20 +154,27 @@ fun LoginScreen(
 @Composable
 fun LoginRoute(
     onNavigateToHome: () -> Unit,
+    onNavigateToOnboarding: () -> Unit,
     onNavigateToRegister: () -> Unit,
     onForgotPassword: () -> Unit,
-    onGoogleClick: () -> Unit = onNavigateToHome,
     viewModel: LoginViewModel = viewModel(),
 ) {
     val context = LocalContext.current
+    val onAuthenticated: (Boolean) -> Unit = { needsOnboarding ->
+        if (needsOnboarding) {
+            onNavigateToOnboarding()
+        } else {
+            onNavigateToHome()
+        }
+    }
 
     LoginScreen(
         state = viewModel.state,
         onIdentifierChange = viewModel::onIdentifierChange,
         onPasswordChange = viewModel::onPasswordChange,
-        onLoginClick = { viewModel.login(context, onNavigateToHome) },
+        onLoginClick = { viewModel.login(context, onAuthenticated) },
         onForgotPasswordClick = onForgotPassword,
-        onGoogleClick = { viewModel.loginWithGoogle(context, onGoogleClick) },
+        onGoogleClick = { viewModel.loginWithGoogle(context, onAuthenticated) },
         onRegisterClick = onNavigateToRegister,
     )
 }

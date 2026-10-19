@@ -2,16 +2,17 @@
 
 namespace App\Http\Controllers\Pengguna;
 
-use App\Http\Controllers\Controller;
-use App\Models\Kategori;
-use App\Models\Pengguna;
 use App\Enums\TujuanOtp;
+use App\Http\Controllers\Controller;
 use App\Http\Requests\Profil\GantiEmailRequest;
 use App\Http\Requests\Profil\KirimOtpGantiEmailRequest;
+use App\Models\Kategori;
+use App\Models\Pengguna;
 use App\Services\Otp\LayananOtp;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
@@ -107,30 +108,54 @@ class ProfilController extends Controller
         return $this->ok($pengguna, 'Akun sudah aktif.');
     }
 
-    public function minat(Request $request)
+    /**
+     * Daftar seluruh kategori yang dapat dipilih pengguna.
+     */
+    public function kategoriTersedia(): JsonResponse
+    {
+        return $this->ok(
+            Kategori::query()
+                ->orderBy('id_kategori')
+                ->get(['id_kategori', 'kategori'])
+        );
+    }
+
+    public function minat(Request $request): JsonResponse
     {
         return $this->ok($request->user()->kategori()->orderByPivot('bobot', 'desc')->get());
     }
 
-    public function updateMinat(Request $request)
+    /**
+     * Ganti seluruh minat pengguna. Array kosong dipakai tombol "Maybe later"
+     * dan tetap menandai onboarding selesai agar tidak ditampilkan berulang.
+     */
+    public function updateMinat(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'kategori' => ['required', 'array', 'min:1', 'max:50'],
+            'kategori' => ['present', 'array', 'max:50'],
             'kategori.*.id_kategori' => ['required', 'integer', 'distinct', 'exists:kategori,id_kategori'],
             'kategori.*.bobot' => ['required', 'numeric', 'min:0', 'max:1'],
         ]);
 
+        $pengguna = $request->user();
+
         $sync = collect($validated['kategori'])
             ->keyBy('id_kategori')
-            ->map(fn ($item) => ['bobot' => $item['bobot']])
+            ->map(fn (array $item): array => ['bobot' => $item['bobot']])
             ->all();
 
-        $request->user()->kategori()->sync($sync);
+        DB::transaction(function () use ($pengguna, $sync): void {
+            $pengguna->kategori()->sync($sync);
+            $pengguna->forceFill(['onboarding_selesai' => true])->save();
+        });
 
-        return $this->ok($request->user()->kategori()->orderByPivot('bobot', 'desc')->get(), 'Minat kategori disimpan.');
+        return $this->ok(
+            $pengguna->kategori()->orderByPivot('bobot', 'desc')->get(),
+            'Minat kategori disimpan.'
+        );
     }
 
-    public function destroyMinat(Request $request, Kategori $kategori)
+    public function destroyMinat(Request $request, Kategori $kategori): JsonResponse
     {
         $request->user()->kategori()->detach($kategori->id_kategori);
 

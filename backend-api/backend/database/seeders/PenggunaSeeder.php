@@ -64,8 +64,8 @@ class PenggunaSeeder extends Seeder
         );
 
         // Optional: Assign Minat Kategori ke Pengguna (jika data Kategori sudah di-seed)
-        $kategoriDigit = Kategori::firstWhere('kategori', 'Seni Digital 3D');
-        $kategoriDesain = Kategori::firstWhere('kategori', 'Desain Grafis & Poster');
+        $kategoriDigit = Kategori::firstWhere('kategori', '3D');
+        $kategoriDesain = Kategori::firstWhere('kategori', 'UI/UX');
 
         if ($kategoriDigit && $kategoriDesain) {
             $fajri->kategori()->syncWithoutDetaching([

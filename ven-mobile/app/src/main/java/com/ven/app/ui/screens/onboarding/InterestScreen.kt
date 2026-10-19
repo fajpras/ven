@@ -2,108 +2,75 @@ package com.ven.app.ui.screens.onboarding
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ven.app.R
+import com.ven.app.data.api.models.KategoriModel
+import com.ven.app.ui.components.feature.InterestCategoryChips
 import com.ven.app.ui.components.layout.AuthLayout
 import com.ven.app.ui.components.ui.VexButton
 import com.ven.app.ui.components.ui.VexButtonVariant
-import com.ven.app.ui.components.ui.VexSelectableChip
 import com.ven.app.ui.theme.ThemeMode
 import com.ven.app.ui.theme.VexSize
 import com.ven.app.ui.theme.VexSpace
 import com.ven.app.ui.theme.VexTheme
 
 /**
- * 14 Kategori minat standar sesuai wireframe onboard resmi (DESIGN.md §8.1).
- */
-val DefaultInterestCategories = listOf(
-    "Cybersecurity",
-    "Software",
-    "UI/UX",
-    "Videography",
-    "Photography",
-    "3D",
-    "Animation",
-    "Internet Of Things",
-    "Automation System",
-    "Game Dev",
-    "Fabrication",
-    "Manufacturing",
-    "2D",
-    "Others",
-)
-
-/**
- * Stateful version of [InterestScreen].
- * Mengelola state pemilihan kategori internal dengan [rememberSaveable].
+ * Penghubung antara [InterestViewModel] dan [InterestScreen] (stateless).
  */
 @Composable
-fun InterestScreen(
-    onSaveSuccess: (selectedCategories: Set<String>) -> Unit,
-    modifier: Modifier = Modifier,
-    onMaybeLater: () -> Unit = { onSaveSuccess(emptySet()) },
-    initialSelected: Set<String> = emptySet(),
-    categories: List<String> = DefaultInterestCategories,
-    isLoading: Boolean = false,
+fun InterestRoute(
+    onFinished: () -> Unit,
+    viewModel: InterestViewModel = viewModel(),
 ) {
-    var selectedCategories by rememberSaveable {
-        mutableStateOf(initialSelected)
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+
+    LaunchedEffect(viewModel) {
+        viewModel.events.collect { event ->
+            when (event) {
+                InterestEvent.Saved -> onFinished()
+            }
+        }
     }
 
-    InterestScreenContent(
-        categories = categories,
-        selectedCategories = selectedCategories,
-        onCategoryToggle = { category ->
-            selectedCategories = if (category in selectedCategories) {
-                selectedCategories - category
-            } else {
-                selectedCategories + category
-            }
-        },
-        onSaveClick = { onSaveSuccess(selectedCategories) },
-        onMaybeLaterClick = onMaybeLater,
-        isLoading = isLoading,
-        modifier = modifier,
+    InterestScreen(
+        state = state,
+        onCategoryToggle = viewModel::toggleKategori,
+        onSaveClick = viewModel::simpan,
+        onMaybeLaterClick = viewModel::lewati,
+        onRetryClick = viewModel::muatKategori,
     )
 }
 
 /**
- * Stateless content version of [InterestScreen] (DESIGN.md §8.1).
- *
- * Mendukung 2 mode (Dark Mode & Light Mode):
- * - Kerangka: [AuthLayout] dengan contentMaxWidth responsif
- * - Judul: "Interest" (displayMedium)
- * - Pilihan kategori: [FlowRow] dengan [VexSelectableChip]
- * - Aksi bawah: Link "Maybe later" -> HorizontalDivider -> Tombol "Save"
+ * Halaman pemilihan kategori minat (DESIGN.md §8.1).
  */
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun InterestScreenContent(
-    categories: List<String>,
-    selectedCategories: Set<String>,
-    onCategoryToggle: (String) -> Unit,
+fun InterestScreen(
+    state: InterestUiState,
+    onCategoryToggle: (idKategori: Int) -> Unit,
     onSaveClick: () -> Unit,
     onMaybeLaterClick: () -> Unit,
+    onRetryClick: () -> Unit,
     modifier: Modifier = Modifier,
-    isLoading: Boolean = false,
 ) {
     val colors = VexTheme.colors
 
@@ -112,20 +79,50 @@ fun InterestScreenContent(
         contentMaxWidth = VexSize.interestContentWidth,
         modifier = modifier,
         formContent = {
-            FlowRow(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = VexSpace.s1),
-                horizontalArrangement = Arrangement.spacedBy(VexSpace.s2),
-                verticalArrangement = Arrangement.spacedBy(VexSpace.s2),
-            ) {
-                categories.forEach { category ->
-                    val isSelected = category in selectedCategories
-                    VexSelectableChip(
-                        text = category,
-                        selected = isSelected,
-                        onSelectedChange = { onCategoryToggle(category) },
+            when {
+                state.isLoading && state.categories.isEmpty() -> {
+                    CircularProgressIndicator(color = colors.primary)
+                }
+
+                state.errorMessage != null && state.categories.isEmpty() -> {
+                    ErrorContent(
+                        message = state.errorMessage,
+                        onRetryClick = onRetryClick,
                     )
+                }
+
+                state.isCategoryEmpty -> {
+                    Text(
+                        text = stringResource(R.string.interest_empty),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = colors.textMuted,
+                        textAlign = TextAlign.Center,
+                    )
+                }
+
+                else -> {
+                    InterestCategoryChips(
+                        categories = state.categories,
+                        selectedIds = state.selectedIds,
+                        onToggle = onCategoryToggle,
+                        modifier = Modifier.padding(horizontal = VexSpace.s1),
+                        enabled = !state.isSaving,
+                    )
+
+                    state.errorMessage?.let { message ->
+                        Spacer(modifier = Modifier.height(VexSpace.s4))
+                        Text(
+                            text = message,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = colors.danger,
+                            textAlign = TextAlign.Center,
+                        )
+                        VexButton(
+                            text = stringResource(R.string.interest_retry),
+                            onClick = onRetryClick,
+                            variant = VexButtonVariant.TextLink,
+                        )
+                    }
                 }
             }
         },
@@ -134,16 +131,15 @@ fun InterestScreenContent(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                // Link teks "Maybe later"
                 VexButton(
                     text = stringResource(R.string.interest_maybe_later),
                     onClick = onMaybeLaterClick,
                     variant = VexButtonVariant.TextLink,
+                    enabled = !state.isSaving,
                 )
 
                 Spacer(modifier = Modifier.height(VexSpace.s3))
 
-                // Garis pemisah horizontal selebar tombol form
                 HorizontalDivider(
                     modifier = Modifier.width(VexSize.authContentWidth),
                     thickness = 1.dp,
@@ -152,12 +148,12 @@ fun InterestScreenContent(
 
                 Spacer(modifier = Modifier.height(VexSpace.s6))
 
-                // Tombol utama "Save"
                 VexButton(
                     text = stringResource(R.string.interest_save),
                     onClick = onSaveClick,
                     variant = VexButtonVariant.Primary,
-                    loading = isLoading,
+                    enabled = state.canSave,
+                    loading = state.isSaving,
                     modifier = Modifier.width(VexSize.authContentWidth),
                 )
             }
@@ -165,20 +161,59 @@ fun InterestScreenContent(
     )
 }
 
+@Composable
+private fun ErrorContent(
+    message: String,
+    onRetryClick: () -> Unit,
+) {
+    val colors = VexTheme.colors
+
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(VexSpace.s4),
+    ) {
+        Text(
+            text = message,
+            style = MaterialTheme.typography.bodyMedium,
+            color = colors.danger,
+            textAlign = TextAlign.Center,
+        )
+
+        VexButton(
+            text = stringResource(R.string.interest_retry),
+            onClick = onRetryClick,
+            variant = VexButtonVariant.Outline,
+            modifier = Modifier.width(VexSize.authContentWidth),
+        )
+    }
+}
+
 // ---------------------------------------------------------
 // Previews untuk 2 Mode: Dark Mode & Light Mode
 // ---------------------------------------------------------
+
+private val sampleCategories = listOf(
+    KategoriModel(1, "Cybersecurity"),
+    KategoriModel(2, "Software"),
+    KategoriModel(3, "UI/UX"),
+    KategoriModel(4, "3D"),
+    KategoriModel(5, "Animation"),
+    KategoriModel(6, "Game Dev"),
+)
 
 @Preview(name = "InterestScreen - Dark Mode", showBackground = true, backgroundColor = 0xFF1F1F1F)
 @Composable
 private fun InterestScreenDarkPreview() {
     VexTheme(mode = ThemeMode.Dark) {
-        InterestScreenContent(
-            categories = DefaultInterestCategories,
-            selectedCategories = setOf("UI/UX", "3D", "Game Dev"),
+        InterestScreen(
+            state = InterestUiState(
+                categories = sampleCategories,
+                selectedIds = setOf(3, 4, 6),
+            ),
             onCategoryToggle = {},
             onSaveClick = {},
             onMaybeLaterClick = {},
+            onRetryClick = {},
         )
     }
 }
@@ -187,12 +222,15 @@ private fun InterestScreenDarkPreview() {
 @Composable
 private fun InterestScreenLightPreview() {
     VexTheme(mode = ThemeMode.Light) {
-        InterestScreenContent(
-            categories = DefaultInterestCategories,
-            selectedCategories = setOf("Cybersecurity", "Animation"),
+        InterestScreen(
+            state = InterestUiState(
+                categories = sampleCategories,
+                selectedIds = setOf(1, 5),
+            ),
             onCategoryToggle = {},
             onSaveClick = {},
             onMaybeLaterClick = {},
+            onRetryClick = {},
         )
     }
 }

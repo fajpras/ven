@@ -32,6 +32,7 @@ Route::middleware(CatatKeamanan::class)->group(function () {
             Route::put('email', 'gantiEmail')->middleware('throttle:5,1');
             Route::put('kata-sandi', 'updatePassword');
             Route::put('status', 'updateStatus');
+            Route::get('kategori', 'kategoriTersedia');
             Route::get('minat', 'minat');
             Route::put('minat', 'updateMinat');
             Route::delete('minat/{kategori}', 'destroyMinat');

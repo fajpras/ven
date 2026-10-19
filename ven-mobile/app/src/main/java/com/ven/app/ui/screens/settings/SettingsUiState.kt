@@ -9,11 +9,11 @@ import com.ven.app.ui.theme.ThemeMode
  */
 @Immutable
 data class ProfileSettingsData(
-    val username: String = "gra._.aph",
-    val name: String = "Terra Faqih Satria Madjid",
-    val phone: String = "082387593452",
-    val description: String = "I’m a fullstack game developer",
-    val interests: Set<String> = setOf("UI/UX", "3D", "Animation", "Game Dev"),
+    val username: String = "",
+    val name: String = "",
+    val phone: String = "",
+    val description: String = "",
+    val interestIds: Set<Int> = emptySet(),
 )
 
 /**

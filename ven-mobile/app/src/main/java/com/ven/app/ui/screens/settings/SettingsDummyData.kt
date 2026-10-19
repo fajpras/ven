@@ -9,7 +9,7 @@ val dummySettingsProfile = ProfileSettingsData(
     name = "Terra Faqih Satria Madjid",
     phone = "082387593452",
     description = "I’m a fullstack game developer",
-    interests = setOf("UI/UX", "3D", "Animation", "Game Dev"),
+    interestIds = setOf(3, 6, 7, 10),
 )
 
 val dummyHistoryEntries = listOf(

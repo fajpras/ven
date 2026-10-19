@@ -31,7 +31,7 @@ class LoginViewModel : ViewModel() {
         state = state.copy(password = value, errorMessage = null)
     }
 
-    fun login(context: Context, onSuccess: () -> Unit) {
+    fun login(context: Context, onSuccess: (needsOnboarding: Boolean) -> Unit) {
         val identifier = state.identifier.trim()
         val password = state.password
 
@@ -51,7 +51,7 @@ class LoginViewModel : ViewModel() {
                 sessionManager.saveUser(authData.pengguna)
 
                 state = state.copy(isLoading = false)
-                onSuccess()
+                onSuccess(authData.pengguna?.needsOnboarding == true)
             }.onFailure { exception ->
                 state = state.copy(
                     isLoading = false,
@@ -61,7 +61,7 @@ class LoginViewModel : ViewModel() {
         }
     }
 
-    fun loginWithGoogle(context: Context, onSuccess: () -> Unit) {
+    fun loginWithGoogle(context: Context, onSuccess: (needsOnboarding: Boolean) -> Unit) {
         viewModelScope.launch {
             state = state.copy(isLoading = true, errorMessage = null)
 
@@ -76,7 +76,7 @@ class LoginViewModel : ViewModel() {
                     sessionManager.saveUser(authData.pengguna)
 
                     state = state.copy(isLoading = false)
-                    onSuccess()
+                    onSuccess(authData.pengguna?.needsOnboarding == true)
                 }.onFailure {
                     // Jika belum terdaftar, coba daftar otomatis via Google
                     val registerResult = ApiRegister.registerGoogle(idToken = idToken)
@@ -86,7 +86,7 @@ class LoginViewModel : ViewModel() {
                         sessionManager.saveUser(authData.pengguna)
 
                         state = state.copy(isLoading = false)
-                        onSuccess()
+                        onSuccess(authData.pengguna?.needsOnboarding == true)
                     }.onFailure { registerException ->
                         state = state.copy(
                             isLoading = false,

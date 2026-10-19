@@ -2,11 +2,7 @@ package com.ven.app.ui.screens.settings
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -31,15 +27,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.ven.app.R
+import com.ven.app.data.api.models.KategoriModel
+import com.ven.app.ui.components.feature.InterestCategoryChips
 import com.ven.app.ui.components.layout.VexTopBar
 import com.ven.app.ui.components.ui.Avatar
 import com.ven.app.ui.components.ui.AvatarSize
-import com.ven.app.ui.components.ui.VexSelectableChip
 import com.ven.app.ui.components.ui.VexTextField
 import com.ven.app.ui.components.ui.VexTextFieldVariant
 import com.ven.app.ui.icons.VexIcon
 import com.ven.app.ui.icons.VexIcons
-import com.ven.app.ui.screens.onboarding.DefaultInterestCategories
 import com.ven.app.ui.theme.ThemeMode
 import com.ven.app.ui.theme.VexSpace
 import com.ven.app.ui.theme.VexTheme
@@ -51,16 +47,19 @@ import com.ven.app.ui.theme.VexTheme
  * - Mode Edit: Top bar "Edit profile" + tombol teks "Save changes" di kanan atas.
  * - Avatar 96dp tengah + teks "New Photo".
  * - Input Boxed: Username, Name, Phone, Description.
- * - Pilihan kategori Interest dengan FlowRow [VexSelectableChip].
+ * - Pilihan kategori Interest dengan [InterestCategoryChips].
  */
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun ProfileSettingsScreen(
     initialData: ProfileSettingsData,
+    categories: List<KategoriModel>,
     onBackClick: () -> Unit,
     onSaveProfile: (ProfileSettingsData) -> Unit,
     modifier: Modifier = Modifier,
     initialIsEditing: Boolean = false,
+    isSaving: Boolean = false,
+    errorMessage: String? = null,
+    onRetryClick: () -> Unit = {},
 ) {
     val colors = VexTheme.colors
     var isEditing by remember { mutableStateOf(initialIsEditing) }
@@ -69,7 +68,7 @@ fun ProfileSettingsScreen(
     var name by remember { mutableStateOf(initialData.name) }
     var phone by remember { mutableStateOf(initialData.phone) }
     var description by remember { mutableStateOf(initialData.description) }
-    var selectedInterests by remember { mutableStateOf(initialData.interests) }
+    var selectedInterestIds by remember { mutableStateOf(initialData.interestIds) }
 
     val topBarTitle = if (isEditing) {
         stringResource(R.string.settings_edit_profile_title)
@@ -93,15 +92,15 @@ fun ProfileSettingsScreen(
                 trailingContent = {
                     if (isEditing) {
                         TextButton(
+                            enabled = !isSaving && categories.isNotEmpty(),
                             onClick = {
-                                isEditing = false
                                 onSaveProfile(
                                     ProfileSettingsData(
                                         username = username,
                                         name = name,
                                         phone = phone,
                                         description = description,
-                                        interests = selectedInterests,
+                                        interestIds = selectedInterestIds,
                                     )
                                 )
                             },
@@ -212,25 +211,41 @@ fun ProfileSettingsScreen(
                     modifier = Modifier.padding(bottom = VexSpace.s3),
                 )
 
-                FlowRow(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(VexSpace.s2),
-                    verticalArrangement = Arrangement.spacedBy(VexSpace.s2),
-                ) {
-                    DefaultInterestCategories.forEach { category ->
-                        val isSelected = category in selectedInterests
-                        VexSelectableChip(
-                            text = category,
-                            selected = isSelected,
-                            onSelectedChange = {
-                                if (isEditing) {
-                                    selectedInterests = if (isSelected) {
-                                        selectedInterests - category
-                                    } else {
-                                        selectedInterests + category
-                                    }
-                                }
-                            },
+                InterestCategoryChips(
+                    categories = categories,
+                    selectedIds = selectedInterestIds,
+                    onToggle = { idKategori ->
+                        if (isEditing && !isSaving) {
+                            selectedInterestIds = if (idKategori in selectedInterestIds) {
+                                selectedInterestIds - idKategori
+                            } else {
+                                selectedInterestIds + idKategori
+                            }
+                        }
+                    },
+                    enabled = isEditing && !isSaving,
+                )
+
+                if (categories.isEmpty() && !isSaving) {
+                    Text(
+                        text = stringResource(R.string.interest_empty),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = colors.textMuted,
+                        modifier = Modifier.padding(top = VexSpace.s2),
+                    )
+                }
+
+                if (errorMessage != null) {
+                    Spacer(modifier = Modifier.height(VexSpace.s3))
+                    Text(
+                        text = errorMessage,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = colors.danger,
+                    )
+                    TextButton(onClick = onRetryClick) {
+                        Text(
+                            text = stringResource(R.string.interest_retry),
+                            color = colors.primaryText,
                         )
                     }
                 }
@@ -243,12 +258,22 @@ fun ProfileSettingsScreen(
 // Previews
 // ---------------------------------------------------------
 
+private val sampleProfileCategories = listOf(
+    KategoriModel(1, "Cybersecurity"),
+    KategoriModel(2, "Software"),
+    KategoriModel(3, "UI/UX"),
+    KategoriModel(6, "3D"),
+    KategoriModel(7, "Animation"),
+    KategoriModel(10, "Game Dev"),
+)
+
 @Preview(name = "ProfileSettings View - Dark Mode", showBackground = true, backgroundColor = 0xFF1F1F1F)
 @Composable
 private fun ProfileSettingsViewDarkPreview() {
     VexTheme(mode = ThemeMode.Dark) {
         ProfileSettingsScreen(
             initialData = dummySettingsProfile,
+            categories = sampleProfileCategories,
             onBackClick = {},
             onSaveProfile = {},
             initialIsEditing = false,
@@ -262,6 +287,7 @@ private fun ProfileSettingsEditLightPreview() {
     VexTheme(mode = ThemeMode.Light) {
         ProfileSettingsScreen(
             initialData = dummySettingsProfile,
+            categories = sampleProfileCategories,
             onBackClick = {},
             onSaveProfile = {},
             initialIsEditing = true,

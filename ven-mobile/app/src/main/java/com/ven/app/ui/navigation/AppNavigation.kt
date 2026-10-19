@@ -41,7 +41,7 @@ import com.ven.app.ui.screens.explore.dummyPostsFeed
 import com.ven.app.ui.screens.home.HomeScreen
 import com.ven.app.ui.screens.home.HomeUiState
 import com.ven.app.ui.screens.home.SampleHomeUiState
-import com.ven.app.ui.screens.onboarding.InterestScreen
+import com.ven.app.ui.screens.onboarding.InterestRoute
 import com.ven.app.ui.screens.profile.ProfileScreen
 import com.ven.app.ui.screens.profile.dummyProfileUiState
 import com.ven.app.ui.screens.requestmeeting.RequestMeetingEvent
@@ -53,13 +53,12 @@ import com.ven.app.ui.screens.settings.ChangeEmailScreen
 import com.ven.app.ui.screens.settings.ChangePasswordScreen
 import com.ven.app.ui.screens.settings.HistoryScreen
 import com.ven.app.ui.screens.settings.LanguageScreen
-import com.ven.app.ui.screens.settings.ProfileSettingsScreen
+import com.ven.app.ui.screens.settings.ProfileSettingsRoute
 import com.ven.app.ui.screens.settings.SettingsPlaceholderScreen
 import com.ven.app.ui.screens.settings.SettingsScreen
 import com.ven.app.ui.screens.settings.ThemeScreen
 import com.ven.app.ui.screens.settings.VerifyEmailScreen
 import com.ven.app.ui.screens.settings.dummyHistoryEntries
-import com.ven.app.ui.screens.settings.dummySettingsProfile
 import com.ven.app.ui.theme.VexTheme
 
 /**
@@ -72,7 +71,6 @@ fun AppNavHost(showExplore: Boolean = false) {
     val themePreferences = remember { ThemePreferences.getInstance(context) }
     val sessionManager = remember { SessionManager.getInstance(context) }
     val currentTheme by themePreferences.themeMode.collectAsStateWithLifecycle()
-    var profileData by remember { mutableStateOf(dummySettingsProfile) }
     var selectedLanguage by remember { mutableStateOf("English") }
     var isAccountDisabled by remember { mutableStateOf(false) }
 
@@ -118,16 +116,16 @@ fun AppNavHost(showExplore: Boolean = false) {
                         popUpTo(Screen.Login.route) { inclusive = true }
                     }
                 },
+                onNavigateToOnboarding = {
+                    navController.navigate(Screen.OnboardingInterest.route) {
+                        popUpTo(Screen.Login.route) { inclusive = true }
+                    }
+                },
                 onNavigateToRegister = {
                     navController.navigate(Screen.Register.route)
                 },
                 onForgotPassword = {
                     navController.navigate(Screen.ForgotPassword.route)
-                },
-                onGoogleClick = {
-                    navController.navigate(Screen.Home.route) {
-                        popUpTo(Screen.Login.route) { inclusive = true }
-                    }
                 },
             )
         }
@@ -161,15 +159,10 @@ fun AppNavHost(showExplore: Boolean = false) {
         // 3. Alur Onboarding (Pemilihan Kategori Minat)
         // -------------------------------------------------------------
         composable(Screen.OnboardingInterest.route) {
-            InterestScreen(
-                onSaveSuccess = { _ ->
+            InterestRoute(
+                onFinished = {
                     navController.navigate(Screen.Home.route) {
-                        popUpTo(Screen.Login.route) { inclusive = true }
-                    }
-                },
-                onMaybeLater = {
-                    navController.navigate(Screen.Home.route) {
-                        popUpTo(Screen.Login.route) { inclusive = true }
+                        popUpTo(0) { inclusive = true }
                     }
                 },
             )
@@ -384,13 +377,9 @@ fun AppNavHost(showExplore: Boolean = false) {
         }
 
         composable(Screen.SettingsProfile.route) {
-            ProfileSettingsScreen(
-                initialData = profileData,
+            ProfileSettingsRoute(
                 onBackClick = { navController.popBackStack() },
-                onSaveProfile = { updated ->
-                    profileData = updated
-                    navController.popBackStack()
-                },
+                onSaved = { navController.popBackStack() },
             )
         }
 
