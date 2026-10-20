@@ -59,21 +59,21 @@ data class ExhibitFurnitureItem(
 
 val sampleFurnitureItems: List<ExhibitFurnitureItem> = listOf(
     // Light
-    ExhibitFurnitureItem("f_light_1", "Spotlight", ExhibitFurnitureCategory.Light, ExhibitFurnitureType.Spotlight),
-    ExhibitFurnitureItem("f_light_2", "Floor Lamp", ExhibitFurnitureCategory.Light, ExhibitFurnitureType.Spotlight),
-    ExhibitFurnitureItem("f_light_3", "Track Light", ExhibitFurnitureCategory.Light, ExhibitFurnitureType.Spotlight),
+    ExhibitFurnitureItem("f_light_1", "Spotlight", ExhibitFurnitureCategory.Light, ExhibitFurnitureType.Spotlight, R.drawable.ic_obj_light),
+    ExhibitFurnitureItem("f_light_2", "Floor Lamp", ExhibitFurnitureCategory.Light, ExhibitFurnitureType.Spotlight, R.drawable.ic_obj_light),
+    ExhibitFurnitureItem("f_light_3", "Track Light", ExhibitFurnitureCategory.Light, ExhibitFurnitureType.Spotlight, R.drawable.ic_obj_light),
     // Chair
-    ExhibitFurnitureItem("f_chair_1", "Lounge Chair", ExhibitFurnitureCategory.Chair, ExhibitFurnitureType.LoungeChair),
-    ExhibitFurnitureItem("f_chair_2", "Modern Stool", ExhibitFurnitureCategory.Chair, ExhibitFurnitureType.LoungeChair),
-    ExhibitFurnitureItem("f_chair_3", "Gallery Bench", ExhibitFurnitureCategory.Chair, ExhibitFurnitureType.GalleryBench),
+    ExhibitFurnitureItem("f_chair_1", "Lounge Chair", ExhibitFurnitureCategory.Chair, ExhibitFurnitureType.LoungeChair, R.drawable.ic_furniture),
+    ExhibitFurnitureItem("f_chair_2", "Modern Stool", ExhibitFurnitureCategory.Chair, ExhibitFurnitureType.LoungeChair, R.drawable.ic_furniture),
+    ExhibitFurnitureItem("f_chair_3", "Gallery Bench", ExhibitFurnitureCategory.Chair, ExhibitFurnitureType.GalleryBench, R.drawable.ic_furniture),
     // Plant
-    ExhibitFurnitureItem("f_plant_1", "Monstera", ExhibitFurnitureCategory.Plant, ExhibitFurnitureType.IndoorPlant),
-    ExhibitFurnitureItem("f_plant_2", "Indoor Ficus", ExhibitFurnitureCategory.Plant, ExhibitFurnitureType.IndoorPlant),
-    ExhibitFurnitureItem("f_plant_3", "Desk Bonsai", ExhibitFurnitureCategory.Plant, ExhibitFurnitureType.IndoorPlant),
+    ExhibitFurnitureItem("f_plant_1", "Monstera", ExhibitFurnitureCategory.Plant, ExhibitFurnitureType.IndoorPlant, R.drawable.ic_obj_plant),
+    ExhibitFurnitureItem("f_plant_2", "Indoor Ficus", ExhibitFurnitureCategory.Plant, ExhibitFurnitureType.IndoorPlant, R.drawable.ic_obj_plant),
+    ExhibitFurnitureItem("f_plant_3", "Desk Bonsai", ExhibitFurnitureCategory.Plant, ExhibitFurnitureType.IndoorPlant, R.drawable.ic_obj_plant),
     // Other
-    ExhibitFurnitureItem("f_other_1", "Info Stand", ExhibitFurnitureCategory.Other, ExhibitFurnitureType.GalleryBench),
-    ExhibitFurnitureItem("f_other_2", "Room Divider", ExhibitFurnitureCategory.Other, ExhibitFurnitureType.GalleryBench),
-    ExhibitFurnitureItem("f_other_3", "Pedestal", ExhibitFurnitureCategory.Other, ExhibitFurnitureType.GalleryBench),
+    ExhibitFurnitureItem("f_other_1", "Info Stand", ExhibitFurnitureCategory.Other, ExhibitFurnitureType.GalleryBench, R.drawable.ic_obj_other),
+    ExhibitFurnitureItem("f_other_2", "Room Divider", ExhibitFurnitureCategory.Other, ExhibitFurnitureType.GalleryBench, R.drawable.ic_obj_other),
+    ExhibitFurnitureItem("f_other_3", "Pedestal", ExhibitFurnitureCategory.Other, ExhibitFurnitureType.GalleryBench, R.drawable.ic_obj_other),
 )
 
 @Immutable
@@ -155,6 +155,7 @@ data class ExhibitEditorUiState(
         ExhibitPanelSlot(slotIndex = index)
     },
     val furnitureCounts: Map<ExhibitFurnitureType, Int> = emptyMap(),
+    val furnitureItemCounts: Map<String, Int> = emptyMap(),
     val activeSheet: ExhibitEditorSheet = ExhibitEditorSheet.None,
     val selectedSlotIndexForAssignment: Int = 0,
     val availableArtworks: List<ExhibitArtwork> = sampleUserArtworks,
@@ -168,7 +169,7 @@ data class ExhibitEditorUiState(
         get() = template.capacity
 
     val totalObjectsCount: Int
-        get() = furnitureCounts.values.sum()
+        get() = if (furnitureItemCounts.isNotEmpty()) furnitureItemCounts.values.sum() else furnitureCounts.values.sum()
 
     val isTitleDescComplete: Boolean
         get() = title.isNotBlank() && description.isNotBlank()

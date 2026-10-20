@@ -98,6 +98,7 @@ fun CreateExhibitEditorScreen(
             viewModel.updateCoverBanner(banner)
         },
         onToggleArtwork = viewModel::toggleArtworkAssignment,
+        onToggleFurnitureItem = viewModel::toggleFurnitureItem,
         onIncrementFurniture = viewModel::incrementFurniture,
         onDecrementFurniture = viewModel::decrementFurniture,
         onSelectColor = viewModel::selectWallColor,
@@ -115,6 +116,7 @@ fun CreateExhibitEditorContent(
     onDismissSheet: () -> Unit,
     onSaveDetails: (title: String, desc: String, banner: String?) -> Unit,
     onToggleArtwork: (ExhibitArtwork) -> Unit,
+    onToggleFurnitureItem: ((String) -> Unit)? = null,
     onIncrementFurniture: (ExhibitFurnitureType) -> Unit,
     onDecrementFurniture: (ExhibitFurnitureType) -> Unit,
     onSelectColor: (Color) -> Unit,
@@ -195,6 +197,8 @@ fun CreateExhibitEditorContent(
                         // Wireframe Frame 4: 4 Tab Furnitur & 3 Kartu Objek
                         ExhibitFurnitureBottomPanel(
                             furnitureCounts = state.furnitureCounts,
+                            furnitureItemCounts = state.furnitureItemCounts,
+                            onToggleFurnitureItem = onToggleFurnitureItem,
                             onIncrement = onIncrementFurniture,
                             onDecrement = onDecrementFurniture,
                         )

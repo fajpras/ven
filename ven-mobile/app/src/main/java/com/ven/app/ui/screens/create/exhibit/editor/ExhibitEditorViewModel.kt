@@ -117,6 +117,19 @@ class ExhibitEditorViewModel(
         }
     }
 
+    fun toggleFurnitureItem(itemId: String) {
+        _uiState.update { state ->
+            val current = state.furnitureItemCounts[itemId] ?: 0
+            val newCounts = state.furnitureItemCounts.toMutableMap()
+            if (current > 0) {
+                newCounts.remove(itemId)
+            } else {
+                newCounts[itemId] = 1
+            }
+            state.copy(furnitureItemCounts = newCounts)
+        }
+    }
+
     fun incrementFurniture(type: ExhibitFurnitureType) {
         _uiState.update { state ->
             val current = state.furnitureCounts[type] ?: 0

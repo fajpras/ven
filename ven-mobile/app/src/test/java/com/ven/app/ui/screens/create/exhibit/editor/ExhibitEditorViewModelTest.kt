@@ -77,14 +77,18 @@ class ExhibitEditorViewModelTest {
 
     @Test
     fun furnitureOperations_updatesObjectsCount() {
-        viewModel.incrementFurniture(ExhibitFurnitureType.Spotlight)
-        viewModel.incrementFurniture(ExhibitFurnitureType.LoungeChair)
+        viewModel.toggleFurnitureItem("f_light_1")
+        viewModel.toggleFurnitureItem("f_chair_1")
 
-        val state = viewModel.uiState.value
+        var state = viewModel.uiState.value
         assertEquals(2, state.totalObjectsCount)
+        assertEquals(1, state.furnitureItemCounts["f_light_1"])
 
-        viewModel.decrementFurniture(ExhibitFurnitureType.Spotlight)
-        assertEquals(1, viewModel.uiState.value.totalObjectsCount)
+        // Toggle off
+        viewModel.toggleFurnitureItem("f_light_1")
+        state = viewModel.uiState.value
+        assertEquals(1, state.totalObjectsCount)
+        assertEquals(null, state.furnitureItemCounts["f_light_1"])
     }
 
     @Test

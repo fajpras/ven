@@ -64,6 +64,8 @@ fun ExhibitFurnitureBottomPanel(
     onIncrement: (ExhibitFurnitureType) -> Unit,
     onDecrement: (ExhibitFurnitureType) -> Unit,
     modifier: Modifier = Modifier,
+    furnitureItemCounts: Map<String, Int> = emptyMap(),
+    onToggleFurnitureItem: ((String) -> Unit)? = null,
     items: List<ExhibitFurnitureItem> = sampleFurnitureItems,
 ) {
     val colors = VexTheme.colors
@@ -119,14 +121,24 @@ fun ExhibitFurnitureBottomPanel(
             ) {
                 for (i in 0 until 3) {
                     val item = filteredItems.getOrNull(i)
-                    val count = item?.let { furnitureCounts[it.type] ?: 0 } ?: 0
+                    val count = item?.let {
+                        if (furnitureItemCounts.isNotEmpty()) {
+                            furnitureItemCounts[it.id] ?: 0
+                        } else {
+                            furnitureCounts[it.type] ?: 0
+                        }
+                    } ?: 0
 
                     FurnitureObjectCard(
                         item = item,
                         count = count,
                         onClick = {
                             if (item != null) {
-                                onIncrement(item.type)
+                                if (onToggleFurnitureItem != null) {
+                                    onToggleFurnitureItem(item.id)
+                                } else {
+                                    onIncrement(item.type)
+                                }
                             }
                         },
                         modifier = Modifier.weight(1f),
