@@ -214,16 +214,19 @@
     <string name="create_exhibit_tool_furniture">Furnitur</string>
     <string name="create_exhibit_tool_color">Warna Dinding</string>
     <string name="create_exhibit_panel_count">%1$d/%2$d panel</string>
+    <string name="create_exhibit_objects_count">%1$d/%2$d objek</string>
     <string name="create_exhibit_check_title_desc">judul &amp; deskripsi</string>
     <string name="create_exhibit_check_panel">satu panel</string>
     <string name="create_exhibit_publish_action">Publikasikan</string>
     <string name="create_exhibit_publish_success">Pameran berhasil dipublikasikan</string>
+    <string name="create_exhibit_details_header">Detail</string>
+    <string name="create_exhibit_thumbnail_label">Thumbnail</string>
     <string name="create_exhibit_cover_banner">Banner Sampul</string>
     <string name="create_exhibit_cover_placeholder">Ketuk untuk unggah banner sampul (16:9)</string>
     <string name="create_exhibit_name_label">Judul</string>
-    <string name="create_exhibit_name_placeholder">mis. Pameran Solo Virtualku</string>
+    <string name="create_exhibit_name_placeholder">tuliskan judul...</string>
     <string name="create_exhibit_desc_label">Deskripsi</string>
-    <string name="create_exhibit_desc_placeholder">Tuliskan cerita dan tema pameran Anda...</string>
+    <string name="create_exhibit_desc_placeholder">tuliskan deskripsi...</string>
     <string name="create_exhibit_save_details">Simpan Detail</string>
     <string name="create_exhibit_sheet_panels_title">Atur Karya pada Panel</string>
     <string name="create_exhibit_panel_slot_title">Slot Panel %1$d</string>
@@ -231,4 +234,18 @@
     <string name="create_exhibit_panel_select_prompt">Pilih karya untuk dipajang pada panel ini</string>
     <string name="create_exhibit_sheet_furniture_title">Dekorasi &amp; Objek 3D</string>
     <string name="create_exhibit_sheet_color_title">Warna Dinding Ruangan</string>
+    <string name="create_exhibit_color_label">Warna</string>
+    <string name="create_exhibit_tab_poster">Poster</string>
+    <string name="create_exhibit_tab_video">Video</string>
+    <string name="create_exhibit_tab_light">Lampu</string>
+    <string name="create_exhibit_tab_chair">Kursi</string>
+    <string name="create_exhibit_tab_plant">Tanaman</string>
+    <string name="create_exhibit_tab_other">Lainnya</string>
+
+    <!-- Create Content Options Sheet -->
+    <string name="create_sheet_title">Buat Karya</string>
+    <string name="create_sheet_post_title">Postingan Baru</string>
+    <string name="create_sheet_post_desc">Bagikan karya, foto, atau desain ke linimasa</string>
+    <string name="create_sheet_exhibit_title">Pameran 3D Baru</string>
+    <string name="create_sheet_exhibit_desc">Rancang ruang pameran virtual 3D interaktif</string>
 </resources>

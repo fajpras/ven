@@ -2,17 +2,11 @@ package com.ven.app.ui.screens.create.exhibit.editor
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
@@ -21,33 +15,44 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ven.app.R
-import com.ven.app.ui.components.ui.VexButton
 import com.ven.app.ui.screens.create.exhibit.editor.components.Exhibit3dCanvas
-import com.ven.app.ui.screens.create.exhibit.editor.components.ExhibitPublishChecklist
-import com.ven.app.ui.screens.create.exhibit.editor.sheets.ExhibitColorBottomSheet
-import com.ven.app.ui.screens.create.exhibit.editor.sheets.ExhibitDetailsBottomSheet
-import com.ven.app.ui.screens.create.exhibit.editor.sheets.ExhibitFurnitureBottomSheet
-import com.ven.app.ui.screens.create.exhibit.editor.sheets.ExhibitPanelsBottomSheet
+import com.ven.app.ui.screens.create.exhibit.editor.components.ExhibitColorBottomPanel
+import com.ven.app.ui.screens.create.exhibit.editor.components.ExhibitDetailsView
+import com.ven.app.ui.screens.create.exhibit.editor.components.ExhibitFurnitureBottomPanel
+import com.ven.app.ui.screens.create.exhibit.editor.components.ExhibitMainBottomPanel
+import com.ven.app.ui.screens.create.exhibit.editor.components.ExhibitPanelsBottomPanel
 import com.ven.app.ui.theme.ThemeMode
-import com.ven.app.ui.theme.VexSpace
 import com.ven.app.ui.theme.VexTheme
 
 /**
- * Layar Editor Ruang Pameran Virtual 3D (Langkah 2 Create Exhibit - DESIGN.md §8.14.2).
+ * Layar Editor Ruang Pameran Virtual 3D (Langkah 2 Create Exhibit - Wireframe Create Exhibition).
  *
- * Fitur:
- * - Kanvas 3D Isometrik dinamis dengan sudut bawah melengkung 28dp.
- * - Tombol Back di kiri-atas untuk kembali ke pemilihan template.
- * - 4 Tombol Alat Melayang (Aa Details, Panel Karya, Furnitur Objek, dan Warna Dinding).
- * - Indikator jumlah panel "X/N panels" di kiri-bawah kanvas.
- * - Baris Checklist Syarat Penerbitan (title & description, a panel).
- * - Tombol CTA "Publish" yang aktif secara validasi real-time.
+ * Alur & Tampilan Presisi Sesuai Wireframe:
+ * 1. Layar Utama (Main Screen):
+ *    - Kanvas 3D Isometrik memenuhi area atas dengan indikator badge "X/9 panels" di kiri-bawah.
+ *    - Tombol Back di kiri-atas dan 4 Tombol Alat Melayang di kanan-atas:
+ *      (1) Aa (Details), (2) Panel (Karya), (3) Sofa (Furnitur), (4) Warna (Wall Color).
+ *    - Panel Bawah: Checklist 2 kriteria ("title & description" dan "a panel") dengan status ✕ merah atau ✓ hijau,
+ *      serta tombol CTA "Publish" yang aktif jika kedua kriteria terpenuhi.
+ * 2. Layar Details (Aa):
+ *    - Header "Details" dengan tombol Centang (✓) di kanan-atas untuk simpan & kembali.
+ *    - Pratinjau banner thumbnail 16:9, bidang input Title, dan bidang input Description.
+ * 3. Mode Panel Karya (Panels):
+ *    - Kanvas 3D tetap terlihat di atas dengan tombol Centang (✓) di kanan-atas.
+ *    - Panel Bawah: Tab "Poster" & "Video" dengan 3 kartu karya rounded square dan paginasi titik (• • •).
+ * 4. Mode Furnitur (Objects):
+ *    - Kanvas 3D dengan badge "X/9 objects" dan tombol Centang (✓) di kanan-atas.
+ *    - Panel Bawah: 4 Tab ("Light", "Chair", "Plant", "Other") dengan 3 kartu objek dan paginasi titik.
+ * 5. Mode Warna (Color):
+ *    - Kanvas 3D berubah warna dinding secara real-time dengan tombol Centang (✓) di kanan-atas.
+ *    - Panel Bawah: Judul "Color" dan 12 lingkaran warna terbagi dalam 2 baris x 6 kolom.
  */
 @Composable
 fun CreateExhibitEditorScreen(
@@ -92,9 +97,7 @@ fun CreateExhibitEditorScreen(
             viewModel.updateDescription(desc)
             viewModel.updateCoverBanner(banner)
         },
-        onSelectSlot = viewModel::selectSlotForAssignment,
-        onAssignArtwork = viewModel::assignArtworkToSlot,
-        onRemoveArtwork = viewModel::removeArtworkFromSlot,
+        onToggleArtwork = viewModel::toggleArtworkAssignment,
         onIncrementFurniture = viewModel::incrementFurniture,
         onDecrementFurniture = viewModel::decrementFurniture,
         onSelectColor = viewModel::selectWallColor,
@@ -111,12 +114,10 @@ fun CreateExhibitEditorContent(
     onOpenSheet: (ExhibitEditorSheet) -> Unit,
     onDismissSheet: () -> Unit,
     onSaveDetails: (title: String, desc: String, banner: String?) -> Unit,
-    onSelectSlot: (Int) -> Unit,
-    onAssignArtwork: (ExhibitArtwork) -> Unit,
-    onRemoveArtwork: (Int) -> Unit,
+    onToggleArtwork: (ExhibitArtwork) -> Unit,
     onIncrementFurniture: (ExhibitFurnitureType) -> Unit,
     onDecrementFurniture: (ExhibitFurnitureType) -> Unit,
-    onSelectColor: (androidx.compose.ui.graphics.Color) -> Unit,
+    onSelectColor: (Color) -> Unit,
     onPublish: () -> Unit,
     modifier: Modifier = Modifier,
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
@@ -128,47 +129,78 @@ fun CreateExhibitEditorContent(
             .fillMaxSize()
             .background(colors.bg),
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState()),
-        ) {
-            // 1. Kanvas 3D Isometrik & 4 Alat Melayang
-            Exhibit3dCanvas(
-                wallColor = state.wallColor,
-                panelSlots = state.panelSlots,
-                totalPanels = state.totalPanelsCount,
-                assignedPanels = state.assignedPanelsCount,
-                onBackClick = onBackClick,
-                onToolClick = onOpenSheet,
+        if (state.activeSheet == ExhibitEditorSheet.Details) {
+            // 1. Tampilan Full Layar Details Sesuai Wireframe Frame 2
+            ExhibitDetailsView(
+                initialTitle = state.title,
+                initialDescription = state.description,
+                coverBannerUri = state.coverBannerUri,
+                onSave = { title, desc, banner ->
+                    onSaveDetails(title, desc, banner)
+                    onDismissSheet()
+                },
             )
-
-            // 2. Area Bawah: Checklist Syarat Penerbitan & Tombol Publish
+        } else {
+            // 2. Kanvas 3D Isometrik & Panel Bawah Sesuai Wireframe
             Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = VexSpace.s6, vertical = VexSpace.s6)
-                    .navigationBarsPadding(),
-                verticalArrangement = Arrangement.spacedBy(VexSpace.s6),
+                modifier = Modifier.fillMaxSize(),
             ) {
-                // Checklist Status Penerbitan
-                ExhibitPublishChecklist(
-                    isTitleDescComplete = state.isTitleDescComplete,
-                    isPanelComplete = state.isPanelComplete,
-                    onTitleDescClick = { onOpenSheet(ExhibitEditorSheet.Details) },
-                    onPanelClick = { onOpenSheet(ExhibitEditorSheet.Panels) },
+                // Kanvas 3D di area atas (mengambil sisa tinggi layar responsif)
+                Exhibit3dCanvas(
+                    activeSheet = state.activeSheet,
+                    wallColor = state.wallColor,
+                    panelSlots = state.panelSlots,
+                    totalPanels = state.totalPanelsCount,
+                    assignedPanels = state.assignedPanelsCount,
+                    assignedObjects = state.totalObjectsCount,
+                    totalObjects = 9,
+                    onBackClick = onBackClick,
+                    onConfirmClick = onDismissSheet,
+                    onToolClick = onOpenSheet,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
                 )
 
-                Spacer(modifier = Modifier.height(VexSpace.s2))
-
-                // Tombol CTA Publish
-                VexButton(
-                    text = stringResource(R.string.create_exhibit_publish_action),
-                    onClick = onPublish,
-                    enabled = state.canPublish && !state.isPublishing,
-                    loading = state.isPublishing,
-                    modifier = Modifier.fillMaxWidth(),
-                )
+                // Panel Bawah Sesuai Status Sheet Alat
+                when (state.activeSheet) {
+                    ExhibitEditorSheet.None -> {
+                        // Wireframe: Layar Utama (Checklist title & desc, a panel + Tombol Publish)
+                        ExhibitMainBottomPanel(
+                            isTitleDescComplete = state.isTitleDescComplete,
+                            isPanelComplete = state.isPanelComplete,
+                            canPublish = state.canPublish,
+                            isPublishing = state.isPublishing,
+                            onTitleDescClick = { onOpenSheet(ExhibitEditorSheet.Details) },
+                            onPanelClick = { onOpenSheet(ExhibitEditorSheet.Panels) },
+                            onPublish = onPublish,
+                        )
+                    }
+                    ExhibitEditorSheet.Color -> {
+                        // Wireframe Frame 1: Pemilihan Warna Dinding (12 Lingkaran Warna 2x6)
+                        ExhibitColorBottomPanel(
+                            selectedColor = state.wallColor,
+                            onSelectColor = onSelectColor,
+                        )
+                    }
+                    ExhibitEditorSheet.Panels -> {
+                        // Wireframe Frame 3: Tab Poster/Video & 3 Kartu Karya
+                        ExhibitPanelsBottomPanel(
+                            panelSlots = state.panelSlots,
+                            availableArtworks = state.availableArtworks,
+                            onToggleArtwork = onToggleArtwork,
+                        )
+                    }
+                    ExhibitEditorSheet.Furniture -> {
+                        // Wireframe Frame 4: 4 Tab Furnitur & 3 Kartu Objek
+                        ExhibitFurnitureBottomPanel(
+                            furnitureCounts = state.furnitureCounts,
+                            onIncrement = onIncrementFurniture,
+                            onDecrement = onDecrementFurniture,
+                        )
+                    }
+                    ExhibitEditorSheet.Details -> Unit
+                }
             }
         }
 
@@ -179,48 +211,6 @@ fun CreateExhibitEditorContent(
                 .align(Alignment.BottomCenter)
                 .navigationBarsPadding(),
         )
-
-        // 3. Bottom Sheets Sesuai Alat yang Sedang Aktif
-        when (state.activeSheet) {
-            ExhibitEditorSheet.Details -> {
-                ExhibitDetailsBottomSheet(
-                    initialTitle = state.title,
-                    initialDescription = state.description,
-                    coverBannerUri = state.coverBannerUri,
-                    onSave = onSaveDetails,
-                    onDismiss = onDismissSheet,
-                )
-            }
-            ExhibitEditorSheet.Panels -> {
-                ExhibitPanelsBottomSheet(
-                    panelSlots = state.panelSlots,
-                    selectedSlotIndex = state.selectedSlotIndexForAssignment,
-                    availableArtworks = state.availableArtworks,
-                    onSelectSlot = onSelectSlot,
-                    onAssignArtwork = onAssignArtwork,
-                    onRemoveArtwork = onRemoveArtwork,
-                    onDismiss = onDismissSheet,
-                )
-            }
-            ExhibitEditorSheet.Furniture -> {
-                ExhibitFurnitureBottomSheet(
-                    furnitureCounts = state.furnitureCounts,
-                    onIncrement = onIncrementFurniture,
-                    onDecrement = onDecrementFurniture,
-                    onDismiss = onDismissSheet,
-                )
-            }
-            ExhibitEditorSheet.Color -> {
-                ExhibitColorBottomSheet(
-                    selectedColor = state.wallColor,
-                    onSelectColor = onSelectColor,
-                    onDismiss = onDismissSheet,
-                )
-            }
-            ExhibitEditorSheet.None -> {
-                // Tidak ada sheet terbuka
-            }
-        }
     }
 }
 
@@ -228,22 +218,17 @@ fun CreateExhibitEditorContent(
 // Previews
 // -------------------------------------------------------------
 
-@Preview(name = "Exhibit Editor - Dark", showBackground = true, backgroundColor = 0xFF1F1F1F)
+@Preview(name = "Exhibit Editor - Main Screen Incomplete", showBackground = true)
 @Composable
-private fun ExhibitEditorDarkPreview() {
-    VexTheme(mode = ThemeMode.Dark) {
+private fun ExhibitEditorMainIncompletePreview() {
+    VexTheme(mode = ThemeMode.Light) {
         CreateExhibitEditorContent(
-            state = ExhibitEditorUiState(
-                title = "Virtual Retrospective",
-                description = "Solo design showcase",
-            ),
+            state = ExhibitEditorUiState(),
             onBackClick = {},
             onOpenSheet = {},
             onDismissSheet = {},
             onSaveDetails = { _, _, _ -> },
-            onSelectSlot = {},
-            onAssignArtwork = {},
-            onRemoveArtwork = {},
+            onToggleArtwork = {},
             onIncrementFurniture = {},
             onDecrementFurniture = {},
             onSelectColor = {},
@@ -252,19 +237,61 @@ private fun ExhibitEditorDarkPreview() {
     }
 }
 
-@Preview(name = "Exhibit Editor - Light", showBackground = true, backgroundColor = 0xFFFFFFFF)
+@Preview(name = "Exhibit Editor - Color Mode", showBackground = true)
 @Composable
-private fun ExhibitEditorLightPreview() {
+private fun ExhibitEditorColorModePreview() {
     VexTheme(mode = ThemeMode.Light) {
         CreateExhibitEditorContent(
-            state = ExhibitEditorUiState(),
+            state = ExhibitEditorUiState(
+                activeSheet = ExhibitEditorSheet.Color,
+            ),
             onBackClick = {},
             onOpenSheet = {},
             onDismissSheet = {},
             onSaveDetails = { _, _, _ -> },
-            onSelectSlot = {},
-            onAssignArtwork = {},
-            onRemoveArtwork = {},
+            onToggleArtwork = {},
+            onIncrementFurniture = {},
+            onDecrementFurniture = {},
+            onSelectColor = {},
+            onPublish = {},
+        )
+    }
+}
+
+@Preview(name = "Exhibit Editor - Panels Mode", showBackground = true)
+@Composable
+private fun ExhibitEditorPanelsModePreview() {
+    VexTheme(mode = ThemeMode.Light) {
+        CreateExhibitEditorContent(
+            state = ExhibitEditorUiState(
+                activeSheet = ExhibitEditorSheet.Panels,
+            ),
+            onBackClick = {},
+            onOpenSheet = {},
+            onDismissSheet = {},
+            onSaveDetails = { _, _, _ -> },
+            onToggleArtwork = {},
+            onIncrementFurniture = {},
+            onDecrementFurniture = {},
+            onSelectColor = {},
+            onPublish = {},
+        )
+    }
+}
+
+@Preview(name = "Exhibit Editor - Furniture Mode", showBackground = true)
+@Composable
+private fun ExhibitEditorFurnitureModePreview() {
+    VexTheme(mode = ThemeMode.Light) {
+        CreateExhibitEditorContent(
+            state = ExhibitEditorUiState(
+                activeSheet = ExhibitEditorSheet.Furniture,
+            ),
+            onBackClick = {},
+            onOpenSheet = {},
+            onDismissSheet = {},
+            onSaveDetails = { _, _, _ -> },
+            onToggleArtwork = {},
             onIncrementFurniture = {},
             onDecrementFurniture = {},
             onSelectColor = {},

@@ -1,6 +1,6 @@
 # design.md: VEN / VEX (Virtual Exhibition), Android (Kotlin + Jetpack Compose) & Admin Web Panel
 
-> **Versi:** 0.6.7 (Penyempurnaan Ergonomi & Interaktivitas Alur Create Exhibit: BackHandler Sheet, Checklist Click-to-Open, dan Integrasi Aset Poster Riil)
+> **Versi:** 0.6.9 (Penyelarasan Total Tampilan & Alur Create Exhibition Editor 3D sesuai Wireframe Resmi Figma: Main Screen Checklist, Details View, Panels, Furniture, dan Color Docked Bottom Panels)
 > **Pembaca utama:** AI/developer yang mengimplementasikan UI.
 > **Penanda:**
 > - `[OBSERVED]` = diambil langsung dari wireframe/Figma.
@@ -1972,6 +1972,40 @@ Untuk mengoptimalkan ergonomi dan estetika desktop admin panel, ditetapkan atura
 ---
 
 ## Changelog
+- **0.6.9**: Penyelarasan Total Tampilan & Alur **Create Exhibition Editor 3D** sesuai Wireframe Resmi Figma:
+  - **Layar Utama Editor (Main Screen)**:
+    - Kanvas 3D isometrik dengan tombol Back di kiri-atas dan 4 tombol melayang di kanan-atas (`Aa`, Panel, Sofa, Warna).
+    - Badge counter pill di kiri-bawah kanvas: `[ic_panel] X/9 panels` (misal `0/9 panels` atau `4/9 panels`).
+    - Panel bawah docked: Checklist 2 kriteria (`title & description` dan `a panel`) dengan status lingkaran teks merah ✕ atau hijau ✓ serta tombol CTA "Publish" yang otomatis aktif (ungu solid) saat kedua kriteria terpenuhi.
+  - **Layar Details (`Aa`)**:
+    - Layar penuh dengan TopBar: judul "Details" di kiri dan tombol Centang (✓) di kanan-atas untuk konfirmasi simpan dan kembali ke Layar Utama.
+    - Pratinjau banner 16:9 (`poster_2.webp` PBL Expo 2026 default), input Boxed Title ("My Exhibition 1"), dan textarea Description multiline ("type your description...").
+  - **Mode Panel Karya (`Panel`)**:
+    - Kanvas 3D tetap terlihat di area atas dengan tombol Centang (✓) di kanan-atas untuk kembali ke Layar Utama.
+    - Panel bawah docked dengan 2 tab ("Poster" | "Video") bergaris bawah aktif, 3 kartu karya rounded square (aspect ratio 1:1) dengan aksi instan tap untuk toggle penempatan karya pada slot panel ruangan, serta paginasi titik (• • •).
+  - **Mode Furnitur (`Sofa`)**:
+    - Kanvas 3D dengan counter `[ic_furniture] X/9 objects` dan tombol Centang (✓) di kanan-atas.
+    - Panel bawah docked menyediakan 4 tab ("Light", "Chair", "Plant", "Other"), 3 kartu objek dekorasi rounded square, dan paginasi titik (• • •).
+  - **Mode Warna Dinding (`Color`)**:
+    - Kanvas 3D merender perubahan warna dinding secara real-time dengan tombol Centang (✓) di kanan-atas.
+    - Panel bawah docked menampilkan judul "Color" dan palet 12 lingkaran warna terbagi presisi dalam 2 baris x 6 kolom (Row 1: White, Black, Coral, Cyan/Mint, Yellow, Purple; Row 2: Light Grey, Dark Grey, Hot Pink, Soft Mint, Pale Yellow, Lavender).
+- **0.6.8**: Integrasi Penuh **Alur Pembuatan Konten Post & Exhibit 3D (§8.13 & §8.14)** serta Penghubungan Titik Interaksi 3D Aplikasi:
+  - **Komponen `CreateOptionsBottomSheet` Terpadu**:
+    - Membangun modal bottom sheet kustom (`CreateOptionsBottomSheet`) dengan 2 opsi pilihan pembuatan konten:
+      1. **New Post**: Ikon grid postingan ungu VEN (`ic_tab_posts_filled`), judul *"New Post"*, deskripsi *"Share artwork, photos, or designs to the feed"*, navigasi langsung ke `Screen.CreatePost`.
+      2. **New Exhibit (3D)**: Ikon kubus 3D oranye (`ic_tab_exhibits_filled`), judul *"New Exhibit (3D)"*, deskripsi *"Build an interactive 3D virtual exhibition room"*, navigasi langsung ke `Screen.CreateExhibit`.
+    - Mengintegrasikan bottom sheet ini pada tombol "+" (`VexTopBar.Home` dan `VexTopBar.Profile`), sehingga pengguna dari Home maupun Profil dapat langsung memilih membuat postingan maupun ruang pameran 3D.
+  - **Penghubungan Seluruh Titik Interaksi 3D (3D Touchpoints)**:
+    - **Home Screen**:
+      - Ikon tombol 3D (`onView3dClick`) pada setiap kartu karya `PostCard` kini langsung membuka ruang pameran 3D virtual (`Screen.CreateExhibitEditor`).
+      - Ketukan banner pameran (`onBannerClick`) pada carousel pameran kini langsung membuka ruang 3D terkait.
+    - **PostsFeed Screen (Explore)**:
+      - Ikon 3D (`onView3dClick`) pada detail karya kini terhubung ke `Screen.CreateExhibitEditor`.
+    - **Profile Screen**:
+      - Pada tab `Exhibits`, mengetuk item kartu pameran di grid langsung membuka ruang pameran 3D editor/viewer (`Screen.CreateExhibitEditor`).
+      - Pada tab `Posts`, mengetuk karya membuka `Screen.PostsFeed`.
+    - **Explore Screen**:
+      - Pada tab `Exhibits`, mengetuk banner pameran `ExhibitBannerCard` kini langsung membuka ruang pameran 3D (`Screen.CreateExhibitEditor`).
 - **0.6.7**: Penyempurnaan Ergonomi & Interaktivitas **Alur Create Exhibit (§8.14)**:
   - **Sistem `BackHandler` Bertingkat di Layar Editor 3D**:
     - Menangani gesture / tombol back hardware Android secara cerdas: jika ada bottom sheet yang sedang terbuka (Details, Panels, Furniture, atau Color), menekan back akan menutup sheet tersebut terlebih dahulu; jika seluruh sheet tertutup, barulah menavigasi kembali ke layar pemilihan template.
