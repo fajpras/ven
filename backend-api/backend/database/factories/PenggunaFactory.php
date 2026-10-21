@@ -32,4 +32,11 @@ class PenggunaFactory extends Factory
             'role' => 'admin',
         ]);
     }
+
+    public function denganGoogle(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'google_id' => (string) fake()->unique()->numerify('#####################'),
+        ]);
+    }
 }
