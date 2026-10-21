@@ -14,11 +14,13 @@ return new class extends Migration
             $table->string('kata_sandi', 255)->nullable();
             $table->text('deskripsi')->nullable();
             $table->string('google_id', 255)->nullable();
+            $table->string('google_id_bidx', 64)->nullable()->index('pengguna_google_id_bidx_index');
             $table->string('email', 254)->unique();
             $table->string('nomor_hp', 20)->nullable()->unique();
             $table->string('foto_profil', 255)->nullable();
             $table->enum('role', ['admin', 'pengguna'])->default('pengguna');
             $table->enum('status', ['aktif', 'nonaktifkan', 'ditangguhkan'])->default('aktif');
+            $table->boolean('onboarding_selesai')->default(false);
             $table->timestamp('created_at')->useCurrent();
             $table->timestamp('updated_at')->nullable()->useCurrentOnUpdate();
             $table->timestamp('deleted_at')->nullable();

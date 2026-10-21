@@ -25,7 +25,7 @@ return new class extends Migration
         $baca = ['SELECT'];
 
         return [
-            'pengguna' => ['SELECT', 'UPDATE (nama, nama_panggilan, deskripsi, foto_profil, email, kata_sandi, status, updated_at)'],
+            'pengguna' => ['SELECT', 'UPDATE (nama, nama_panggilan, deskripsi, foto_profil, email, kata_sandi, status, onboarding_selesai, updated_at)'],
             'pengguna_kategori' => ['SELECT', 'INSERT', 'UPDATE', 'DELETE'],
             'pameran' => ['SELECT', 'INSERT', 'UPDATE (id_model, judul, banner, warna, tipe, updated_at, deleted_at)'],
             'ruangan' => ['SELECT', 'INSERT'],
@@ -34,7 +34,7 @@ return new class extends Migration
             'posisi_objek' => ['SELECT', 'INSERT', 'DELETE'],
             'undangan' => ['SELECT', 'INSERT', 'UPDATE (status, catatan, tautan)'],
             'reset_kata_sandi' => ['SELECT', 'INSERT', 'UPDATE (percobaan, used_at)'],
-            'personal_access_tokens' => ['SELECT', 'DELETE'],
+            'personal_access_tokens' => ['SELECT'],
             'kategori' => $baca, 'model' => $baca, 'sanksi_akun' => $baca,
         ];
     }
@@ -48,7 +48,7 @@ return new class extends Migration
             'sanksi_akun' => ['SELECT', 'INSERT', 'UPDATE'],
             'karya' => ['SELECT', 'UPDATE (deleted_at, updated_at)'],
             'pameran' => ['SELECT', 'UPDATE (deleted_at)'],
-            'personal_access_tokens' => ['SELECT', 'DELETE'],
+            'personal_access_tokens' => ['SELECT'],
             'log_aktivitas' => ['SELECT'],
             'log_keamanan' => ['SELECT'],
             'kategori' => $baca, 'model' => $baca, 'objek' => $baca, 'posisi_objek' => $baca,

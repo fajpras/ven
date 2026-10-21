@@ -10,6 +10,7 @@ use App\Http\Middleware\PilihKoneksi;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(CatatKeamanan::class)->group(function () {
+    
     Route::prefix('auth')->controller(AuthController::class)->group(function () {
         Route::post('daftar/kirim-otp', 'kirimOtpRegistrasi')->middleware('throttle:5,1');
         Route::post('daftar', 'register')->middleware('throttle:5,1');
