@@ -1,0 +1,10 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!-- Pedestal / Stand / 3D Box Icon -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M12,2L3,7l9,5 9,-5 -9,-5z M3,9v6l9,5 9,-5V9l-9,5 -9,-5z"/>
+</vector>

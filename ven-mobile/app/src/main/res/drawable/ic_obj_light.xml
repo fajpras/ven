@@ -1,0 +1,10 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!-- Desk Lamp / Spotlight Icon -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M9,2h6l2,5H7L9,2z M11,7v9H7v2h10v-2h-4V7h-2z M12,19c-2.21,0 -4,1.79 -4,4h8c0,-2.21 -1.79,-4 -4,-4z"/>
+</vector>

@@ -72,6 +72,25 @@ class ExhibitEditorViewModel(
         }
     }
 
+    fun toggleArtworkAssignment(artwork: ExhibitArtwork) {
+        _uiState.update { state ->
+            val existingSlot = state.panelSlots.firstOrNull { it.assignedArtwork?.id == artwork.id }
+            if (existingSlot != null) {
+                val updatedSlots = state.panelSlots.map { slot ->
+                    if (slot.slotIndex == existingSlot.slotIndex) slot.copy(assignedArtwork = null) else slot
+                }
+                state.copy(panelSlots = updatedSlots)
+            } else {
+                val firstEmptySlot = state.panelSlots.firstOrNull { it.assignedArtwork == null }
+                val targetSlotIndex = firstEmptySlot?.slotIndex ?: 0
+                val updatedSlots = state.panelSlots.map { slot ->
+                    if (slot.slotIndex == targetSlotIndex) slot.copy(assignedArtwork = artwork) else slot
+                }
+                state.copy(panelSlots = updatedSlots)
+            }
+        }
+    }
+
     fun assignArtworkToSlot(artwork: ExhibitArtwork, slotIndex: Int = _uiState.value.selectedSlotIndexForAssignment) {
         _uiState.update { state ->
             val updatedSlots = state.panelSlots.map { slot ->
@@ -95,6 +114,19 @@ class ExhibitEditorViewModel(
                 }
             }
             state.copy(panelSlots = updatedSlots)
+        }
+    }
+
+    fun toggleFurnitureItem(itemId: String) {
+        _uiState.update { state ->
+            val current = state.furnitureItemCounts[itemId] ?: 0
+            val newCounts = state.furnitureItemCounts.toMutableMap()
+            if (current > 0) {
+                newCounts.remove(itemId)
+            } else {
+                newCounts[itemId] = 1
+            }
+            state.copy(furnitureItemCounts = newCounts)
         }
     }
 

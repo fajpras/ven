@@ -38,6 +38,7 @@ import com.ven.app.ui.icons.VexIcon
 import com.ven.app.ui.icons.VexIcons
 import com.ven.app.ui.screens.create.exhibit.editor.ExhibitEditorSheet
 import com.ven.app.ui.screens.create.exhibit.editor.ExhibitPanelSlot
+import com.ven.app.ui.theme.ThemeMode
 import com.ven.app.ui.theme.VexRadius
 import com.ven.app.ui.theme.VexSize
 import com.ven.app.ui.theme.VexSpace
@@ -57,14 +58,18 @@ import com.ven.app.ui.theme.VexTheme
  */
 @Composable
 fun Exhibit3dCanvas(
+    activeSheet: ExhibitEditorSheet,
     wallColor: Color,
     panelSlots: List<ExhibitPanelSlot>,
     totalPanels: Int,
     assignedPanels: Int,
     onBackClick: () -> Unit,
+    onConfirmClick: () -> Unit,
     onToolClick: (ExhibitEditorSheet) -> Unit,
     modifier: Modifier = Modifier,
-    canvasHeight: Dp = 420.dp,
+    assignedObjects: Int = 0,
+    totalObjects: Int = 9,
+    canvasHeight: Dp = Dp.Unspecified,
 ) {
     val colors = VexTheme.colors
     val isDark = (colors.bg.red * 0.299f + colors.bg.green * 0.587f + colors.bg.blue * 0.114f) < 0.5f
@@ -82,7 +87,7 @@ fun Exhibit3dCanvas(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .height(canvasHeight)
+            .then(if (canvasHeight != Dp.Unspecified) Modifier.height(canvasHeight) else Modifier)
             .clip(canvasShape)
             .background(canvasBg),
     ) {
@@ -278,99 +283,130 @@ fun Exhibit3dCanvas(
             }
         }
 
-        // 2. Tombol Kembali di Sisi Kiri-Atas (statusBarsPadding)
-        Box(
-            modifier = Modifier
-                .align(Alignment.TopStart)
-                .statusBarsPadding()
-                .padding(start = VexSpace.s4, top = VexSpace.s2),
-        ) {
-            IconButton(
-                onClick = onBackClick,
+        // 2. Tombol di Bagian Atas
+        if (activeSheet == ExhibitEditorSheet.None) {
+            // Mode Utama: Tombol Kembali di Kiri-Atas
+            Box(
                 modifier = Modifier
-                    .size(44.dp)
-                    .clip(CircleShape)
-                    .background(if (isDark) Color(0x66000000) else colors.surface.copy(alpha = 0.90f))
-                    .then(
-                        if (!isDark) Modifier.border(width = 1.dp, color = colors.border, shape = CircleShape)
-                        else Modifier
-                    ),
+                    .align(Alignment.TopStart)
+                    .statusBarsPadding()
+                    .padding(start = VexSpace.s4, top = VexSpace.s2),
             ) {
-                VexIcon(
-                    id = VexIcons.Back,
-                    contentDescription = stringResource(R.string.create_exhibit_editor_back),
-                    size = VexSize.icon,
-                    tint = if (isDark) Color.White else colors.text,
-                )
-            }
-        }
-
-        // 3. Kolom 4 FloatingToolButton di Sisi Kanan-Atas (statusBarsPadding)
-        Column(
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .statusBarsPadding()
-                .padding(end = VexSpace.s4, top = VexSpace.s2),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            // Tool 1: Aa (Exhibit Details)
-            FloatingToolButton(
-                onClick = { onToolClick(ExhibitEditorSheet.Details) },
-                contentDescription = stringResource(R.string.create_exhibit_tool_details),
-            ) {
-                Text(
-                    text = "Aa",
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 17.sp,
-                    ),
-                    color = colors.text,
-                )
-            }
-
-            // Tool 2: Panel (Atur Karya)
-            FloatingToolButton(
-                onClick = { onToolClick(ExhibitEditorSheet.Panels) },
-                contentDescription = stringResource(R.string.create_exhibit_tool_panels),
-            ) {
-                VexIcon(
-                    id = VexIcons.EditorPanel,
-                    contentDescription = null,
-                    size = 22.dp,
-                    tint = colors.text,
-                )
-            }
-
-            // Tool 3: Furniture (Dekorasi)
-            FloatingToolButton(
-                onClick = { onToolClick(ExhibitEditorSheet.Furniture) },
-                contentDescription = stringResource(R.string.create_exhibit_tool_furniture),
-            ) {
-                VexIcon(
-                    id = VexIcons.EditorFurniture,
-                    contentDescription = null,
-                    size = 22.dp,
-                    tint = colors.text,
-                )
-            }
-
-            // Tool 4: Color (Warna Dinding)
-            FloatingToolButton(
-                onClick = { onToolClick(ExhibitEditorSheet.Color) },
-                contentDescription = stringResource(R.string.create_exhibit_tool_color),
-            ) {
-                Box(
+                IconButton(
+                    onClick = onBackClick,
                     modifier = Modifier
-                        .size(24.dp)
+                        .size(44.dp)
                         .clip(CircleShape)
-                        .background(wallColor)
-                        .border(width = 2.dp, color = Color.White, shape = CircleShape),
-                )
+                        .background(if (isDark) Color(0x66000000) else colors.surface.copy(alpha = 0.90f))
+                        .then(
+                            if (!isDark) Modifier.border(width = 1.dp, color = colors.border, shape = CircleShape)
+                            else Modifier
+                        ),
+                ) {
+                    VexIcon(
+                        id = VexIcons.Back,
+                        contentDescription = stringResource(R.string.create_exhibit_editor_back),
+                        size = VexSize.icon,
+                        tint = if (isDark) Color.White else colors.text,
+                    )
+                }
+            }
+
+            // Mode Utama: Kolom 4 FloatingToolButton di Kanan-Atas (Aa, Panel, Furniture, Color)
+            Column(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .statusBarsPadding()
+                    .padding(end = VexSpace.s4, top = VexSpace.s2),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                // Tool 1: Aa (Exhibit Details)
+                FloatingToolButton(
+                    onClick = { onToolClick(ExhibitEditorSheet.Details) },
+                    contentDescription = stringResource(R.string.create_exhibit_tool_details),
+                ) {
+                    Text(
+                        text = "Aa",
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 17.sp,
+                        ),
+                        color = colors.text,
+                    )
+                }
+
+                // Tool 2: Panel (Atur Karya)
+                FloatingToolButton(
+                    onClick = { onToolClick(ExhibitEditorSheet.Panels) },
+                    contentDescription = stringResource(R.string.create_exhibit_tool_panels),
+                ) {
+                    VexIcon(
+                        id = VexIcons.EditorPanel,
+                        contentDescription = null,
+                        size = 22.dp,
+                        tint = colors.text,
+                    )
+                }
+
+                // Tool 3: Furniture (Dekorasi)
+                FloatingToolButton(
+                    onClick = { onToolClick(ExhibitEditorSheet.Furniture) },
+                    contentDescription = stringResource(R.string.create_exhibit_tool_furniture),
+                ) {
+                    VexIcon(
+                        id = VexIcons.EditorFurniture,
+                        contentDescription = null,
+                        size = 22.dp,
+                        tint = colors.text,
+                    )
+                }
+
+                // Tool 4: Color (Warna Dinding)
+                FloatingToolButton(
+                    onClick = { onToolClick(ExhibitEditorSheet.Color) },
+                    contentDescription = stringResource(R.string.create_exhibit_tool_color),
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(24.dp)
+                            .clip(CircleShape)
+                            .background(wallColor)
+                            .border(width = 2.dp, color = Color.White, shape = CircleShape),
+                    )
+                }
+            }
+        } else {
+            // Mode Sheet Alat (Color, Panels, Furniture): Tombol Centang (✓) di Kanan-Atas Sesuai Wireframe
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .statusBarsPadding()
+                    .padding(end = VexSpace.s4, top = VexSpace.s2),
+            ) {
+                IconButton(
+                    onClick = onConfirmClick,
+                    modifier = Modifier
+                        .size(44.dp)
+                        .clip(CircleShape)
+                        .background(if (isDark) Color(0x66000000) else colors.surface.copy(alpha = 0.90f))
+                        .then(
+                            if (!isDark) Modifier.border(width = 1.dp, color = colors.border, shape = CircleShape)
+                            else Modifier
+                        ),
+                ) {
+                    VexIcon(
+                        id = VexIcons.Check,
+                        contentDescription = null,
+                        size = VexSize.icon,
+                        tint = if (isDark) Color.White else colors.text,
+                    )
+                }
             }
         }
 
-        // 4. Penghitung Panel di Kiri-Bawah Kanvas ("X/N panels")
+        // 3. Penghitung di Kiri-Bawah Kanvas ("X/9 panels" atau "X/9 objects" sesuai wireframe)
+        val isFurnitureMode = activeSheet == ExhibitEditorSheet.Furniture
         Row(
             modifier = Modifier
                 .align(Alignment.BottomStart)
@@ -386,14 +422,18 @@ fun Exhibit3dCanvas(
             horizontalArrangement = Arrangement.spacedBy(VexSpace.s2),
         ) {
             VexIcon(
-                id = VexIcons.EditorPanel,
+                id = if (isFurnitureMode) VexIcons.EditorFurniture else VexIcons.EditorPanel,
                 contentDescription = null,
                 size = 16.dp,
                 tint = if (isDark) Color.White else colors.text,
             )
 
             Text(
-                text = stringResource(R.string.create_exhibit_panel_count, assignedPanels, totalPanels),
+                text = if (isFurnitureMode) {
+                    stringResource(R.string.create_exhibit_objects_count, assignedObjects, totalObjects)
+                } else {
+                    stringResource(R.string.create_exhibit_panel_count, assignedPanels, totalPanels)
+                },
                 style = MaterialTheme.typography.labelMedium.copy(
                     fontWeight = FontWeight.Medium,
                     fontSize = 13.sp,
@@ -430,5 +470,45 @@ fun FloatingToolButton(
         contentAlignment = Alignment.Center,
     ) {
         content()
+    }
+}
+
+// -------------------------------------------------------------
+// Previews
+// -------------------------------------------------------------
+
+@androidx.compose.ui.tooling.preview.Preview(name = "3D Canvas - Main State", showBackground = true)
+@Composable
+private fun Exhibit3dCanvasMainPreview() {
+    VexTheme(mode = ThemeMode.Dark) {
+        Exhibit3dCanvas(
+            activeSheet = ExhibitEditorSheet.None,
+            wallColor = Color(0xFF6C3BE8),
+            panelSlots = emptyList(),
+            totalPanels = 9,
+            assignedPanels = 0,
+            onBackClick = {},
+            onConfirmClick = {},
+            onToolClick = {},
+            canvasHeight = 400.dp,
+        )
+    }
+}
+
+@androidx.compose.ui.tooling.preview.Preview(name = "3D Canvas - Tool Active State", showBackground = true)
+@Composable
+private fun Exhibit3dCanvasToolPreview() {
+    VexTheme(mode = ThemeMode.Dark) {
+        Exhibit3dCanvas(
+            activeSheet = ExhibitEditorSheet.Panels,
+            wallColor = Color(0xFF6C3BE8),
+            panelSlots = emptyList(),
+            totalPanels = 9,
+            assignedPanels = 2,
+            onBackClick = {},
+            onConfirmClick = {},
+            onToolClick = {},
+            canvasHeight = 400.dp,
+        )
     }
 }

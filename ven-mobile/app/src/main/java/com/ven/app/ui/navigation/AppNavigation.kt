@@ -23,6 +23,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.ven.app.data.api.SessionManager
 import com.ven.app.data.preference.ThemePreferences
+import com.ven.app.ui.components.feature.CreateOptionsBottomSheet
 import com.ven.app.ui.components.layout.AppScaffold
 import com.ven.app.ui.screens.ai.AiChatScreen
 import com.ven.app.ui.screens.auth.ForgotPasswordEvent
@@ -228,6 +229,12 @@ fun AppNavHost(showExplore: Boolean = false) {
                 onNavigateToCreatePost = {
                     navController.navigate(Screen.CreatePost.route)
                 },
+                onNavigateToCreateExhibit = {
+                    navController.navigate(Screen.CreateExhibit.route)
+                },
+                onNavigateToExhibitEditor = { id ->
+                    navController.navigate(Screen.CreateExhibitEditor.createRoute(id))
+                },
             )
         }
 
@@ -282,7 +289,9 @@ fun AppNavHost(showExplore: Boolean = false) {
             CreateExhibitEditorScreen(
                 onBackClick = { navController.popBackStack() },
                 onPublishSuccess = {
-                    navController.popBackStack(Screen.CreateExhibit.route, inclusive = true)
+                    if (!navController.popBackStack(Screen.CreateExhibit.route, inclusive = true)) {
+                        navController.popBackStack()
+                    }
                 },
             )
         }
@@ -306,7 +315,9 @@ fun AppNavHost(showExplore: Boolean = false) {
                 onRequestMeetingClick = { id ->
                     navController.navigate(Screen.RequestMeeting.createRoute(id))
                 },
-                onView3dClick = { /* TODO: handle view 3D */ },
+                onView3dClick = { id ->
+                    navController.navigate(Screen.CreateExhibitEditor.createRoute(id.ifBlank { "tpl_small" }))
+                },
                 initialPostId = postId.ifBlank { null },
             )
         }
@@ -488,19 +499,40 @@ fun MainHomeScreen(
     onNavigateToSettings: () -> Unit = {},
     onNavigateToPostsFeed: (postId: String) -> Unit = {},
     onNavigateToCreatePost: () -> Unit = {},
+    onNavigateToCreateExhibit: () -> Unit = {},
+    onNavigateToExhibitEditor: (templateIdOrExhibitId: String) -> Unit = {},
 ) {
     var currentTab by remember { mutableStateOf(initialTab) }
     var profileState by remember { mutableStateOf(dummyProfileUiState) }
+    var isCreateSheetOpen by remember { mutableStateOf(false) }
+
+    val handleCreateClick = {
+        isCreateSheetOpen = true
+    }
+
+    if (isCreateSheetOpen) {
+        CreateOptionsBottomSheet(
+            onDismissRequest = { isCreateSheetOpen = false },
+            onCreatePostClick = {
+                isCreateSheetOpen = false
+                onNavigateToCreatePost()
+            },
+            onCreateExhibitClick = {
+                isCreateSheetOpen = false
+                onNavigateToCreateExhibit()
+            },
+        )
+    }
 
     when (currentTab) {
         BottomNavTab.Home -> {
             HomeScreen(
                 uiState = uiState,
                 onTabSelected = { currentTab = it },
-                onCreateClick = onNavigateToCreatePost,
+                onCreateClick = handleCreateClick,
                 onRequestMeetingClick = onRequestMeetingClick,
-                onView3dClick = { /* TODO: handle view 3D */ },
-                onBannerClick = { /* TODO: handle banner click */ },
+                onView3dClick = { pameranId -> onNavigateToExhibitEditor(pameranId ?: "tpl_small") },
+                onBannerClick = { eventId -> onNavigateToExhibitEditor(eventId) },
             )
         }
         BottomNavTab.Schedule -> {
@@ -517,17 +549,24 @@ fun MainHomeScreen(
             ExploreScreen(
                 onTabSelected = { currentTab = it },
                 onMediaClick = { media -> onNavigateToPostsFeed(media.id) },
+                onExhibitClick = { exhibit -> onNavigateToExhibitEditor(exhibit.id) },
             )
         }
         BottomNavTab.Profile -> {
             ProfileScreen(
                 uiState = profileState,
                 onTabSelected = { currentTab = it },
-                onCreateClick = onNavigateToCreatePost,
+                onCreateClick = handleCreateClick,
                 onMenuClick = onNavigateToSettings,
                 onProfileTabChange = { profileState = profileState.copy(selectedTab = it) },
                 onSkillSheetToggle = { profileState = profileState.copy(isSkillSheetOpen = it) },
-                onMediaClick = { /* TODO: handle media click */ },
+                onMediaClick = { media ->
+                    if (profileState.selectedTab == com.ven.app.ui.screens.profile.ProfileTab.Exhibits) {
+                        onNavigateToExhibitEditor(media.id)
+                    } else {
+                        onNavigateToPostsFeed(media.id)
+                    }
+                },
             )
         }
     }
