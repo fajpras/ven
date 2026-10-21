@@ -41,10 +41,65 @@ enum class ExhibitFurnitureType(val displayName: String) {
     GalleryBench("Gallery Bench"),
 }
 
+enum class ExhibitFurnitureCategory(val displayName: String) {
+    Light("Light"),
+    Chair("Chair"),
+    Plant("Plant"),
+    Other("Other"),
+}
+
+@Immutable
+data class ExhibitFurnitureItem(
+    val id: String,
+    val name: String,
+    val category: ExhibitFurnitureCategory,
+    val type: ExhibitFurnitureType,
+    @param:DrawableRes val iconRes: Int = R.drawable.ic_furniture,
+)
+
+val sampleFurnitureItems: List<ExhibitFurnitureItem> = listOf(
+    // Light
+    ExhibitFurnitureItem("f_light_1", "Spotlight", ExhibitFurnitureCategory.Light, ExhibitFurnitureType.Spotlight, R.drawable.ic_obj_light),
+    ExhibitFurnitureItem("f_light_2", "Floor Lamp", ExhibitFurnitureCategory.Light, ExhibitFurnitureType.Spotlight, R.drawable.ic_obj_light),
+    ExhibitFurnitureItem("f_light_3", "Track Light", ExhibitFurnitureCategory.Light, ExhibitFurnitureType.Spotlight, R.drawable.ic_obj_light),
+    // Chair
+    ExhibitFurnitureItem("f_chair_1", "Lounge Chair", ExhibitFurnitureCategory.Chair, ExhibitFurnitureType.LoungeChair, R.drawable.ic_furniture),
+    ExhibitFurnitureItem("f_chair_2", "Modern Stool", ExhibitFurnitureCategory.Chair, ExhibitFurnitureType.LoungeChair, R.drawable.ic_furniture),
+    ExhibitFurnitureItem("f_chair_3", "Gallery Bench", ExhibitFurnitureCategory.Chair, ExhibitFurnitureType.GalleryBench, R.drawable.ic_furniture),
+    // Plant
+    ExhibitFurnitureItem("f_plant_1", "Monstera", ExhibitFurnitureCategory.Plant, ExhibitFurnitureType.IndoorPlant, R.drawable.ic_obj_plant),
+    ExhibitFurnitureItem("f_plant_2", "Indoor Ficus", ExhibitFurnitureCategory.Plant, ExhibitFurnitureType.IndoorPlant, R.drawable.ic_obj_plant),
+    ExhibitFurnitureItem("f_plant_3", "Desk Bonsai", ExhibitFurnitureCategory.Plant, ExhibitFurnitureType.IndoorPlant, R.drawable.ic_obj_plant),
+    // Other
+    ExhibitFurnitureItem("f_other_1", "Info Stand", ExhibitFurnitureCategory.Other, ExhibitFurnitureType.GalleryBench, R.drawable.ic_obj_other),
+    ExhibitFurnitureItem("f_other_2", "Room Divider", ExhibitFurnitureCategory.Other, ExhibitFurnitureType.GalleryBench, R.drawable.ic_obj_other),
+    ExhibitFurnitureItem("f_other_3", "Pedestal", ExhibitFurnitureCategory.Other, ExhibitFurnitureType.GalleryBench, R.drawable.ic_obj_other),
+)
+
 @Immutable
 data class WallColorOption(
     val name: String,
     val color: Color,
+)
+
+/**
+ * 12 Palet Warna Dinding Ruang Pameran 3D sesuai Wireframe (2 baris x 6 warna):
+ * Baris 1: White, Black, Coral, Cyan/Mint, Yellow, Purple
+ * Baris 2: Light Grey, Dark Grey, Hot Pink, Soft Mint, Pale Yellow, Lavender
+ */
+val exhibitWallPalette: List<Color> = listOf(
+    Color(0xFFFFFFFF), // White
+    Color(0xFF1E1E1E), // Black
+    Color(0xFFFF8A80), // Coral / Salmon
+    Color(0xFF80FFE8), // Mint / Cyan
+    Color(0xFFFFD54F), // Yellow / Gold
+    Color(0xFF8B5CF6), // Purple
+    Color(0xFFE5E5EA), // Light Grey
+    Color(0xFF48484A), // Dark Grey
+    Color(0xFFFF4081), // Hot Pink
+    Color(0xFFA7F3D0), // Soft Mint
+    Color(0xFFFFF59D), // Pale Yellow
+    Color(0xFFC4B5FD), // Lavender
 )
 
 val defaultWallColorOptions: List<WallColorOption> = listOf(
@@ -99,12 +154,8 @@ data class ExhibitEditorUiState(
     val panelSlots: List<ExhibitPanelSlot> = List(defaultExhibitTemplates[0].capacity) { index ->
         ExhibitPanelSlot(slotIndex = index)
     },
-    val furnitureCounts: Map<ExhibitFurnitureType, Int> = mapOf(
-        ExhibitFurnitureType.Spotlight to 2,
-        ExhibitFurnitureType.LoungeChair to 1,
-        ExhibitFurnitureType.IndoorPlant to 1,
-        ExhibitFurnitureType.GalleryBench to 0,
-    ),
+    val furnitureCounts: Map<ExhibitFurnitureType, Int> = emptyMap(),
+    val furnitureItemCounts: Map<String, Int> = emptyMap(),
     val activeSheet: ExhibitEditorSheet = ExhibitEditorSheet.None,
     val selectedSlotIndexForAssignment: Int = 0,
     val availableArtworks: List<ExhibitArtwork> = sampleUserArtworks,
@@ -116,6 +167,9 @@ data class ExhibitEditorUiState(
 
     val totalPanelsCount: Int
         get() = template.capacity
+
+    val totalObjectsCount: Int
+        get() = if (furnitureItemCounts.isNotEmpty()) furnitureItemCounts.values.sum() else furnitureCounts.values.sum()
 
     val isTitleDescComplete: Boolean
         get() = title.isNotBlank() && description.isNotBlank()

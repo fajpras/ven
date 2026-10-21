@@ -4,13 +4,13 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -27,20 +27,23 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.ven.app.R
 import com.ven.app.ui.components.ui.VexBottomSheet
 import com.ven.app.ui.components.ui.VexButton
-import com.ven.app.ui.components.ui.VexButtonVariant
 import com.ven.app.ui.icons.VexIcon
 import com.ven.app.ui.icons.VexIcons
 import com.ven.app.ui.screens.create.exhibit.editor.ExhibitArtwork
@@ -163,47 +166,87 @@ fun ExhibitPanelsBottomSheet(
                 }
             }
 
-            // Info Slot Saat Ini
+            // Info Slot Saat Ini jika sudah terpasang karya
             if (currentSlot?.assignedArtwork != null) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(VexRadius.md))
-                        .background(colors.surfaceInput)
-                        .padding(VexSpace.s3),
+                        .background(colors.primary.copy(alpha = 0.10f))
+                        .border(
+                            width = 1.dp,
+                            color = colors.primary.copy(alpha = 0.40f),
+                            shape = RoundedCornerShape(VexRadius.md),
+                        )
+                        .padding(horizontal = VexSpace.s4, vertical = VexSpace.s3),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Row(
+                        modifier = Modifier.weight(1f),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(VexSpace.s3),
                     ) {
                         ArtworkThumbnail(
                             artwork = currentSlot.assignedArtwork,
-                            modifier = Modifier.size(48.dp),
+                            modifier = Modifier.size(44.dp),
                         )
 
-                        Column {
+                        Column(modifier = Modifier.weight(1f)) {
                             Text(
                                 text = currentSlot.assignedArtwork.title,
-                                style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Medium),
+                                style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
                                 color = colors.text,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
                             )
+                            Spacer(modifier = Modifier.height(2.dp))
                             Text(
-                                text = currentSlot.assignedArtwork.type.name,
+                                text = "Placed on Slot ${selectedSlotIndex + 1}",
                                 style = MaterialTheme.typography.bodySmall,
-                                color = colors.textMuted,
+                                color = colors.primaryText,
+                                maxLines = 1,
                             )
                         }
                     }
 
-                    VexButton(
-                        text = "Remove",
-                        onClick = { onRemoveArtwork(selectedSlotIndex) },
-                        variant = VexButtonVariant.Outline,
-                    )
+                    Spacer(modifier = Modifier.width(VexSpace.s2))
+
+                    // Tombol Remove ringkas
+                    Box(
+                        modifier = Modifier
+                            .height(32.dp)
+                            .clip(RoundedCornerShape(VexRadius.full))
+                            .background(colors.danger.copy(alpha = 0.15f))
+                            .border(1.dp, colors.danger.copy(alpha = 0.4f), RoundedCornerShape(VexRadius.full))
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = ripple(color = colors.danger.copy(alpha = 0.2f)),
+                                role = Role.Button,
+                                onClick = { onRemoveArtwork(selectedSlotIndex) },
+                            )
+                            .padding(horizontal = 14.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(
+                            text = "Remove",
+                            style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
+                            color = colors.danger,
+                        )
+                    }
                 }
-            } else {
+            }
+
+            // Header Daftar Karya / Postingan
+            Column(
+                modifier = Modifier.padding(top = VexSpace.s2),
+            ) {
+                Text(
+                    text = "Your Works / Posts",
+                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
+                    color = colors.text,
+                )
+                Spacer(modifier = Modifier.height(2.dp))
                 Text(
                     text = stringResource(R.string.create_exhibit_panel_select_prompt),
                     style = MaterialTheme.typography.bodySmall,
@@ -212,62 +255,156 @@ fun ExhibitPanelsBottomSheet(
             }
 
             // Daftar Postingan / Karya yang Tersedia
-            Text(
-                text = "Your Works / Posts",
-                style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
-                color = colors.text,
-                modifier = Modifier.padding(top = VexSpace.s2),
-            )
-
             Column(
                 verticalArrangement = Arrangement.spacedBy(VexSpace.s3),
             ) {
                 availableArtworks.forEach { artwork ->
                     val isAssignedToCurrent = currentSlot?.assignedArtwork?.id == artwork.id
+                    val assignedSlot = panelSlots.firstOrNull { it.assignedArtwork?.id == artwork.id }
+                    val isAssignedToOther = assignedSlot != null && !isAssignedToCurrent
 
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(VexRadius.md))
-                            .background(colors.surfaceInput)
-                            .clickable(
-                                role = Role.Button,
-                                onClick = { onAssignArtwork(artwork) },
+                            .background(
+                                if (isAssignedToCurrent) colors.primary.copy(alpha = 0.10f) else colors.surfaceInput
                             )
-                            .padding(VexSpace.s3),
+                            .border(
+                                width = if (isAssignedToCurrent) 1.5.dp else 1.dp,
+                                color = if (isAssignedToCurrent) colors.primary else colors.border,
+                                shape = RoundedCornerShape(VexRadius.md),
+                            )
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = ripple(color = colors.text.copy(alpha = 0.1f)),
+                                role = Role.Button,
+                                onClick = {
+                                    if (isAssignedToCurrent) {
+                                        onRemoveArtwork(selectedSlotIndex)
+                                    } else {
+                                        onAssignArtwork(artwork)
+                                    }
+                                },
+                            )
+                            .padding(horizontal = VexSpace.s4, vertical = VexSpace.s3),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
+                        // Sisi Kiri: Thumbnail & Metadata Karya
                         Row(
+                            modifier = Modifier.weight(1f),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(VexSpace.s3),
                         ) {
                             ArtworkThumbnail(
                                 artwork = artwork,
-                                modifier = Modifier
-                                    .size(54.dp)
-                                    .aspectRatio(1f),
+                                modifier = Modifier.size(50.dp),
                             )
 
-                            Column {
+                            Column(
+                                modifier = Modifier.weight(1f),
+                                verticalArrangement = Arrangement.Center,
+                            ) {
                                 Text(
                                     text = artwork.title,
-                                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Medium),
+                                    style = MaterialTheme.typography.titleSmall.copy(
+                                        fontWeight = FontWeight.SemiBold,
+                                    ),
                                     color = colors.text,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
                                 )
-                                Text(
-                                    text = artwork.type.name,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = colors.textMuted,
-                                )
+
+                                Spacer(modifier = Modifier.height(4.dp))
+
+                                // Badge Tipe Karya (Poster / Video)
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(VexRadius.xs))
+                                        .background(colors.surface.copy(alpha = 0.7f))
+                                        .border(0.5.dp, colors.border, RoundedCornerShape(VexRadius.xs))
+                                        .padding(horizontal = 6.dp, vertical = 2.dp),
+                                ) {
+                                    Text(
+                                        text = artwork.type.name,
+                                        style = MaterialTheme.typography.labelSmall.copy(
+                                            fontWeight = FontWeight.Medium,
+                                        ),
+                                        color = colors.textMuted,
+                                    )
+                                }
                             }
                         }
 
-                        VexButton(
-                            text = if (isAssignedToCurrent) "Assigned" else "Assign",
-                            onClick = { onAssignArtwork(artwork) },
-                            variant = if (isAssignedToCurrent) VexButtonVariant.Outline else VexButtonVariant.Primary,
-                        )
+                        Spacer(modifier = Modifier.width(VexSpace.s3))
+
+                        // Tombol Aksi Kompak "Assign" / "Assigned ✓" / "Slot N"
+                        Box(
+                            modifier = Modifier
+                                .height(34.dp)
+                                .clip(RoundedCornerShape(VexRadius.full))
+                                .background(
+                                    when {
+                                        isAssignedToCurrent -> colors.primary.copy(alpha = 0.20f)
+                                        isAssignedToOther -> colors.surface
+                                        else -> colors.primary
+                                    }
+                                )
+                                .border(
+                                    width = if (isAssignedToCurrent || isAssignedToOther) 1.dp else 0.dp,
+                                    color = when {
+                                        isAssignedToCurrent -> colors.primary
+                                        isAssignedToOther -> colors.border
+                                        else -> Color.Transparent
+                                    },
+                                    shape = RoundedCornerShape(VexRadius.full),
+                                )
+                                .clickable(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = ripple(color = Color.White.copy(alpha = 0.2f)),
+                                    role = Role.Button,
+                                    onClick = {
+                                        if (isAssignedToCurrent) {
+                                            onRemoveArtwork(selectedSlotIndex)
+                                        } else {
+                                            onAssignArtwork(artwork)
+                                        }
+                                    },
+                                )
+                                .padding(horizontal = 16.dp),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                            ) {
+                                if (isAssignedToCurrent) {
+                                    VexIcon(
+                                        id = VexIcons.Check,
+                                        contentDescription = null,
+                                        size = 14.dp,
+                                        tint = colors.primaryText,
+                                    )
+                                }
+
+                                Text(
+                                    text = when {
+                                        isAssignedToCurrent -> "Assigned"
+                                        isAssignedToOther -> "Slot ${assignedSlot.slotIndex + 1}"
+                                        else -> "Assign"
+                                    },
+                                    style = MaterialTheme.typography.labelMedium.copy(
+                                        fontWeight = FontWeight.SemiBold,
+                                    ),
+                                    color = when {
+                                        isAssignedToCurrent -> colors.primaryText
+                                        isAssignedToOther -> colors.textMuted
+                                        else -> Color.White
+                                    },
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -293,9 +430,9 @@ private fun ArtworkThumbnail(
 
     Box(
         modifier = modifier
-            .clip(RoundedCornerShape(VexRadius.xs))
-            .background(colors.primary.copy(alpha = 0.2f))
-            .border(width = 1.dp, color = colors.border, shape = RoundedCornerShape(VexRadius.xs)),
+            .clip(RoundedCornerShape(VexRadius.md))
+            .background(colors.primary.copy(alpha = 0.15f))
+            .border(width = 1.dp, color = colors.border, shape = RoundedCornerShape(VexRadius.md)),
         contentAlignment = Alignment.Center,
     ) {
         if (artwork.imageRes != null) {

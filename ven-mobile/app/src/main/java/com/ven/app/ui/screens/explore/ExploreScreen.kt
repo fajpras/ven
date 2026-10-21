@@ -65,6 +65,7 @@ fun ExploreScreen(
     onTabSelected: (BottomNavTab) -> Unit,
     onMediaClick: (MediaGridItem) -> Unit,
     modifier: Modifier = Modifier,
+    onExhibitClick: (ExhibitItem) -> Unit = {},
     initialUiState: ExploreUiState = dummyExploreUiState,
 ) {
     var uiState by remember { mutableStateOf(initialUiState) }
@@ -116,6 +117,7 @@ fun ExploreScreen(
                 )
             },
             onMediaClick = onMediaClick,
+            onExhibitClick = onExhibitClick,
             modifier = Modifier.padding(bottom = innerPadding.calculateBottomPadding()),
         )
     }
@@ -138,6 +140,7 @@ fun ExploreContent(
     onRemoveHistoryItem: (RecentSearchItem) -> Unit,
     onMediaClick: (MediaGridItem) -> Unit,
     modifier: Modifier = Modifier,
+    onExhibitClick: (ExhibitItem) -> Unit = {},
 ) {
     val colors = VexTheme.colors
 
@@ -163,7 +166,7 @@ fun ExploreContent(
                     onTabChange = onTabChange,
                     onAccountClick = { },
                     onMediaClick = onMediaClick,
-                    onExhibitClick = { },
+                    onExhibitClick = onExhibitClick,
                     modifier = Modifier.weight(1f),
                 )
             }

@@ -229,16 +229,19 @@
     <string name="create_exhibit_tool_furniture">Furniture</string>
     <string name="create_exhibit_tool_color">Wall Color</string>
     <string name="create_exhibit_panel_count">%1$d/%2$d panels</string>
+    <string name="create_exhibit_objects_count">%1$d/%2$d objects</string>
     <string name="create_exhibit_check_title_desc">title &amp; description</string>
     <string name="create_exhibit_check_panel">a panel</string>
     <string name="create_exhibit_publish_action">Publish</string>
     <string name="create_exhibit_publish_success">Exhibit published successfully</string>
+    <string name="create_exhibit_details_header">Details</string>
+    <string name="create_exhibit_thumbnail_label">Thumbnail</string>
     <string name="create_exhibit_cover_banner">Cover Banner</string>
     <string name="create_exhibit_cover_placeholder">Tap to upload cover banner (16:9)</string>
     <string name="create_exhibit_name_label">Title</string>
-    <string name="create_exhibit_name_placeholder">e.g. My Virtual Solo Exhibition</string>
+    <string name="create_exhibit_name_placeholder">type your title...</string>
     <string name="create_exhibit_desc_label">Description</string>
-    <string name="create_exhibit_desc_placeholder">Describe your exhibition theme and story...</string>
+    <string name="create_exhibit_desc_placeholder">type your description...</string>
     <string name="create_exhibit_save_details">Save Details</string>
     <string name="create_exhibit_sheet_panels_title">Assign Works to Panels</string>
     <string name="create_exhibit_panel_slot_title">Panel %1$d</string>
@@ -246,4 +249,18 @@
     <string name="create_exhibit_panel_select_prompt">Select a post to place on this panel</string>
     <string name="create_exhibit_sheet_furniture_title">Decorations &amp; Objects</string>
     <string name="create_exhibit_sheet_color_title">Room Wall Color</string>
+    <string name="create_exhibit_color_label">Color</string>
+    <string name="create_exhibit_tab_poster">Poster</string>
+    <string name="create_exhibit_tab_video">Video</string>
+    <string name="create_exhibit_tab_light">Light</string>
+    <string name="create_exhibit_tab_chair">Chair</string>
+    <string name="create_exhibit_tab_plant">Plant</string>
+    <string name="create_exhibit_tab_other">Other</string>
+
+    <!-- Create Content Options Sheet -->
+    <string name="create_sheet_title">Create</string>
+    <string name="create_sheet_post_title">New Post</string>
+    <string name="create_sheet_post_desc">Share artwork, photos, or designs to the feed</string>
+    <string name="create_sheet_exhibit_title">New Exhibit (3D)</string>
+    <string name="create_sheet_exhibit_desc">Build an interactive 3D virtual exhibition room</string>
 </resources>
