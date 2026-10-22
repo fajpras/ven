@@ -111,6 +111,98 @@ trait PersiapanTransaksiPameran
         return Storage::disk('public')->allFiles('pameran/banner');
     }
 
+    /**
+     * Mengambil potret data untuk bukti sebelum/sesudah request.
+     *
+     * @return array<string, mixed>
+     */
+    protected function snapshotData(int $idLogSejak = 0): array
+    {
+        return [
+            'pameran' => Pameran::query()
+                ->where('judul', $this->judul)
+                ->get(['id_pameran', 'judul', 'banner', 'tipe', 'id_model'])
+                ->toArray(),
+            'file_banner' => $this->fileBanner(),
+            'log_pameran' => DB::table('log_aktivitas')
+                ->where('id_log', '>', $idLogSejak)
+                ->where('entitas', 'pameran')
+                ->get(['id_log', 'pesan', 'status'])
+                ->all(),
+            'level_transaksi' => DB::transactionLevel(),
+            'event' => $this->peristiwaTransaksi,
+        ];
+    }
+
+    /**
+     * Mencetak bukti ke terminal dan menyimpannya sebagai file Markdown
+     * agar mudah dilampirkan pada laporan.
+     *
+     * @param  array<string, mixed>  $sebelum
+     * @param  array<string, mixed>  $sesudah
+     */
+    protected function cetakBukti(string $skenario, array $sebelum, array $sesudah, int $status): void
+    {
+        $teks = implode(PHP_EOL, [
+            str_repeat('=', 70),
+            "BUKTI TRANSAKSI — {$skenario}",
+            str_repeat('=', 70),
+            $this->formatSnapshot('SEBELUM REQUEST', $sebelum),
+            '',
+            $this->formatSnapshot('SESUDAH REQUEST', $sesudah, $status),
+            str_repeat('=', 70),
+        ]).PHP_EOL;
+
+        fwrite(STDERR, PHP_EOL.$teks);
+
+        $folder = storage_path('app/testing');
+
+        if (! is_dir($folder)) {
+            mkdir($folder, 0777, true);
+        }
+
+        $nama = str_contains($skenario, 'SUKSES')
+            ? 'bukti-transaksi-sukses.md'
+            : 'bukti-transaksi-gagal.md';
+
+        file_put_contents($folder.DIRECTORY_SEPARATOR.$nama, $teks);
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    private function formatSnapshot(string $judul, array $data, ?int $status = null): string
+    {
+        $baris = ["{$judul}:"];
+
+        if ($status !== null) {
+            $baris[] = "  response HTTP            : {$status}";
+        }
+
+        $baris[] = '  jumlah pameran           : '.count($data['pameran']);
+
+        foreach ($data['pameran'] as $pameran) {
+            $baris[] = "    - id_pameran={$pameran['id_pameran']}, judul={$pameran['judul']}, banner={$pameran['banner']}";
+        }
+
+        $baris[] = '  file banner              : '.count($data['file_banner']);
+
+        foreach ($data['file_banner'] as $file) {
+            $baris[] = "    - {$file}";
+        }
+
+        $baris[] = '  log aktivitas pameran    : '.count($data['log_pameran']);
+
+        foreach ($data['log_pameran'] as $log) {
+            $baris[] = "    - {$log->pesan} ({$log->status})";
+        }
+
+        $baris[] = '  level transaksi          : '.$data['level_transaksi'];
+        $baris[] = '  event transaksi          : '.(empty($data['event']) ? '(belum ada)' : implode(' -> ', $data['event']));
+
+        return implode(PHP_EOL, $baris);
+    }
+
     protected function bersihkanData(): void
     {
         if ($this->judul !== '') {

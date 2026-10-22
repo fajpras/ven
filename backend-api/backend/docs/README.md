@@ -20,9 +20,13 @@ cd C:\laragon\www\VEN\ven\backend-api\backend
 | Modul | Dokumen | Jumlah test | Database |
 |---|---|---|---|
 | Transaksi tambah pameran (Poin 13 & 14) | [test-transaksi-pameran.md](test-transaksi-pameran.md) | 2 | Ya (`ven_testing`) |
+| Transaksi sederhana (COMMIT & ROLLBACK) | [test-transaksi-sederhana.md](test-transaksi-sederhana.md) | 2 | Ya (`ven_testing`) |
 
 Modul ini membuktikan COMMIT pada jalur sukses dan ROLLBACK pada jalur gagal,
-lengkap dengan kondisi data sebelum dan sesudah kedua skenario.
+lengkap dengan kondisi data sebelum dan sesudah kedua skenario. Setiap test
+juga mencetak bukti ke terminal dan menyimpannya di
+`storage/app/testing/bukti-transaksi-sukses.md` serta
+`storage/app/testing/bukti-transaksi-gagal.md`.
 
 ## Dokumen per test
 
@@ -45,8 +49,9 @@ lengkap dengan kondisi data sebelum dan sesudah kedua skenario.
 | `PenggunaSanksiGagalTest` | [test-pengguna-sanksi-gagal.md](test-pengguna-sanksi-gagal.md) | 1 | Ya |
 | `TambahPameranCommitTest` | [test-transaksi-pameran.md](test-transaksi-pameran.md) | 1 | Ya |
 | `TambahPameranRollbackTest` | [test-transaksi-pameran.md](test-transaksi-pameran.md) | 1 | Ya |
+| `TransaksiSederhanaTest` | [test-transaksi-sederhana.md](test-transaksi-sederhana.md) | 2 | Ya |
 
-Total: **26 test** (15 Unit + 11 Feature), **95 assertion**.
+Total: **28 test** (15 Unit + 13 Feature), **101 assertion**.
 
 ## Perintah cepat
 
@@ -68,6 +73,18 @@ php artisan test --filter=test_blind_index_tersimpan_dan_pencarian_menemukan_pen
 
 # Modul transaksi tambah pameran
 php artisan test tests/Feature/Transaksi
+
+# Test transaksi paling sederhana
+php artisan test tests/Feature/Transaksi/TransaksiSederhanaTest.php
+
+# Uji transaksi langsung di database asli (.env, biasanya ven)
+php artisan tinker database/scripts/uji-transaksi-db-asli.php
+
+# Uji transaksi TAMBAH PAMERAN langsung di database asli
+php artisan tinker database/scripts/uji-transaksi-pameran-db-asli.php
+
+# Uji transaksi + data dummy lewat Artisan command
+php artisan uji:transaksi-pameran
 ```
 
 ## Prasyarat

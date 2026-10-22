@@ -2,6 +2,7 @@
 
 use App\Console\Commands\EnkripsiGoogleId;
 use App\Console\Commands\SetupDatabase;
+use App\Console\Commands\UjiTransaksiPameran;
 use App\Http\Middleware\EnsureUserIsAdmin;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -18,6 +19,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withCommands([
         SetupDatabase::class,
         EnkripsiGoogleId::class,
+        UjiTransaksiPameran::class,
     ])
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([

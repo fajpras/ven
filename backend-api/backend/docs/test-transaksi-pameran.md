@@ -140,6 +140,247 @@ php vendor\bin\phpunit --testdox tests\Feature\Transaksi
 > test secara bersamaan pada satu folder, karena `Storage::fake()` memakai
 > direktori testing yang sama.
 
+### 3.8 Melihat bukti data sebelum dan sesudah
+
+Setiap test otomatis mencetak bukti ke terminal dan menyimpannya sebagai
+file Markdown:
+
+```text
+storage/app/testing/bukti-transaksi-sukses.md
+storage/app/testing/bukti-transaksi-gagal.md
+```
+
+Contoh bukti skenario sukses:
+
+```text
+======================================================================
+BUKTI TRANSAKSI — SUKSES (COMMIT)
+======================================================================
+SEBELUM REQUEST:
+  jumlah pameran           : 0
+  file banner              : 0
+  log aktivitas pameran    : 0
+  level transaksi          : 0
+  event transaksi          : (belum ada)
+
+SESUDAH REQUEST:
+  response HTTP            : 201
+  jumlah pameran           : 1
+    - id_pameran=123, judul=Pameran Uji Transaksi ..., banner=/storage/pameran/banner/xxxx.jpg
+  file banner              : 1
+    - pameran/banner/xxxx.jpg
+  log aktivitas pameran    : 1
+    - membuat pameran #123 (berhasil)
+  level transaksi          : 0
+  event transaksi          : BEGIN -> COMMIT
+======================================================================
+```
+
+Contoh bukti skenario gagal:
+
+```text
+======================================================================
+BUKTI TRANSAKSI — GAGAL (ROLLBACK)
+======================================================================
+SEBELUM REQUEST:
+  jumlah pameran           : 0
+  file banner              : 0
+  log aktivitas pameran    : 0
+  level transaksi          : 0
+  event transaksi          : (belum ada)
+
+SESUDAH REQUEST:
+  response HTTP            : 500
+  jumlah pameran           : 0
+  file banner              : 0
+  log aktivitas pameran    : 0
+  level transaksi          : 0
+  event transaksi          : BEGIN -> ROLLBACK
+======================================================================
+```
+
+File bukti tersebut berada di folder `storage` yang di-*ignore* Git, jadi
+aman dijadikan lampiran atau bahan screenshot laporan.
+
+### 3.9 Uji langsung di database asli (opsional)
+
+Test PHPUnit memakai database `ven_testing`. Untuk membuktikan transaksi yang
+sama di database aplikasi (`ven`), gunakan script:
+
+```powershell
+php artisan tinker database/scripts/uji-transaksi-pameran-db-asli.php
+```
+
+Script memanggil `PameranController@store()` yang asli, bukan menyalin
+logikanya. Karena tinker tidak melewati middleware pemilihan koneksi, script
+memakai koneksi `mysql_user`, yaitu role yang punya izin INSERT ke `pameran`.
+
+Contoh output:
+
+```text
+Database : ven
+Koneksi  : mysql_user
+Judul    : Pameran Uji Tinker 20261022010453
+User     : fajri@ven.test
+Model    : Hall Uji 010453 (dibuat sementara)
+
+=== 1. TAMBAH PAMERAN — COMMIT ===
+Sebelum  : 0 baris pameran
+Response : 201
+Sesudah  : 1 baris pameran
+Data     : #6 Pameran Uji Tinker 20261022010453
+Banner   : /storage/pameran/banner/nAgQ...jpg
+File ada : ya
+Log      : 1 baris
+Event    : BEGIN -> COMMIT
+
+=== 2. TAMBAH PAMERAN — ROLLBACK ===
+Sebelum  : 0 baris pameran
+Error    : Gagal sengaja setelah INSERT pameran.
+Sesudah  : 0 baris pameran
+Event    : BEGIN -> ROLLBACK
+
+Bersih   : data uji dihapus.
+Selesai.
+```
+
+Yang dilakukan script:
+
+1. Memilih satu pengguna dan satu model hall yang ada.
+2. Jika belum ada model hall, membuat model sementara.
+3. Menjalankan skenario sukses: `store()` → `201` → 1 baris pameran,
+   1 file banner, 1 log, dan event `BEGIN -> COMMIT`.
+4. Membersihkan hasil skenario sukses.
+5. Memasang listener `eloquent.created` yang melempar error setelah INSERT.
+6. Menjalankan skenario gagal: `store()` → error → 0 baris pameran,
+   0 file banner, dan event `BEGIN -> ROLLBACK`.
+7. Menghapus pameran, banner, log, dan model sementara, lalu mengembalikan
+   koneksi default.
+
+Catatan:
+
+- Ini menguji database asli, bukan `ven_testing`. Data uji memakai judul unik
+  dan dibersihkan otomatis.
+- Jika proses terhenti paksa, jalankan pembersih:
+
+  ```powershell
+  php artisan tinker database/scripts/bersihkan-sisa-uji-pameran.php
+  ```
+
+- Script tidak melewati HTTP/middleware auth; ia memanggil controller langsung
+  dengan `Request` dan user resolver. Untuk menguji endpoint HTTP lengkap,
+  gunakan Postman atau test PHPUnit.
+
+### 3.10 Menjalankan uji lewat Artisan command
+
+Cara paling praktis untuk melihat kondisi awal dan akhir adalah command:
+
+```powershell
+php artisan uji:transaksi-pameran
+```
+
+Command ini membuat data dummy, menjalankan skenario **COMMIT**, lalu
+**ROLLBACK**, dan menampilkan kondisi sebelum/sesudah masing-masing.
+
+Contoh output:
+
+```text
+========================================================================
+UJI TRANSAKSI TAMBAH PAMERAN
+========================================================================
+Database    : ven
+Koneksi     : mysql_user
+Judul dummy : DUMMY-TRANSAKSI-20261022012157-9720
+Pengguna    : fajri@ven.test
+Model hall  : Hall Dummy 20261022012157-9720 (dibuat sementara)
+
+KONDISI AWAL
+  pameran dummy : 0
+  file banner   : total 26, baru 0
+  log pameran   : baru 0
+  level transaksi: 0
+
+PROSES COMMIT
+  Sebelum:
+    pameran dummy : 0
+    file banner   : total 26, baru 0
+    log pameran   : baru 0
+    level transaksi: 0
+  Sesudah:
+    response HTTP : 201
+    pameran dummy : 1
+    #13 DUMMY-TRANSAKSI-20261022012157-9720 | /storage/pameran/banner/mKCf...jpg
+    file banner   : total 27, baru 1
+    log pameran   : baru 1
+    level transaksi: 0
+  Level saat INSERT: 1
+  Data   : #13 DUMMY-TRANSAKSI-20261022012157-9720
+  Banner : /storage/pameran/banner/mKCf...jpg
+  Perubahan:
+    pameran : 0 -> 1 (+1)
+    banner  : +1 file baru
+    log     : +1 baris baru
+    + pameran #13 DUMMY-TRANSAKSI-20261022012157-9720
+    + log #47 membuat pameran #13 (berhasil)
+  Event  : BEGIN -> COMMIT
+
+PROSES ROLLBACK
+  Sebelum:
+    pameran dummy : 0
+    file banner   : total 26, baru 0
+    log pameran   : baru 0
+    level transaksi: 0
+  Error : Gagal sengaja setelah INSERT pameran.
+  Sesudah:
+    pameran dummy : 0
+    file banner   : total 26, baru 0
+    log pameran   : baru 0
+    level transaksi: 0
+  Level saat INSERT: 1
+  Perubahan:
+    pameran : 0 -> 0 (0)
+    banner  : +0 file baru
+    log     : +0 baris baru
+    (tidak ada perubahan)
+  Event  : BEGIN -> ROLLBACK
+
+Tidak ada data dummy tersisa.
+```
+
+Ringkasan kondisi:
+
+| Skenario | Kondisi awal | Kondisi akhir | Event |
+|---|---|---|---|
+| COMMIT | 0 pameran, 0 banner baru, 0 log | 1 pameran, 1 banner baru, 1 log | `BEGIN -> COMMIT` |
+| ROLLBACK | 0 pameran, 0 banner baru, 0 log | 0 pameran, 0 banner baru, 0 log | `BEGIN -> ROLLBACK` |
+
+Opsi command:
+
+```powershell
+# Hanya skenario commit
+php artisan uji:transaksi-pameran --skenario=commit
+
+# Hanya skenario rollback
+php artisan uji:transaksi-pameran --skenario=rollback
+
+# Simpan data dummy dari skenario commit
+php artisan uji:transaksi-pameran --skenario=commit --keep
+
+# Hapus semua data dummy yang pernah dibuat command ini
+php artisan uji:transaksi-pameran --bersihkan
+```
+
+Catatan:
+
+- `--keep` hanya boleh dipakai bersama `--skenario=commit`.
+- Tanpa `--keep`, semua pameran, banner, log, dan model hall sementara
+  dibersihkan otomatis.
+- Command memakai koneksi `mysql_user` secara default karena role tersebut
+  yang punya izin INSERT ke tabel `pameran`. Bisa diganti dengan
+  `--koneksi=nama_koneksi`.
+- Jangan menjalankan dua command uji secara bersamaan karena keduanya memakai
+  folder banner yang sama.
+
 ---
 
 ## 4. Dasar transaksi yang dipakai
