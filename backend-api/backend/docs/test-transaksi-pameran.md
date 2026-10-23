@@ -271,6 +271,15 @@ Catatan:
   dengan `Request` dan user resolver. Untuk menguji endpoint HTTP lengkap,
   gunakan Postman atau test PHPUnit.
 
+Catatan tambahan command:
+
+- Command ini **tidak memakai locking** seperti `SELECT ... FOR UPDATE` atau
+  `lockForUpdate`.
+- `DB::transaction` sudah menjamin atomicity, tetapi tidak menambahkan lock
+  aplikasi-level untuk skenario ini.
+- Jadi, untuk skenario uji saat ini cukup aman satu proses; jangan jalankan
+  dua command secara bersamaan karena memakai folder banner dan tabel yang sama.
+
 ### 3.10 Menjalankan uji lewat Artisan command
 
 Cara paling praktis untuk melihat kondisi awal dan akhir adalah command:
