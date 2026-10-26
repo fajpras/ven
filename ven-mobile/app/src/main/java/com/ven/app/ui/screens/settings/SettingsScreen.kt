@@ -1,10 +1,12 @@
 package com.ven.app.ui.screens.settings
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
@@ -18,12 +20,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import com.ven.app.R
 import com.ven.app.ui.components.layout.VexTopBar
 import com.ven.app.ui.components.ui.VexListRow
 import com.ven.app.ui.components.ui.VexSectionLabel
 import com.ven.app.ui.theme.ThemeMode
+import com.ven.app.ui.theme.VexRadius
 import com.ven.app.ui.theme.VexSpace
 import com.ven.app.ui.theme.VexTheme
 
@@ -147,49 +152,81 @@ fun SettingsScreen(
 
         // Dialog Konfirmasi Logout
         if (showLogoutDialog) {
-            AlertDialog(
-                onDismissRequest = { showLogoutDialog = false },
-                containerColor = colors.surface,
-                titleContentColor = colors.text,
-                textContentColor = colors.textSecondary,
-                title = {
-                    Text(
-                        text = stringResource(R.string.settings_logout_dialog_title),
-                        style = MaterialTheme.typography.titleMedium,
-                    )
+            LogoutConfirmationDialog(
+                onConfirm = {
+                    showLogoutDialog = false
+                    onLogoutConfirmed()
                 },
-                text = {
-                    Text(
-                        text = stringResource(R.string.settings_logout_dialog_msg),
-                        style = MaterialTheme.typography.bodyMedium,
-                    )
-                },
-                confirmButton = {
-                    TextButton(
-                        onClick = {
-                            showLogoutDialog = false
-                            onLogoutConfirmed()
-                        },
-                    ) {
-                        Text(
-                            text = stringResource(R.string.settings_logout_confirm),
-                            color = colors.danger,
-                        )
-                    }
-                },
-                dismissButton = {
-                    TextButton(
-                        onClick = { showLogoutDialog = false },
-                    ) {
-                        Text(
-                            text = stringResource(R.string.settings_logout_cancel),
-                            color = colors.text,
-                        )
-                    }
-                },
+                onDismiss = { showLogoutDialog = false },
             )
         }
     }
+}
+
+/**
+ * Dialog konfirmasi logout dengan frame yang rapi, simetris, dan presisi.
+ * Menggunakan radius 28dp (VexRadius.xl), kontainer colors.surface,
+ * dan garis outline border 1dp colors.border yang elegan.
+ */
+@Composable
+fun LogoutConfirmationDialog(
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val colors = VexTheme.colors
+    val dialogShape = RoundedCornerShape(VexRadius.xl)
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        modifier = modifier.border(
+            width = 1.dp,
+            color = colors.border,
+            shape = dialogShape,
+        ),
+        shape = dialogShape,
+        containerColor = colors.surface,
+        tonalElevation = 0.dp,
+        titleContentColor = colors.text,
+        textContentColor = colors.textSecondary,
+        title = {
+            Text(
+                text = stringResource(R.string.settings_logout_dialog_title),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+            )
+        },
+        text = {
+            Text(
+                text = stringResource(R.string.settings_logout_dialog_msg),
+                style = MaterialTheme.typography.bodyMedium,
+            )
+        },
+        confirmButton = {
+            TextButton(
+                onClick = onConfirm,
+            ) {
+                Text(
+                    text = stringResource(R.string.settings_logout_confirm),
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    color = colors.danger,
+                )
+            }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = onDismiss,
+            ) {
+                Text(
+                    text = stringResource(R.string.settings_logout_cancel),
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Medium,
+                    color = colors.text,
+                )
+            }
+        },
+    )
 }
 
 // ---------------------------------------------------------
@@ -232,6 +269,28 @@ private fun SettingsLightPreview() {
             onNavigateToPrivacyPolicy = {},
             onNavigateToHelp = {},
             onLogoutConfirmed = {},
+        )
+    }
+}
+
+@Preview(name = "Logout Dialog - Dark Mode", showBackground = true, backgroundColor = 0xFF1F1F1F)
+@Composable
+private fun LogoutDialogDarkPreview() {
+    VexTheme(mode = ThemeMode.Dark) {
+        LogoutConfirmationDialog(
+            onConfirm = {},
+            onDismiss = {},
+        )
+    }
+}
+
+@Preview(name = "Logout Dialog - Light Mode", showBackground = true, backgroundColor = 0xFFFFFFFF)
+@Composable
+private fun LogoutDialogLightPreview() {
+    VexTheme(mode = ThemeMode.Light) {
+        LogoutConfirmationDialog(
+            onConfirm = {},
+            onDismiss = {},
         )
     }
 }
