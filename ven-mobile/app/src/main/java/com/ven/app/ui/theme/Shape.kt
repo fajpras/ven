@@ -15,7 +15,7 @@ object VexRadius {
 val VexShapes = Shapes(
     extraSmall = RoundedCornerShape(VexRadius.xs),
     small = RoundedCornerShape(VexRadius.md),
-    medium = RoundedCornerShape(VexRadius.lg),
-    large = RoundedCornerShape(VexRadius.xl),
-    extraLarge = RoundedCornerShape(VexRadius.full),
+    medium = RoundedCornerShape(VexRadius.md),
+    large = RoundedCornerShape(VexRadius.lg),
+    extraLarge = RoundedCornerShape(VexRadius.xl),
 )

@@ -1,5 +1,6 @@
 package com.ven.app.ui.screens.auth
 
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -8,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.HorizontalDivider
@@ -60,8 +62,17 @@ fun RegisterScreen(
     val colors = VexTheme.colors
 
     if (state.isOtpDialogOpen) {
+        val dialogShape = RoundedCornerShape(VexRadius.xl)
         AlertDialog(
             onDismissRequest = onDismissOtpDialog,
+            modifier = Modifier.border(
+                width = 1.dp,
+                color = colors.border,
+                shape = dialogShape,
+            ),
+            shape = dialogShape,
+            containerColor = colors.surface,
+            tonalElevation = 0.dp,
             title = {
                 Text(
                     text = stringResource(R.string.verify_otp_title),
@@ -149,7 +160,6 @@ fun RegisterScreen(
                     variant = VexButtonVariant.Outline,
                 )
             },
-            containerColor = colors.surface,
         )
     }
 
