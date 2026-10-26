@@ -5,6 +5,8 @@ namespace App\Providers;
 use App\Contracts\PembuatKodeOtp;
 use App\Listeners\CatatEventAuth;
 use App\Models\Karya;
+use App\Models\Kategori;
+use App\Models\Model3D;
 use App\Models\Objek;
 use App\Models\Pameran;
 use App\Models\Pengguna;
@@ -37,7 +39,17 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        foreach ([Pengguna::class, Pameran::class, Karya::class, Objek::class, Ruangan::class, Undangan::class, SanksiAkun::class] as $model) {
+        foreach ([
+            Pengguna::class,
+            Pameran::class,
+            Karya::class,
+            Model3D::class,
+            Objek::class,
+            Ruangan::class,
+            Undangan::class,
+            SanksiAkun::class,
+            Kategori::class,
+        ] as $model) {
             $model::observe(AktivitasObserver::class);
         }
 

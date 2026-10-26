@@ -25,6 +25,17 @@ return new class extends Migration
                 created_at
             FROM pengguna
         ');
+
+        $db = DB::getDatabaseName();
+        $host = config('database.ven_client_host', 'localhost');
+        $app = "'".env('DB_APP_USERNAME', 'ven_app')."'@'{$host}'";
+
+        foreach ([$app, '`user_role`', '`admin_role`'] as $penerima) {
+            try {
+                DB::unprepared("GRANT SELECT ON `{$db}`.`v_pengguna_publik` TO {$penerima}");
+            } catch (Throwable) {
+            }
+        }
     }
 
     /**

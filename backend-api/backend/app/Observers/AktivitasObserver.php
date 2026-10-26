@@ -11,7 +11,7 @@ class AktivitasObserver implements ShouldHandleEventsAfterCommit
 {
     public function created(Model $m): void
     {
-        $this->catat($m, 'membuat');
+        $this->catat($m, 'tambah');
     }
 
     public function updated(Model $m): void
@@ -19,42 +19,64 @@ class AktivitasObserver implements ShouldHandleEventsAfterCommit
         $kolom = array_values(array_diff(array_keys($m->getChanges()), ['updated_at', 'created_at']));
 
         if ($kolom) {
-            $this->catat($m, 'mengubah', implode(', ', $kolom));
+            $this->catat($m, 'ubah', implode(', ', $kolom));
         }
     }
 
     public function deleted(Model $m): void
     {
-        $this->catat($m, 'menghapus');
+        $this->catat($m, 'hapus');
     }
 
     public function restored(Model $m): void
     {
-        $this->catat($m, 'memulihkan');
+        $this->catat($m, 'pulih');
     }
 
     private function catat(Model $m, string $aksi, ?string $detail = null): void
     {
         $key = $m->getKey();
         $label = (string) $key;
-        $kolomProfil = ['nama', 'nama_panggilan', 'deskripsi', 'foto_profil', 'email'];
+        $kolomProfil = ['nama', 'nama_panggilan', 'deskripsi', 'foto_profil', 'email', 'nomor_hp'];
+
         $jenis = match ($m->getTable()) {
-            'pameran' => 'pameran',
-            'karya' => 'karya',
-            'pengguna' => $aksi === 'mengubah'
-                && array_intersect($kolomProfil, array_keys($m->getChanges()))
-                    ? 'profil'
-                    : 'pengguna',
-            default => null,
+            'pameran'     => 'pameran',
+            'karya'       => 'karya',
+            'model'       => 'model',
+            'ruangan'     => 'ruangan',
+            'undangan'    => 'undangan',
+            'kategori'    => 'kategori',
+            'objek'       => 'objek',
+            'sanksi_akun' => 'sanksi',
+            'pengguna'    => ($aksi === 'ubah') && array_intersect($kolomProfil, array_keys($m->getChanges()))
+                ? 'profil'
+                : 'pengguna',
+            default       => $m->getTable(),
         };
 
-        $pelaku = ($m instanceof Pengguna && $aksi === 'membuat') ? $key : null;
+        $pelakuId = ($m instanceof Pengguna && $aksi === 'tambah') ? $key : null;
+        $namaPelaku = ($m instanceof Pengguna && $aksi === 'tambah')
+            ? (string) $m->nama
+            : (request()?->user('sanctum')?->nama ?? 'Sistem');
+
+        $namaObjek = $m->judul ?? $m->nama ?? null;
+        $labelObjek = "#{$label}".($namaObjek ? " \"{$namaObjek}\"" : '');
+
+        $pesan = match ($aksi) {
+            'tambah' => "Menambah {$jenis} {$labelObjek}",
+            'ubah'   => "Mengubah {$jenis} {$labelObjek}".($detail ? " ({$detail})" : ''),
+            'hapus'  => "Menghapus {$jenis} {$labelObjek}",
+            'pulih'  => "Memulihkan {$jenis} {$labelObjek}",
+            default  => "{$aksi} {$jenis} {$labelObjek}",
+        };
 
         LogSistem::aktivitas(
-            entitas: $m->getTable(),
+            entitas: $namaPelaku,
             jenis: $jenis,
-            pesan: "{$aksi} {$m->getTable()} #{$label}".($detail ? " ({$detail})" : ''),
-            idPengguna: $pelaku,
+            pesan: $pesan,
+            status: 'berhasil',
+            idPengguna: $pelakuId,
+            aksi: $aksi,
         );
     }
 }

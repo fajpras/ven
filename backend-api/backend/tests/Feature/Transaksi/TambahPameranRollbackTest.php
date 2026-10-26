@@ -83,7 +83,7 @@ class TambahPameranRollbackTest extends TestCase
             0,
             DB::table('log_aktivitas')
                 ->where('id_log', '>', $idLogSebelum)
-                ->where('entitas', 'pameran')
+                ->where('jenis', 'pameran')
                 ->count(),
             'Log aktivitas tidak boleh ditulis jika transaksi di-rollback.'
         );

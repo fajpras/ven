@@ -7,9 +7,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class LogAktivitas extends Model
 {
-    public const JENIS = ['pameran', 'karya', 'pengguna'];
+    public const JENIS = [
+        'pameran', 'karya', 'model', 'profil', 'pengguna',
+        'ruangan', 'undangan', 'kategori', 'objek', 'sanksi',
+    ];
 
-    public const AKSI = ['tambah', 'edit', 'hapus'];
+    public const AKSI = ['tambah', 'lihat', 'ubah', 'edit', 'hapus', 'pulih'];
 
     public $timestamps = false;
 

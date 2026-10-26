@@ -83,7 +83,7 @@ class TambahPameranCommitTest extends TestCase
         $this->assertTrue(
             DB::table('log_aktivitas')
                 ->where('id_log', '>', $idLogSebelum)
-                ->where('entitas', 'pameran')
+                ->where('entitas', $this->pengguna->nama)
                 ->where('jenis', 'pameran')
                 ->where('pesan', 'like', "%pameran #{$pameran->id_pameran}%")
                 ->exists(),

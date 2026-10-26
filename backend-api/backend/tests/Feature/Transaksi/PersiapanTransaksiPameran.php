@@ -126,7 +126,7 @@ trait PersiapanTransaksiPameran
             'file_banner' => $this->fileBanner(),
             'log_pameran' => DB::table('log_aktivitas')
                 ->where('id_log', '>', $idLogSejak)
-                ->where('entitas', 'pameran')
+                ->where('jenis', 'pameran')
                 ->get(['id_log', 'pesan', 'status'])
                 ->all(),
             'level_transaksi' => DB::transactionLevel(),

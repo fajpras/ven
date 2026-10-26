@@ -11,13 +11,13 @@ return new class extends Migration
             $table->bigIncrements('id_log');
             $table->uuid('id_pengguna')->nullable()->index();
             $table->foreign('id_pengguna')->references('id_pengguna')->on('pengguna')->nullOnDelete();
-            $table->string('entitas', 60);
-            $table->enum('jenis', ['pameran', 'karya', 'pengguna'])->nullable();
-            $table->string('status', 20);
+            $table->string('entitas', 100);
+            $table->string('jenis', 50)->nullable();
+            $table->string('status', 20)->default('berhasil');
             $table->string('pesan', 255)->nullable();
             $table->string('ip_address', 100)->nullable();
             $table->timestamp('waktu')->useCurrent()->index();
-            $table->enum('aksi', ['tambah', 'edit', 'hapus'])->nullable();
+            $table->string('aksi', 20)->nullable();
         });
     }
 

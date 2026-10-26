@@ -22,10 +22,18 @@ class CatatKeamanan
             return;
         }
 
-        LogSistem::keamanan(match ($status) {
+        $event = match ($status) {
             401 => 'tidak_terautentikasi',
             403 => 'akses_ditolak',
             default => 'terlalu_banyak_permintaan',
-        }, null, $status);
+        };
+
+        $pesan = match ($status) {
+            401 => 'Percobaan akses endpoint tanpa token otentikasi valid',
+            403 => 'Akses ditolak: pengguna tidak memiliki izin ke endpoint ini',
+            default => 'Permintaan dibatasi: melebihi batas laju (rate limit)',
+        };
+
+        LogSistem::keamanan($event, $pesan, $status);
     }
 }

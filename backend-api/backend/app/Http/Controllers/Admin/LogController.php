@@ -16,7 +16,7 @@ class LogController extends Controller
         $request->validate(['filter.id_pengguna' => ['nullable', 'uuid']]);
 
         $log = QueryBuilder::for(LogAktivitas::class)
-            ->allowedFilters(['entitas', 'status', 'jenis', 'aksi', ...$this->filterUmum()])
+            ->allowedFilters(['entitas', 'status', 'jenis', 'aksi', 'pesan', ...$this->filterUmum()])
             ->allowedSorts(['waktu', 'id_log'])
             ->defaultSort('-id_log')
             ->paginate(50);
@@ -35,8 +35,9 @@ class LogController extends Controller
 
         $log = QueryBuilder::for(LogKeamanan::class)
             ->allowedFilters([
-                'event', 'endpoint', 'method', 'ip_address',
+                'event', 'endpoint', 'method', 'ip_address', 'pesan',
                 AllowedFilter::exact('status_kode'),
+                AllowedFilter::callback('status', fn ($q, $v) => $q->where('status_kode', (int) $v)),
                 ...$this->filterUmum(),
             ])
             ->allowedSorts(['waktu', 'id_log', 'status_kode'])

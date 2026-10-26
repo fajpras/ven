@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -23,6 +24,14 @@ class LogKeamanan extends Model
             'status_kode' => 'integer',
             'waktu'       => 'datetime',
         ];
+    }
+
+    protected function status(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->status_kode,
+            set: fn ($value) => ['status_kode' => (int) $value],
+        );
     }
 
     protected static function booted(): void

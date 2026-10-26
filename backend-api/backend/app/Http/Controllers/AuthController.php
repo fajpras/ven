@@ -220,7 +220,7 @@ class AuthController extends Controller
         }
 
         if (! $profil || ! $profil['verified'] || $profil['sub'] === '' || $profil['email'] === '') {
-            LogSistem::keamanan('google_token_tidak_valid', null, 401);
+            LogSistem::keamanan('google_token_tidak_valid', 'Token Google OAuth tidak valid atau tidak terverifikasi', 401);
 
             return $this->unauthorized('Token Google tidak valid.');
         }
