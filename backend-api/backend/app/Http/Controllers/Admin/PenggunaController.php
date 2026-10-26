@@ -71,15 +71,19 @@ class PenggunaController extends Controller
         ]);
 
         $sanksi = DB::transaction(function () use ($pengguna, $validated, $request) {
-            $sanksi = $pengguna->sanksi()->forceCreate([
-                'id_pengguna' => $pengguna->id_pengguna,
+            $target = Pengguna::where('id_pengguna', $pengguna->id_pengguna)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            $sanksi = $target->sanksi()->forceCreate([
+                'id_pengguna' => $target->id_pengguna,
                 'jenis_sanksi' => $validated['jenis_sanksi'],
                 'alasan' => $validated['alasan'],
                 'mulai' => $validated['mulai'],
                 'berakhir' => $request->boolean('permanen') ? null : $validated['berakhir'],
             ]);
 
-            $pengguna->sinkronStatusSanksi();
+            $target->sinkronStatusSanksi();
 
             return $sanksi;
         });
@@ -111,8 +115,12 @@ class PenggunaController extends Controller
         }
 
         DB::transaction(function () use ($sanksi, $validated) {
+            $target = Pengguna::where('id_pengguna', $sanksi->id_pengguna)
+                ->lockForUpdate()
+                ->firstOrFail();
+
             $sanksi->forceFill($validated)->save();
-            $sanksi->pengguna->sinkronStatusSanksi();
+            $target->sinkronStatusSanksi();
         });
 
         return $this->ok($sanksi->fresh()->load('pengguna'), 'Sanksi diperbarui.');
@@ -121,15 +129,25 @@ class PenggunaController extends Controller
     public function sanksiCabut(SanksiAkun $sanksi)
     {
         DB::transaction(function () use ($sanksi) {
+            $target = Pengguna::where('id_pengguna', $sanksi->id_pengguna)
+                ->lockForUpdate()
+                ->firstOrFail();
+
             $sekarang = now();
+            $mulai = Carbon::parse($sanksi->mulai);
 
-            $sanksi->forceFill([
+            if ($mulai->greaterThanOrEqualTo($sekarang)) {
+                $sanksi->forceFill([
+                    'mulai' => $sekarang->copy()->subSeconds(2),
+                    'berakhir' => $sekarang->copy()->subSecond(),
+                ])->save();
+            } else {
+                $sanksi->forceFill([
+                    'berakhir' => $sekarang,
+                ])->save();
+            }
 
-                'mulai' => $sanksi->mulai->lessThan($sekarang) ? $sanksi->mulai : $sekarang->copy()->subSecond(),
-                'berakhir' => $sekarang,
-            ])->save();
-
-            $sanksi->pengguna->sinkronStatusSanksi();
+            $target->sinkronStatusSanksi();
         });
 
         return $this->ok(null, 'Sanksi dicabut.');
