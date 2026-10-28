@@ -71,4 +71,22 @@ class LogSistemTest extends TestCase
         $this->assertSame('tambah', $log->aksi);
         $this->assertStringContainsString('Menambah pengguna', $log->pesan);
     }
+
+    public function test_observer_mencatat_aktivitas_registrasi(): void
+    {
+        // Simulasi request pendaftaran akun
+        $this->app->instance('request', \Illuminate\Http\Request::create('/api/auth/register', 'POST'));
+
+        $pengguna = Pengguna::factory()->create(['nama' => 'User Registrasi']);
+
+        $log = LogAktivitas::where('id_pengguna', $pengguna->id_pengguna)
+            ->where('aksi', 'registrasi')
+            ->first();
+
+        $this->assertNotNull($log);
+        $this->assertSame('User Registrasi', $log->entitas);
+        $this->assertSame('pengguna', $log->jenis);
+        $this->assertSame('registrasi', $log->aksi);
+        $this->assertStringContainsString('Registrasi akun pengguna', $log->pesan);
+    }
 }
