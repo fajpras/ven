@@ -54,21 +54,37 @@ class AktivitasObserver implements ShouldHandleEventsAfterCommit
             default       => $m->getTable(),
         };
 
-        $pelakuId = ($m instanceof Pengguna && $aksi === 'tambah') ? $key : null;
-        $namaPelaku = ($m instanceof Pengguna && $aksi === 'tambah')
-            ? (string) $m->nama
-            : (request()?->user('sanctum')?->nama ?? 'Sistem');
-
         $namaObjek = $m->judul ?? $m->nama ?? null;
         $labelObjek = "#{$label}".($namaObjek ? " \"{$namaObjek}\"" : '');
 
-        $pesan = match ($aksi) {
-            'tambah' => "Menambah {$jenis} {$labelObjek}",
-            'ubah'   => "Mengubah {$jenis} {$labelObjek}".($detail ? " ({$detail})" : ''),
-            'hapus'  => "Menghapus {$jenis} {$labelObjek}",
-            'pulih'  => "Memulihkan {$jenis} {$labelObjek}",
-            default  => "{$aksi} {$jenis} {$labelObjek}",
-        };
+        // Tentukan ID Pengguna yang berelasi dengan aktivitas (tidak boleh NULL jika entitasnya Pengguna)
+        $pelakuId = ($m instanceof Pengguna)
+            ? $key
+            : (request()?->user('sanctum')?->id_pengguna ?? ($m->id_pengguna ?? null));
+
+        $isRegistrasi = ($m instanceof Pengguna && $aksi === 'tambah' && (request()?->is('*register*') || request()?->is('*auth/google*')));
+        $isSeeder = ($m instanceof Pengguna && $aksi === 'tambah' && app()->runningInConsole() && ! app()->runningUnitTests());
+
+        if ($isSeeder) {
+            $namaPelaku = 'Sistem (Seeder)';
+            $pesan = "Inisialisasi akun pengguna {$labelObjek} via Seeder";
+        } elseif ($isRegistrasi) {
+            $aksi = 'registrasi';
+            $namaPelaku = (string) $m->nama;
+            $pesan = "Registrasi akun pengguna {$labelObjek}";
+        } else {
+            $namaPelaku = ($m instanceof Pengguna && $aksi === 'tambah')
+                ? (string) $m->nama
+                : (request()?->user('sanctum')?->nama ?? 'Sistem');
+
+            $pesan = match ($aksi) {
+                'tambah' => "Menambah {$jenis} {$labelObjek}",
+                'ubah'   => "Mengubah {$jenis} {$labelObjek}".($detail ? " ({$detail})" : ''),
+                'hapus'  => "Menghapus {$jenis} {$labelObjek}",
+                'pulih'  => "Memulihkan {$jenis} {$labelObjek} (Restore)",
+                default  => "{$aksi} {$jenis} {$labelObjek}",
+            };
+        }
 
         LogSistem::aktivitas(
             entitas: $namaPelaku,

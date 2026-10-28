@@ -12,7 +12,16 @@ class LogAktivitas extends Model
         'ruangan', 'undangan', 'kategori', 'objek', 'sanksi',
     ];
 
-    public const AKSI = ['tambah', 'lihat', 'ubah', 'edit', 'hapus', 'pulih'];
+    /**
+     * Daftar aksi aktivitas yang dicatat oleh sistem:
+     * - 'tambah'     : Pembuatan entitas/data baru
+     * - 'ubah'       : Pembaruan atau modifikasi data
+     * - 'hapus'      : Penghapusan data (soft delete atau delete)
+     * - 'pulih'      : Pemulihan data yang sempat dihapus (soft-delete restore)
+     * - 'lihat'      : Pengaksesan/pemeriksaan data sensitif
+     * - 'registrasi' : Pendaftaran akun pengguna baru
+     */
+    public const AKSI = ['tambah', 'lihat', 'ubah', 'hapus', 'pulih', 'registrasi'];
 
     public $timestamps = false;
 
