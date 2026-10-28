@@ -14,7 +14,7 @@ class RestoreDatabase extends Command
      * Options:
      *   --path : full path to the .sql dump file to import (required)
      */
-    protected $signature = 'ven:restore-db {--path= : Full path to the .sql dump file to restore}';
+    protected $signature = 'ven:restore-db {--path= : Full path to the .sql dump file to restore} {--db= : Target database name (default: DB_DATABASE)}';
 
     /**
      * The console command description.
@@ -25,8 +25,8 @@ class RestoreDatabase extends Command
     {
         $host = env('DB_HOST', '127.0.0.1');
         $port = env('DB_PORT', '3306');
-        $db   = env('DB_DATABASE');
-        $user = env('MYSQL_ROOT_USER', 'root');
+        $db   = $this->option('db') ?: env('DB_DATABASE', 'ven');
+        $user = env('DB_DBA_USERNAME', 'dba');
 
         if (! $db) {
             $this->error('Variable DB_DATABASE tidak di‑set di .env');
@@ -43,13 +43,20 @@ class RestoreDatabase extends Command
             return self::FAILURE;
         }
 
-        // Prompt for root password (allow empty)
-        $rootPass = $this->secret("Password MySQL untuk user '{$user}' (kosongkan bila tidak ada)");
+        $pass = env('DB_DBA_PASSWORD');
+        if ($pass === null || $pass === '') {
+            $pass = (string) $this->secret("Password MySQL untuk user '{$user}' (kosongkan bila tidak ada)");
+        }
 
         $this->info('Menjalankan restore…');
-        // Build mysql command
-        $command = "mysql -h {$host} -P {$port} -u {$user} " .
-            (empty($rootPass) ? '' : "-p{$rootPass} ") .
+        $binary = env('MYSQL_BINARY_PATH');
+        if (! $binary) {
+            $laragonMysql = glob('C:/laragon/bin/mysql/*/bin/mysql.exe');
+            $binary = ! empty($laragonMysql) ? end($laragonMysql) : 'mysql';
+        }
+
+        $command = escapeshellarg($binary) . " -h {$host} -P {$port} -u {$user} " .
+            (empty($pass) ? '' : "-p{$pass} ") .
             "{$db} < " . escapeshellarg($path);
 
         exec($command, $output, $returnVar);

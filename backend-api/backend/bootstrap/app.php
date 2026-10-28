@@ -1,6 +1,9 @@
 <?php
 
+use App\Console\Commands\BackupDatabase;
 use App\Console\Commands\EnkripsiGoogleId;
+use App\Console\Commands\InitializeDatabase;
+use App\Console\Commands\RestoreDatabase;
 use App\Console\Commands\SetupDatabase;
 use App\Console\Commands\UjiTransaksiPameran;
 use App\Http\Middleware\EnsureUserIsAdmin;
@@ -17,7 +20,10 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withCommands([
+        BackupDatabase::class,
+        RestoreDatabase::class,
         SetupDatabase::class,
+        InitializeDatabase::class,
         EnkripsiGoogleId::class,
         UjiTransaksiPameran::class,
     ])
