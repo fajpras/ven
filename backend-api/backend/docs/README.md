@@ -1,110 +1,87 @@
-# Dokumentasi Pengujian Aplikasi VEN
+# Dokumentasi Audit & Pengujian Keamanan Aplikasi VEN
 
-Kumpulan panduan menjalankan test aplikasi. Semua perintah dijalankan dari
-folder backend:
+Kumpulan dokumen audit kepatuhan database & keamanan sistem VEN, panduan pengujian otomatis (*automated testing*), dan integrasi API testing.
 
+Semua perintah pengujian dijalankan dari direktori backend:
 ```powershell
 cd C:\laragon\www\VEN\ven\backend-api\backend
 ```
 
-## Panduan umum
+---
 
-| Dokumen | Isi |
-|---|---|
-| [panduan-artisan-test.md](panduan-artisan-test.md) | Menjalankan test dengan `php artisan test`: semua, per suite, per file, per method |
-| [panduan-unit-test.md](panduan-unit-test.md) | Test unit tanpa database: perintah, struktur, dan cara menambah test |
-| [panduan-tinker.md](panduan-tinker.md) | Pengujian manual lewat `php artisan tinker`: enkripsi, dekripsi, data nyata, simulasi kegagalan |
+## 🛡️ 7 Kategori Audit Keamanan & Kepatuhan Database
 
-## Modul transaksi
+Berikut adalah 7 pilar keamanan dan basis data yang telah diimplementasikan, diaudit, dan lulus pengujian:
 
-| Modul | Dokumen | Jumlah test | Database |
-|---|---|---|---|
-| Transaksi tambah pameran (Poin 13 & 14) | [test-transaksi-pameran.md](test-transaksi-pameran.md) | 2 | Ya (`ven_testing`) |
-| Transaksi sederhana (COMMIT & ROLLBACK) | [test-transaksi-sederhana.md](test-transaksi-sederhana.md) | 2 | Ya (`ven_testing`) |
+| No | Kategori Audit | Dokumen Penjelasan | File Pengujian Utama (PHPUnit) | Status |
+|:--:|---|---|---|:---:|
+| 1 | **Pembatasan Akses dengan View** | [01-pembatasan-akses-view.md](01-pembatasan-akses-view.md) | `tests/Feature/AuditKeamananDanViewTest.php` | ✅ COMPLIED |
+| 2 | **Hashing dan Salting (Bcrypt)** | [02-hashing-dan-salting.md](02-hashing-dan-salting.md) | `tests/Feature/AuditKeamananDanViewTest.php` | ✅ COMPLIED |
+| 3 | **Enkripsi AES-256-GCM & Blind Index** | [03-enkripsi-aes-256-gcm.md](03-enkripsi-aes-256-gcm.md) | `tests/Feature/EnkripsiGoogleIdTest.php`<br>`tests/Unit/LayananEnkripsiTest.php` | ✅ COMPLIED |
+| 4 | **Database Transaction (COMMIT & ROLLBACK)** | [04-database-transactions.md](04-database-transactions.md) | `tests/Feature/Transaksi/TransaksiSederhanaTest.php`<br>`tests/Feature/Transaksi/TambahPameranCommitTest.php` | ✅ COMPLIED |
+| 5 | **Concurrent Access / Locking (`lockForUpdate`)** | [05-concurrent-access-locking.md](05-concurrent-access-locking.md) | `tests/Feature/PenggunaSanksiLockTest.php` | ✅ COMPLIED |
+| 6 | **Backup Database (Otomatis & Manual)** | [06-backup-database.md](06-backup-database.md) | `tests/Feature/AuditBackupDanRestoreTest.php` | ✅ COMPLIED |
+| 7 | **Restore Verification (Disaster Recovery)** | [07-restore-verification.md](07-restore-verification.md) | `tests/Feature/AuditBackupDanRestoreTest.php` | ✅ COMPLIED |
 
-Modul ini membuktikan COMMIT pada jalur sukses dan ROLLBACK pada jalur gagal,
-lengkap dengan kondisi data sebelum dan sesudah kedua skenario. Setiap test
-juga mencetak bukti ke terminal dan menyimpannya di
-`storage/app/testing/bukti-transaksi-sukses.md` serta
-`storage/app/testing/bukti-transaksi-gagal.md`.
+---
 
-## Dokumen per test
+## 🚀 Menjalankan Pengujian Otomatis
 
-### Suite Unit (tanpa database)
-
-| Test | Dokumen | Jumlah | Database |
-|---|---|---|---|
-| `DekripsiGoogleIdTest` | [test-dekripsi-google-id.md](test-dekripsi-google-id.md) | 8 | Tidak |
-| `LayananEnkripsiTest` | [test-layanan-enkripsi.md](test-layanan-enkripsi.md) | 6 | Tidak |
-| `ExampleTest` | [test-example.md](test-example.md) | 1 | Tidak |
-
-### Suite Feature (database `ven_testing`)
-
-| Test | Dokumen | Jumlah | Database |
-|---|---|---|---|
-| `EnkripsiGoogleIdTest` | [test-enkripsi.md](test-enkripsi.md) | 3 | Ya |
-| `AdminPanelAksesTest` | [test-admin-panel-akses.md](test-admin-panel-akses.md) | 3 | Ya |
-| `LayananOtpRegistrasiTest` | [test-layanan-otp-registrasi.md](test-layanan-otp-registrasi.md) | 1 | Ya |
-| `PenggunaSanksiSuksesTest` | [test-pengguna-sanksi-sukses.md](test-pengguna-sanksi-sukses.md) | 1 | Ya |
-| `PenggunaSanksiGagalTest` | [test-pengguna-sanksi-gagal.md](test-pengguna-sanksi-gagal.md) | 1 | Ya |
-| `TambahPameranCommitTest` | [test-transaksi-pameran.md](test-transaksi-pameran.md) | 1 | Ya |
-| `TambahPameranRollbackTest` | [test-transaksi-pameran.md](test-transaksi-pameran.md) | 1 | Ya |
-| `TransaksiSederhanaTest` | [test-transaksi-sederhana.md](test-transaksi-sederhana.md) | 2 | Ya |
-
-Total: **28 test** (15 Unit + 13 Feature), **101 assertion**.
-
-## Perintah cepat
-
+### 1. Menjalankan Semua Test Sekaligus (37 Tests Passed)
 ```powershell
-# Semua test
 php artisan test
-
-# Hanya unit (tanpa database)
-php artisan test --testsuite=Unit
-
-# Hanya feature (butuh ven_testing)
-php artisan test --testsuite=Feature
-
-# Satu file
-php artisan test tests/Feature/EnkripsiGoogleIdTest.php
-
-# Satu method
-php artisan test --filter=test_blind_index_tersimpan_dan_pencarian_menemukan_pengguna
-
-# Modul transaksi tambah pameran
-php artisan test tests/Feature/Transaksi
-
-# Test transaksi paling sederhana
-php artisan test tests/Feature/Transaksi/TransaksiSederhanaTest.php
-
-# Uji transaksi langsung di database asli (.env, biasanya ven)
-php artisan tinker database/scripts/uji-transaksi-db-asli.php
-
-# Uji transaksi TAMBAH PAMERAN langsung di database asli
-php artisan tinker database/scripts/uji-transaksi-pameran-db-asli.php
-
-# Uji transaksi + data dummy lewat Artisan command
-php artisan uji:transaksi-pameran
+# Atau jika PHP belum ada di path environment:
+& "C:\laragon\bin\php\php-8.3.33-Win32-vs16-x64\php.exe" artisan test
 ```
 
-## Prasyarat
+### 2. Pengujian Spesifik Fitur Audit
+```powershell
+# Uji View & Hashing
+php artisan test tests/Feature/AuditKeamananDanViewTest.php
 
-1. Dependency terpasang: `composer install`
-2. PHP 8.3. Jika `php` belum ada di PATH, gunakan:
+# Uji Enkripsi AES-256-GCM & Blind Index
+php artisan test tests/Feature/EnkripsiGoogleIdTest.php
+php artisan test tests/Unit/LayananEnkripsiTest.php
 
-   ```powershell
-   & "C:\laragon\bin\php\php-8.3.33-Win32-vs16-x64\php.exe" artisan test
-   ```
+# Uji Transaksi (Commit & Rollback)
+php artisan test tests/Feature/Transaksi/TransaksiSederhanaTest.php
+php artisan test tests/Feature/Transaksi/TambahPameranCommitTest.php
+php artisan test tests/Feature/Transaksi/TambahPameranRollbackTest.php
 
-3. Untuk test Feature: MySQL berjalan dan database `ven_testing` tersedia.
-4. Konfigurasi test ada di `phpunit.xml` dan `.env.testing`.
-5. Jangan mengarahkan test ke database aplikasi (`ven`).
+# Uji Concurrent Access Locking (Pessimistic Locking)
+php artisan test tests/Feature/PenggunaSanksiLockTest.php
 
-## Perbedaan singkat
+# Uji Backup Otomatis & Restore Verification
+php artisan test tests/Feature/AuditBackupDanRestoreTest.php
+```
 
-| Aspek | Unit | Feature |
-|---|---|---|
-| Folder | `tests/Unit` | `tests/Feature` |
-| Database | Tidak | `ven_testing` |
-| Fokus | Logika, service, model di memori | HTTP, database, alur aplikasi |
-| Contoh | `DekripsiGoogleIdTest` | `EnkripsiGoogleIdTest` |
+---
+
+## 📬 Koleksi Postman API (Audit 7 Kategori)
+
+Koleksi dan environment Postman terstruktur per kategori audit telah disediakan di direktori `c:\laragon\www\VEN\ven\postman`:
+
+### 1. Import Langsung ke Postman (Format JSON Standar)
+- **File Koleksi**: [`VEN_Audit_Keamanan_Database.postman_collection.json`](file:///c:/laragon/www/VEN/ven/postman/VEN_Audit_Keamanan_Database.postman_collection.json)
+- **File Environment**: [`VEN_Local.postman_environment.json`](file:///c:/laragon/www/VEN/ven/postman/VEN_Local.postman_environment.json)
+
+### 2. Format Git / Workspace Postman
+Tersimpan di [collections/VEN Audit Keamanan & Database](file:///c:/laragon/www/VEN/ven/postman/collections/VEN%20Audit%20Keamanan%20&%20Database) yang terbagi menjadi 7 folder kategori:
+1. `1. Pembatasan Akses dengan View`
+2. `2. Hashing dan Salting`
+3. `3. Enkripsi AES-256-GCM`
+4. `4. Transaction (COMMIT & ROLLBACK)`
+5. `5. Concurrent Access & Locking`
+6. `6. Backup Database`
+7. `7. Restore Verification`
+
+---
+
+## 📚 Panduan Tambahan
+
+| Dokumen | Deskripsi |
+|---|---|
+| [panduan-artisan-test.md](panduan-artisan-test.md) | Panduan lengkap opsi command `php artisan test` |
+| [panduan-unit-test.md](panduan-unit-test.md) | Pengujian Unit tanpa database |
+| [panduan-tinker.md](panduan-tinker.md) | Panduan simulasi interaktif lewat REPL Tinker |
+| [test-transaksi-pameran.md](test-transaksi-pameran.md) | Log pembuktian COMMIT dan ROLLBACK modul pameran |
