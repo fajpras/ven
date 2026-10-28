@@ -1,0 +1,20 @@
+$kind: collection
+description: |-
+  Koleksi Postman terstruktur khusus untuk pengujian dan audit kepatuhan 7 pilar keamanan dan basis data VEN:
+  1. Pembatasan Akses dengan View
+  2. Hashing dan Salting (Bcrypt)
+  3. Enkripsi AES-256-GCM & Blind Index
+  4. Database Transaction (COMMIT & ROLLBACK)
+  5. Concurrent Access / Locking (lockForUpdate)
+  6. Backup Database (Otomatis & Manual)
+  7. Restore Verification (Disaster Recovery)
+scripts:
+  - type: http:beforeRequest
+    code: "pm.request.headers.add({key: 'Accept', value: 'application/json'});"
+    language: text/javascript
+auth:
+  - id: fcf8c5d4-e690-4c86-98d7-f73bf9fbec56
+    type: bearer
+    name: bearer auth
+    credentials:
+      token: "{{admin_token}}"

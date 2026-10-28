@@ -1,0 +1,33 @@
+$kind: http-request
+url: "{{base_url}}/api/pengguna/update"
+method: PUT
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+        "nama_panggilan": "fajrinur_dev",
+        "deskripsi": "Fullstack Developer & 3D Web Enthusiast di VEN Platform."
+    }
+auth:
+  type: bearer
+  credentials:
+    token: "{{auth_token}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Status code is 200 OK", function () {
+          pm.response.to.have.status(200);
+      });
+
+      pm.test("Data updated successfully", function () {
+          const jsonData = pm.response.json();
+          const reqBody = JSON.parse(pm.request.body.raw);
+          const data = jsonData.data || jsonData;
+          
+          pm.expect(data.nama_panggilan).to.eql(reqBody.nama_panggilan);
+          pm.expect(data.deskripsi).to.eql(reqBody.deskripsi);
+      });
+    language: text/javascript
+order: 4000

@@ -1,0 +1,24 @@
+$kind: http-request
+url: "{{base_url}}/api/pameran"
+method: POST
+body:
+  type: formdata
+  content:
+    - type: text
+      key: judul
+      value: "Pameran Seni Transaksi COMMIT {{$timestamp}}"
+    - type: text
+      key: tipe
+      value: "besar"
+    - type: text
+      key: id_model
+      value: "1"
+    - type: file
+      key: banner
+      description: "Pilih file gambar (.jpg, .png, max 2MB)"
+auth:
+  type: bearer
+  credentials:
+    token: "{{auth_token}}"
+order: 4000
+

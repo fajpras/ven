@@ -1,0 +1,23 @@
+$kind: http-request
+description: Memastikan hash mismatch menolak autentikasi dan tidak terjadi otentikasi palsu.
+url: "{{base_url}}/api/auth/masuk"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+        "email": "admin@ven.test",
+        "kata_sandi": "KataSandiSalah123"
+    }
+auth:
+  type: noauth
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Login ditolak karena kata sandi tidak cocok", function () {
+          pm.expect(pm.response.code).to.be.oneOf([401, 422]);
+      });
+    language: text/javascript
+order: 3000

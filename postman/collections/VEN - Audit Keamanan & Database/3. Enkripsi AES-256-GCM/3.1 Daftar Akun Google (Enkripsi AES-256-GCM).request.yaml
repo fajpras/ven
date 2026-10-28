@@ -1,0 +1,24 @@
+$kind: http-request
+description: Menyimpan Google ID yang otomatis dienkripsi dengan AES-256-GCM dan menghasilkan kolom google_id_bidx.
+url: "{{base_url}}/api/auth/google/daftar"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+        "google_id": "google-oauth-audit-{{$timestamp}}",
+        "email": "google_audit_{{$timestamp}}@ven.test",
+        "nama": "User Google Audit"
+    }
+auth:
+  type: noauth
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Registrasi OAuth Google diproses", function () {
+          pm.expect(pm.response.code).to.be.oneOf([200, 201, 409, 422]);
+      });
+    language: text/javascript
+order: 1000

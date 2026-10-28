@@ -1,0 +1,31 @@
+$kind: http-request
+url: "{{base_url}}/api/login"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+        "email": "fajri@ven.test",
+        "kata_sandi": "password123"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Status code is 200 OK", function () {
+          pm.response.to.have.status(200);
+      });
+
+      pm.test("Response contains Sanctum token and user data", function () {
+          const jsonData = pm.response.json();
+          pm.expect(jsonData).to.have.property('token');
+          pm.expect(jsonData.data).to.have.property('id_pengguna');
+          pm.expect(jsonData.data.status).to.eql('aktif');
+
+          // Simpan token & user_id ke environment variable
+          pm.environment.set("auth_token", jsonData.token);
+          pm.environment.set("user_id", jsonData.data.id_pengguna);
+      });
+    language: text/javascript
+order: 1000

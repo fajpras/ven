@@ -1,0 +1,4 @@
+$kind: collection
+name: 5. Concurrent Access / Locking
+description: Pengujian penguncian baris pesimistik (lockForUpdate) pada tabel pengguna saat penjatuhan sanksi akun untuk mencegah race condition.
+order: 5000

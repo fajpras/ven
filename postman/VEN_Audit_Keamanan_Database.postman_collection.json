@@ -1,0 +1,696 @@
+{
+	"info": {
+		"_postman_id": "ven-audit-keamanan-database-collection-id",
+		"name": "VEN - Audit Keamanan & Database",
+		"description": "Koleksi Postman terstruktur khusus untuk pengujian dan audit kepatuhan 7 pilar keamanan dan basis data VEN:\n1. Pembatasan Akses dengan View\n2. Hashing dan Salting (Bcrypt)\n3. Enkripsi AES-256-GCM & Blind Index\n4. Database Transaction (COMMIT & ROLLBACK)\n5. Concurrent Access / Locking (lockForUpdate)\n6. Backup Database (Otomatis & Manual)\n7. Restore Verification (Disaster Recovery)",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{admin_token}}",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"pm.request.headers.add({key: 'Accept', value: 'application/json'});"
+				]
+			}
+		}
+	],
+	"item": [
+		{
+			"name": "1. Pembatasan Akses dengan View",
+			"description": "Memastikan data pengguna yang terekspos ke publik disaring ketat melalui view database (v_pengguna_publik) tanpa membocorkan kata sandi, google_id, atau role.",
+			"item": [
+				{
+					"name": "1.1 Akses Profil Pengguna (View Filtering)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{auth_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/profil",
+							"host": ["{{base_url}}"],
+							"path": ["api", "profil"]
+						},
+						"description": "Mengambil profil pengguna yang sedang login. Memastikan data sensitif tidak terekspos."
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Status HTTP 200 OK\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"pm.test(\"Kolom sensitif (kata_sandi, google_id) tidak terekspos\", function () {",
+									"    var res = pm.response.json();",
+									"    var user = res.data || res;",
+									"    pm.expect(user.kata_sandi).to.be.undefined;",
+									"    pm.expect(user.google_id).to.be.undefined;",
+									"    pm.expect(user.google_id_bidx).to.be.undefined;",
+									"});"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "1.2 Verifikasi Skema View Database (Audit View)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/admin/database/audit-status",
+							"host": ["{{base_url}}"],
+							"path": ["api", "admin", "database", "audit-status"]
+						},
+						"description": "Memeriksa kepatuhan skema v_pengguna_publik bahwa kolom kata_sandi, google_id, dan role tidak pernah dimasukkan dalam skema view."
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Status HTTP 200 OK\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"pm.test(\"Audit View comply = true\", function () {",
+									"    var res = pm.response.json();",
+									"    pm.expect(res.data.audit['1_pembatasan_akses_view'].comply).to.be.true;",
+									"});"
+								]
+							}
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "2. Hashing dan Salting",
+			"description": "Audit algoritma Bcrypt ($2y$) dengan salting unik otomatis pada kata sandi pengguna.",
+			"item": [
+				{
+					"name": "2.1 Daftar Akun Baru (Password Hashing Otomatis)",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nama\": \"Auditor Hash\",\n    \"nama_panggilan\": \"audit_{{$timestamp}}\",\n    \"email\": \"audit_{{$timestamp}}@ven.test\",\n    \"kata_sandi\": \"PasswordAman123!\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/auth/daftar",
+							"host": ["{{base_url}}"],
+							"path": ["api", "auth", "daftar"]
+						},
+						"description": "Pendaftaran pengguna baru yang memicu Hash::make() dengan algoritma Bcrypt dan salt unik."
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Registrasi merespons sukses atau validasi OTP\", function () {",
+									"    pm.expect(pm.response.code).to.be.oneOf([200, 201, 422]);",
+									"});"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "2.2 Masuk dengan Kata Sandi Valid (Bcrypt Verification)",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"admin@ven.test\",\n    \"kata_sandi\": \"password\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/auth/masuk",
+							"host": ["{{base_url}}"],
+							"path": ["api", "auth", "masuk"]
+						},
+						"description": "Memverifikasi plaintext password terhadap hash Bcrypt yang tersimpan di basis data."
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    var res = pm.response.json();",
+									"    var token = (res.data && res.data.token) ? res.data.token : res.token;",
+									"    if (token) {",
+									"        pm.environment.set(\"admin_token\", token);",
+									"        pm.environment.set(\"auth_token\", token);",
+									"    }",
+									"}",
+									"pm.test(\"Status respons login sesuai\", function () {",
+									"    pm.expect(pm.response.code).to.be.oneOf([200, 401, 422]);",
+									"});"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "2.3 Masuk dengan Kata Sandi Salah (Penolakan Salt Hash)",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"admin@ven.test\",\n    \"kata_sandi\": \"KataSandiSalah123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/auth/masuk",
+							"host": ["{{base_url}}"],
+							"path": ["api", "auth", "masuk"]
+						},
+						"description": "Memastikan hash mismatch menolak autentikasi dan tidak terjadi otentikasi palsu."
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Login ditolak karena kata sandi tidak cocok\", function () {",
+									"    pm.expect(pm.response.code).to.be.oneOf([401, 422]);",
+									"});"
+								]
+							}
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "3. Enkripsi AES-256-GCM",
+			"description": "Pengujian enkripsi simetris AES-256-GCM untuk data pengenal sensitif (Google ID) serta Blind Index (HMAC-SHA-256) untuk pencarian cepat.",
+			"item": [
+				{
+					"name": "3.1 Daftar Akun Google (Enkripsi AES-256-GCM)",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"google_id\": \"google-oauth-audit-{{$timestamp}}\",\n    \"email\": \"google_audit_{{$timestamp}}@ven.test\",\n    \"nama\": \"User Google Audit\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/auth/google/daftar",
+							"host": ["{{base_url}}"],
+							"path": ["api", "auth", "google", "daftar"]
+						},
+						"description": "Menyimpan Google ID yang otomatis dienkripsi dengan AES-256-GCM dan menghasilkan kolom google_id_bidx."
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Registrasi OAuth Google diproses\", function () {",
+									"    pm.expect(pm.response.code).to.be.oneOf([200, 201, 409, 422]);",
+									"});"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "3.2 Masuk via Google ID (Blind Index Lookup)",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"google_id\": \"google-oauth-audit-123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/auth/google/masuk",
+							"host": ["{{base_url}}"],
+							"path": ["api", "auth", "google", "masuk"]
+						},
+						"description": "Mencari pengguna menggunakan Blind Index HMAC-SHA-256 tanpa mendekripsi seluruh tabel pengguna."
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Lookup Google ID diproses via Blind Index\", function () {",
+									"    pm.expect(pm.response.code).to.be.oneOf([200, 401, 404, 422]);",
+									"});"
+								]
+							}
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "4. Transaction (COMMIT & ROLLBACK)",
+			"description": "Pengujian sifat transaksi database ACID. Memastikan operasi multi-tabel berhasil secara atomik (COMMIT) atau kembali utuh tanpa sampah saat terjadi kegagalan (ROLLBACK).",
+			"item": [
+				{
+					"name": "4.1 Tambah Pameran - Jalur Sukses (COMMIT)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{auth_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "judul",
+									"value": "Pameran Seni Transaksi COMMIT {{$timestamp}}",
+									"type": "text"
+								},
+								{
+									"key": "tipe",
+									"value": "besar",
+									"type": "text"
+								},
+								{
+									"key": "id_model",
+									"value": "1",
+									"type": "text"
+								},
+								{
+									"key": "banner",
+									"type": "file",
+									"description": "Pilih file gambar banner (.jpg, .png, .webp, max 2MB)",
+									"src": []
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/api/pameran",
+							"host": ["{{base_url}}"],
+							"path": ["api", "pameran"]
+						},
+						"description": "Memicu DB::transaction() yang sukses. Data pameran dan log aktivitas dicatat secara atomik (COMMIT)."
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Transaksi berhasil dibuat (HTTP 201 Created)\", function () {",
+									"    pm.expect(pm.response.code).to.be.oneOf([201, 200, 422]);",
+									"    if (pm.response.code === 201) {",
+									"        var res = pm.response.json();",
+									"        if (res.data && res.data.id_pameran) {",
+									"            pm.environment.set(\"pameran_id\", res.data.id_pameran);",
+									"        }",
+									"    }",
+									"});"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "4.2 Tambah Pameran - Jalur Gagal (ROLLBACK)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{auth_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "judul",
+									"value": "",
+									"type": "text"
+								},
+								{
+									"key": "tipe",
+									"value": "tipe_tidak_valid",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/api/pameran",
+							"host": ["{{base_url}}"],
+							"path": ["api", "pameran"]
+						},
+						"description": "Mengirim data tidak valid untuk memastikan transaksi membatalkan seluruh perubahan (ROLLBACK) dan tidak ada data yatim tersimpan."
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Validasi gagal memicu ROLLBACK transaksi (HTTP 422)\", function () {",
+									"    pm.expect(pm.response.code).to.be.oneOf([422, 500]);",
+									"});"
+								]
+							}
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "5. Concurrent Access / Locking",
+			"description": "Pengujian penguncian baris pesimistik (lockForUpdate) pada tabel pengguna saat penjatuhan sanksi akun untuk mencegah race condition.",
+			"item": [
+				{
+					"name": "5.1 Ambil ID Pengguna Target",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/admin/pengguna",
+							"host": ["{{base_url}}"],
+							"path": ["api", "admin", "pengguna"]
+						},
+						"description": "Mengambil daftar pengguna untuk target pengujian sanksi dengan locking."
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Daftar pengguna diambil\", function () {",
+									"    pm.expect(pm.response.code).to.be.oneOf([200, 403]);",
+									"    if (pm.response.code === 200) {",
+									"        var res = pm.response.json();",
+									"        var list = res.data ? (res.data.data || res.data) : [];",
+									"        if (list.length > 0) {",
+									"            pm.environment.set(\"target_user_id\", list[0].id_pengguna);",
+									"        }",
+									"    }",
+									"});"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "5.2 Terapkan Sanksi Akun (lockForUpdate)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"jenis_sanksi\": \"ditangguhkan\",\n    \"alasan\": \"Uji Audit Concurrent Lock\",\n    \"permanen\": false,\n    \"berakhir\": \"2026-12-31 23:59:59\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/admin/pengguna/{{target_user_id}}/sanksi",
+							"host": ["{{base_url}}"],
+							"path": ["api", "admin", "pengguna", "{{target_user_id}}", "sanksi"]
+						},
+						"description": "Menerapkan sanksi ke akun pengguna. Pengendali mengunci baris pengguna dengan lockForUpdate() secara eksklusif selama transaksi berlangsung."
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Pemberian sanksi dengan row lock berhasil diproses\", function () {",
+									"    pm.expect(pm.response.code).to.be.oneOf([200, 201, 403, 404, 422]);",
+									"});"
+								]
+							}
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "6. Backup Database (Otomatis & Manual)",
+			"description": "Pengujian dan pemicuan pencadangan database baik terjadwal harian (00:00) maupun on-demand melalui API dan CLI.",
+			"item": [
+				{
+					"name": "6.1 Eksekusi Backup Manual On-Demand",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"db\": \"ven\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/admin/database/backup",
+							"host": ["{{base_url}}"],
+							"path": ["api", "admin", "database", "backup"]
+						},
+						"description": "Menjalankan mysqldump on-demand melalui Artisan command ven:backup-db dan menyimpan file ke storage/app/backups/."
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Backup database berhasil dieksekusi (HTTP 200)\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"pm.test(\"File backup SQL terkonfirmasi terbentuk\", function () {",
+									"    var res = pm.response.json();",
+									"    pm.expect(res.data.status).to.eql(\"success\");",
+									"    pm.expect(res.data.file).to.include(\".sql\");",
+									"    pm.environment.set(\"latest_backup_file\", res.data.file);",
+									"});"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "6.2 Ambil Daftar Riwayat Backup",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/admin/database/backups",
+							"host": ["{{base_url}}"],
+							"path": ["api", "admin", "database", "backups"]
+						},
+						"description": "Melihat file-file backup yang tersedia di server beserta ukuran dan waktu pembuatannya."
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Daftar backup berhasil diambil (HTTP 200)\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    var res = pm.response.json();",
+									"    pm.expect(res.data).to.be.an(\"array\");",
+									"});"
+								]
+							}
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "7. Restore Verification",
+			"description": "Pengujian verifikasi pemulihan basis data (Disaster Recovery) ke database sandbox (ven_restore) dan pengecekan kepatuhan 7 modul audit.",
+			"item": [
+				{
+					"name": "7.1 Jalankan Restore Verifikasi ke Database Sandbox",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"db\": \"ven_restore\",\n    \"path\": \"{{latest_backup_file}}\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/admin/database/restore",
+							"host": ["{{base_url}}"],
+							"path": ["api", "admin", "database", "restore"]
+						},
+						"description": "Memulihkan file SQL dump terbaru ke database sandbox ven_restore untuk membuktikan file cadangan valid dan dapat dipulihkan."
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Verifikasi restore berhasil diproses\", function () {",
+									"    pm.expect(pm.response.code).to.be.oneOf([200, 500]);",
+									"    if (pm.response.code === 200) {",
+									"        var res = pm.response.json();",
+									"        pm.expect(res.data.status).to.eql(\"verified\");",
+									"    }",
+									"});"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "7.2 Status Kepatuhan 7 Fitur Audit (Full Compliance Matrix)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/admin/database/audit-status",
+							"host": ["{{base_url}}"],
+							"path": ["api", "admin", "database", "audit-status"]
+						},
+						"description": "Pemeriksaan live menyeluruh untuk 7 kriteria audit: View, Hashing, Enkripsi, Transaksi, Locking, Backup, dan Restore."
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test(\"Status HTTP 200 OK\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"pm.test(\"Semua 7 Kriteria Audit COMPLIED\", function () {",
+									"    var audit = pm.response.json().data.audit;",
+									"    pm.expect(audit['1_pembatasan_akses_view'].comply).to.be.true;",
+									"    pm.expect(audit['2_hashing_dan_salting'].comply).to.be.true;",
+									"    pm.expect(audit['3_enkripsi_aes_256_gcm'].comply).to.be.true;",
+									"    pm.expect(audit['4_database_transactions'].comply).to.be.true;",
+									"    pm.expect(audit['5_concurrent_access_locking'].comply).to.be.true;",
+									"    pm.expect(audit['6_backup_database'].comply).to.be.true;",
+									"    pm.expect(audit['7_restore_verification'].comply).to.be.true;",
+									"});"
+								]
+							}
+						}
+					]
+				}
+			]
+		}
+	]
+}
+

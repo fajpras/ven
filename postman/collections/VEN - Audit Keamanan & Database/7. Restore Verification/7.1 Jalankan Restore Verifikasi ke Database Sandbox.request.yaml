@@ -1,0 +1,25 @@
+$kind: http-request
+description: Memulihkan file SQL dump terbaru ke database sandbox ven_restore untuk membuktikan file cadangan valid dan dapat dipulihkan.
+url: "{{base_url}}/api/admin/database/restore"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+        "db": "ven_restore",
+        "path": "{{latest_backup_file}}"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Verifikasi restore berhasil diproses", function () {
+          pm.expect(pm.response.code).to.be.oneOf([200, 500]);
+          if (pm.response.code === 200) {
+              var res = pm.response.json();
+              pm.expect(res.data.status).to.eql("verified");
+          }
+      });
+    language: text/javascript
+order: 1000

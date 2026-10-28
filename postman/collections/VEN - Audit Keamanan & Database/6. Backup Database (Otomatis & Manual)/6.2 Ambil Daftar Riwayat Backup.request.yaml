@@ -1,0 +1,14 @@
+$kind: http-request
+description: Melihat file-file backup yang tersedia di server beserta ukuran dan waktu pembuatannya.
+url: "{{base_url}}/api/admin/database/backups"
+method: GET
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Daftar backup berhasil diambil (HTTP 200)", function () {
+          pm.response.to.have.status(200);
+          var res = pm.response.json();
+          pm.expect(res.data).to.be.an("array");
+      });
+    language: text/javascript
+order: 2000

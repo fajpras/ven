@@ -1,0 +1,22 @@
+$kind: http-request
+description: Mencari pengguna menggunakan Blind Index HMAC-SHA-256 tanpa mendekripsi seluruh tabel pengguna.
+url: "{{base_url}}/api/auth/google/masuk"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+        "google_id": "google-oauth-audit-123"
+    }
+auth:
+  type: noauth
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Lookup Google ID diproses via Blind Index", function () {
+          pm.expect(pm.response.code).to.be.oneOf([200, 401, 404, 422]);
+      });
+    language: text/javascript
+order: 2000

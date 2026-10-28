@@ -1,0 +1,26 @@
+$kind: http-request
+description: Menjalankan mysqldump on-demand melalui Artisan command ven:backup-db dan menyimpan file ke storage/app/backups/.
+url: "{{base_url}}/api/admin/database/backup"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+        "db": "ven"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Backup database berhasil dieksekusi (HTTP 200)", function () {
+          pm.response.to.have.status(200);
+      });
+      pm.test("File backup SQL terkonfirmasi terbentuk", function () {
+          var res = pm.response.json();
+          pm.expect(res.data.status).to.eql("success");
+          pm.expect(res.data.file).to.include(".sql");
+          pm.environment.set("latest_backup_file", res.data.file);
+      });
+    language: text/javascript
+order: 1000

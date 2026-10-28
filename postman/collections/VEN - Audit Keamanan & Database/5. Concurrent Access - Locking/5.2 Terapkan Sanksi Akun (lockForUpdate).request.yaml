@@ -1,0 +1,24 @@
+$kind: http-request
+description: Menerapkan sanksi ke akun pengguna. Pengendali mengunci baris pengguna dengan lockForUpdate() secara eksklusif selama transaksi berlangsung.
+url: "{{base_url}}/api/admin/pengguna/{{target_user_id}}/sanksi"
+method: POST
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+        "jenis_sanksi": "ditangguhkan",
+        "alasan": "Uji Audit Concurrent Lock",
+        "permanen": false,
+        "berakhir": "2026-12-31 23:59:59"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Pemberian sanksi dengan row lock berhasil diproses", function () {
+          pm.expect(pm.response.code).to.be.oneOf([200, 201]);
+      });
+    language: text/javascript
+order: 2000

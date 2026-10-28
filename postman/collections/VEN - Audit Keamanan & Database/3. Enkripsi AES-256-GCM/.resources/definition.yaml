@@ -1,0 +1,3 @@
+$kind: collection
+description: Pengujian enkripsi simetris AES-256-GCM untuk data pengenal sensitif (Google ID) serta Blind Index (HMAC-SHA-256) untuk pencarian cepat.
+order: 3000

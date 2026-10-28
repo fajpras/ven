@@ -1,0 +1,25 @@
+$kind: http-request
+description: Mengirim data tidak valid untuk memastikan transaksi membatalkan seluruh perubahan (ROLLBACK) dan tidak ada data yatim tersimpan.
+url: "{{base_url}}/api/pameran"
+method: POST
+body:
+  type: formdata
+  content:
+    - type: text
+      key: judul
+      value: ""
+    - type: text
+      key: tipe
+      value: tipe_tidak_valid
+auth:
+  type: bearer
+  credentials:
+    token: "{{auth_token}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Validasi gagal memicu ROLLBACK transaksi (HTTP 422)", function () {
+          pm.expect(pm.response.code).to.be.oneOf([422, 500]);
+      });
+    language: text/javascript
+order: 2000

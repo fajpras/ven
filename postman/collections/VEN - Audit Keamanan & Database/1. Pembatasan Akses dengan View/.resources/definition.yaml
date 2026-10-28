@@ -1,0 +1,3 @@
+$kind: collection
+description: Memastikan data pengguna yang terekspos ke publik disaring ketat melalui view database (v_pengguna_publik) tanpa membocorkan kata sandi, google_id, atau role.
+order: 1000

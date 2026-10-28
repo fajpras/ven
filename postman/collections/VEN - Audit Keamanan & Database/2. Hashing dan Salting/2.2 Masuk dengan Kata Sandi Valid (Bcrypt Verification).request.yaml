@@ -1,0 +1,31 @@
+$kind: http-request
+description: Memverifikasi plaintext password terhadap hash Bcrypt yang tersimpan di basis data.
+url: "{{base_url}}/api/auth/masuk"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+        "email": "admin@ven.test",
+        "kata_sandi": "password"
+    }
+auth:
+  type: noauth
+scripts:
+  - type: afterResponse
+    code: |-
+      if (pm.response.code === 200) {
+          var res = pm.response.json();
+          var token = (res.data && res.data.token) ? res.data.token : res.token;
+          if (token) {
+              pm.environment.set("admin_token", token);
+              pm.environment.set("auth_token", token);
+          }
+      }
+      pm.test("Status respons login sesuai", function () {
+          pm.expect(pm.response.code).to.be.oneOf([200, 401, 422]);
+      });
+    language: text/javascript
+order: 2000

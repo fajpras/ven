@@ -1,0 +1,26 @@
+$kind: http-request
+url: "{{base_url}}/api/login"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+        "email": "suspended@ven.test",
+        "kata_sandi": "password123"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Status code is 401 Unauthorized or 403 Forbidden", function () {
+          pm.expect(pm.response.code).to.be.oneOf([401, 403]);
+      });
+
+      pm.test("Response returns sanksi reason message", function () {
+          const jsonData = pm.response.json();
+          pm.expect(jsonData).to.have.property('message');
+          pm.expect(jsonData.message).to.include('Akun Anda dikenai sanksi');
+      });
+    language: text/javascript
+order: 2000

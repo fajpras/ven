@@ -1,0 +1,3 @@
+$kind: collection
+description: Audit algoritma Bcrypt ($2y$) dengan salting unik otomatis pada kata sandi pengguna.
+order: 2000

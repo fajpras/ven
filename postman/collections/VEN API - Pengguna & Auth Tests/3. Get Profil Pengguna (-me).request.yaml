@@ -1,0 +1,28 @@
+$kind: http-request
+name: 3. Get Profil Pengguna (/me)
+url: "{{base_url}}/api/me"
+method: GET
+auth:
+  type: bearer
+  credentials:
+    token: "{{auth_token}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Status code is 200 OK", function () {
+          pm.response.to.have.status(200);
+      });
+
+      pm.test("Response returns valid UUID and Pengguna structure", function () {
+          const jsonData = pm.response.json();
+          const data = jsonData.data || jsonData;
+          const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[4][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+          
+          pm.expect(data.id_pengguna).to.match(uuidRegex);
+          pm.expect(data).to.have.property('nama');
+          pm.expect(data).to.have.property('email');
+          pm.expect(data).to.not.have.property('kata_sandi');
+          pm.expect(data).to.not.have.property('google_id');
+      });
+    language: text/javascript
+order: 3000

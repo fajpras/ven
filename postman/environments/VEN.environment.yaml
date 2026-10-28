@@ -1,6 +1,17 @@
 name: VEN
 values:
   - key: base_url
-    value: ''
+    value: 'http://127.0.0.1:8000'
   - key: auth_token
+    value: ''
+  - key: admin_token
+    value: ''
+    disabled: true
+  - key: target_user_id
+    value: ''
+  - key: pameran_id
+    value: ''
+  - key: latest_backup_file
+    value: ''
+  - key: admin_token
     value: ''

@@ -1,0 +1,3 @@
+$kind: collection
+description: Pengujian dan pemicuan pencadangan database baik terjadwal harian (00:00) maupun on-demand melalui API dan CLI.
+order: 6000

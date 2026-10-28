@@ -1,0 +1,3 @@
+$kind: collection
+description: Pengujian sifat transaksi database ACID. Memastikan operasi multi-tabel berhasil secara atomik (COMMIT) atau kembali utuh tanpa sampah saat terjadi kegagalan (ROLLBACK).
+order: 4000

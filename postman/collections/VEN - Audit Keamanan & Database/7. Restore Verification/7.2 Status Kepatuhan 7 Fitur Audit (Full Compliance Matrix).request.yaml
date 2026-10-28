@@ -1,0 +1,22 @@
+$kind: http-request
+description: "Pemeriksaan live menyeluruh untuk 7 kriteria audit: View, Hashing, Enkripsi, Transaksi, Locking, Backup, dan Restore."
+url: "{{base_url}}/api/admin/database/audit-status"
+method: GET
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Status HTTP 200 OK", function () {
+          pm.response.to.have.status(200);
+      });
+      pm.test("Semua 7 Kriteria Audit COMPLIED", function () {
+          var audit = pm.response.json().data.audit;
+          pm.expect(audit['1_pembatasan_akses_view'].comply).to.be.true;
+          pm.expect(audit['2_hashing_dan_salting'].comply).to.be.true;
+          pm.expect(audit['3_enkripsi_aes_256_gcm'].comply).to.be.true;
+          pm.expect(audit['4_database_transactions'].comply).to.be.true;
+          pm.expect(audit['5_concurrent_access_locking'].comply).to.be.true;
+          pm.expect(audit['6_backup_database'].comply).to.be.true;
+          pm.expect(audit['7_restore_verification'].comply).to.be.true;
+      });
+    language: text/javascript
+order: 2000
