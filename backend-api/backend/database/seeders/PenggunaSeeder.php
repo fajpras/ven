@@ -63,19 +63,35 @@ class PenggunaSeeder extends Seeder
             ],
         );
 
-        // Optional: Assign Minat Kategori ke Pengguna (jika data Kategori sudah di-seed)
-        $kategoriDigit = Kategori::firstWhere('kategori', 'Seni Digital 3D');
-        $kategoriDesain = Kategori::firstWhere('kategori', 'Desain Grafis & Poster');
+        // Assign Minat Kategori ke Pengguna sesuai kategori mobile
+        $kategori3D = Kategori::firstWhere('kategori', '3D');
+        $kategoriAnimation = Kategori::firstWhere('kategori', 'Animation');
+        $kategoriSoftware = Kategori::firstWhere('kategori', 'Software');
 
-        if ($kategoriDigit && $kategoriDesain) {
-            $fajri->kategori()->syncWithoutDetaching([
-                $kategoriDigit->id_kategori => ['bobot' => 0.850],
-                $kategoriDesain->id_kategori => ['bobot' => 0.600],
-            ]);
+        if ($fajri) {
+            $minatFajri = [];
+            if ($kategori3D) {
+                $minatFajri[$kategori3D->id_kategori] = ['bobot' => 0.850];
+            }
+            if ($kategoriSoftware) {
+                $minatFajri[$kategoriSoftware->id_kategori] = ['bobot' => 0.750];
+            }
+            if (! empty($minatFajri)) {
+                $fajri->kategori()->syncWithoutDetaching($minatFajri);
+            }
+        }
 
-            $creator->kategori()->syncWithoutDetaching([
-                $kategoriDigit->id_kategori => ['bobot' => 0.950],
-            ]);
+        if ($creator) {
+            $minatCreator = [];
+            if ($kategori3D) {
+                $minatCreator[$kategori3D->id_kategori] = ['bobot' => 0.950];
+            }
+            if ($kategoriAnimation) {
+                $minatCreator[$kategoriAnimation->id_kategori] = ['bobot' => 0.800];
+            }
+            if (! empty($minatCreator)) {
+                $creator->kategori()->syncWithoutDetaching($minatCreator);
+            }
         }
     }
 }
