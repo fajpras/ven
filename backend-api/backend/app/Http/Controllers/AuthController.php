@@ -9,6 +9,7 @@ use App\Http\Requests\Auth\LupaKataSandiRequest;
 use App\Http\Requests\Auth\RegistrasiRequest;
 use App\Http\Requests\Auth\ResetKataSandiRequest;
 use App\Models\Pengguna;
+use App\Models\PenggunaPublik;
 use App\Services\Crypto\LayananEnkripsi;
 use App\Services\LogSistem;
 use App\Services\Otp\LayananOtp;
@@ -193,8 +194,10 @@ class AuthController extends Controller
 
     private function withToken(Pengguna $pengguna): array
     {
+        $penggunaPublik = PenggunaPublik::find($pengguna->id_pengguna);
+
         return [
-            'pengguna' => $pengguna->fresh(),
+            'pengguna' => $penggunaPublik ?? $pengguna->fresh(),
             'token' => $pengguna->createToken('mobile', ['*'], now()->addDays(30))->plainTextToken,
         ];
     }

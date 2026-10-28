@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Pengguna;
 use App\Http\Controllers\Controller;
 use App\Models\Kategori;
 use App\Models\Pengguna;
+use App\Models\PenggunaPublik;
 use App\Enums\TujuanOtp;
 use App\Http\Requests\Profil\GantiEmailRequest;
 use App\Http\Requests\Profil\KirimOtpGantiEmailRequest;
@@ -22,7 +23,9 @@ class ProfilController extends Controller
 
     public function show(Request $request)
     {
-        return $this->ok($request->user());
+        $publik = PenggunaPublik::find($request->user()->id_pengguna);
+
+        return $this->ok($publik ?? $request->user());
     }
 
     public function update(Request $request)

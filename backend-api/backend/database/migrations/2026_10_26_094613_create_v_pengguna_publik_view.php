@@ -22,7 +22,9 @@ return new class extends Migration
                 email,
                 foto_profil,
                 status,
-                created_at
+                created_at,
+                updated_at,
+                deleted_at
             FROM pengguna
         ');
 

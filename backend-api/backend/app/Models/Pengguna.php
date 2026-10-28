@@ -30,7 +30,7 @@ class Pengguna extends Authenticatable
         'email', 'foto_profil', 'role', 'status',
     ];
 
-    protected $hidden = ['kata_sandi', 'google_id', 'google_id_bidx'];
+    protected $hidden = ['kata_sandi', 'google_id', 'google_id_bidx', 'role'];
 
     protected $attributes = ['status' => 'aktif'];
 
