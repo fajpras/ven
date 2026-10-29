@@ -282,7 +282,7 @@ class UjiTransaksiPameran extends Command
         $fileSekarang = Storage::disk('public')->allFiles('pameran/banner');
         $fileBaru = array_values(array_diff($fileSekarang, $fileAwal));
 
-        $logBaru = DB::connection($this->koneksiUji)
+        $logBaru = DB::connection($this->koneksiAsli)
             ->table('log_aktivitas')
             ->where('id_log', '>', $logAwal)
             ->where('entitas', 'pameran')
@@ -385,7 +385,7 @@ class UjiTransaksiPameran extends Command
 
     private function idLogTerakhir(): int
     {
-        return (int) DB::connection($this->koneksiUji)
+        return (int) DB::connection($this->koneksiAsli)
             ->table('log_aktivitas')
             ->max('id_log');
     }
