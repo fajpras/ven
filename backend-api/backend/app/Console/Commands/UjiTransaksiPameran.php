@@ -52,7 +52,7 @@ class UjiTransaksiPameran extends Command
 
     public function handle(): int
     {
-        $this->koneksiAsli = DB::getDefaultConnection();
+        $this->koneksiAsli = config('database.default') === 'mysql_dba' ? 'mysql_dba' : 'mysql_dba';
         $this->koneksiUji = (string) $this->option('koneksi');
 
         try {
