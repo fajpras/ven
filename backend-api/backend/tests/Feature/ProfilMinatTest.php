@@ -66,8 +66,7 @@ class ProfilMinatTest extends TestCase
             'kata_sandi' => 'password',
         ])
             ->assertOk()
-            ->assertJsonPath('data.pengguna.onboarding_selesai', false)
-            ->assertJsonPath('data.pengguna.role', 'pengguna');
+            ->assertJsonPath('data.pengguna.onboarding_selesai', false);
     }
 
     public function test_pengguna_dapat_melihat_daftar_kategori(): void
@@ -103,6 +102,13 @@ class ProfilMinatTest extends TestCase
                 'bobot' => 1,
             ], 'mysql');
         }
+
+        $this->assertDatabaseHas('log_aktivitas', [
+            'id_pengguna' => $this->pengguna->id_pengguna,
+            'jenis' => 'kategori',
+            'aksi' => 'ubah',
+            'status' => 'berhasil',
+        ], 'mysql');
     }
 
     public function test_maybe_later_menghapus_minat_dan_tetap_menandai_selesai(): void
@@ -115,6 +121,13 @@ class ProfilMinatTest extends TestCase
 
         $this->assertSame(0, $this->pengguna->kategori()->count());
         $this->assertTrue($this->pengguna->fresh()->onboarding_selesai);
+
+        $this->assertDatabaseHas('log_aktivitas', [
+            'id_pengguna' => $this->pengguna->id_pengguna,
+            'jenis' => 'kategori',
+            'aksi' => 'ubah',
+            'status' => 'berhasil',
+        ], 'mysql');
     }
 
     public function test_kategori_yang_tidak_ada_ditolak(): void

@@ -89,4 +89,33 @@ class LogSistemTest extends TestCase
         $this->assertSame('registrasi', $log->aksi);
         $this->assertStringContainsString('Registrasi akun pengguna', $log->pesan);
     }
+
+    public function test_observer_mencatat_aktivitas_kategori(): void
+    {
+        $kategori = \App\Models\Kategori::create(['kategori' => 'Kategori Baru']);
+
+        $logTambah = LogAktivitas::where('jenis', 'kategori')
+            ->where('aksi', 'tambah')
+            ->latest('id_log')
+            ->first();
+
+        $this->assertNotNull($logTambah);
+        $this->assertSame('kategori', $logTambah->jenis);
+        $this->assertSame('tambah', $logTambah->aksi);
+        $this->assertStringContainsString('Menambah kategori', $logTambah->pesan);
+        $this->assertStringContainsString('Kategori Baru', $logTambah->pesan);
+
+        $kategori->update(['kategori' => 'Kategori Baru Diubah']);
+
+        $logUbah = LogAktivitas::where('jenis', 'kategori')
+            ->where('aksi', 'ubah')
+            ->latest('id_log')
+            ->first();
+
+        $this->assertNotNull($logUbah);
+        $this->assertSame('kategori', $logUbah->jenis);
+        $this->assertSame('ubah', $logUbah->aksi);
+        $this->assertStringContainsString('Mengubah kategori', $logUbah->pesan);
+        $this->assertStringContainsString('kategori', $logUbah->pesan);
+    }
 }

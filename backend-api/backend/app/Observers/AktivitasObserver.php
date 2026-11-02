@@ -54,13 +54,13 @@ class AktivitasObserver implements ShouldHandleEventsAfterCommit
             default       => $m->getTable(),
         };
 
-        $namaObjek = $m->judul ?? $m->nama ?? null;
+        $namaObjek = $m->judul ?? $m->nama ?? $m->kategori ?? null;
         $labelObjek = "#{$label}".($namaObjek ? " \"{$namaObjek}\"" : '');
 
-        // Tentukan ID Pengguna yang berelasi dengan aktivitas (tidak boleh NULL jika entitasnya Pengguna)
+        // Tentukan ID Pengguna yang berelasi dengan aktivitas (NULL jika pengguna dihapus untuk hindari FK constraint)
         $pelakuId = ($m instanceof Pengguna)
-            ? $key
-            : (request()?->user('sanctum')?->id_pengguna ?? ($m->id_pengguna ?? null));
+            ? ($aksi === 'hapus' ? null : $key)
+            : (request()?->user('sanctum')?->id_pengguna ?? auth()->id() ?? ($m->id_pengguna ?? null));
 
         $isRegistrasi = ($m instanceof Pengguna && $aksi === 'tambah' && (request()?->is('*register*') || request()?->is('*auth/google*')));
         $isSeeder = ($m instanceof Pengguna && $aksi === 'tambah' && app()->runningInConsole() && ! app()->runningUnitTests());

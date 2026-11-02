@@ -99,7 +99,7 @@ class LogSistem
     private static function aktorId(): ?string
     {
         try {
-            return request()?->user('sanctum')?->id_pengguna;
+            return request()?->user('sanctum')?->id_pengguna ?? auth()->id();
         } catch (Throwable) {
             return null;
         }
@@ -108,7 +108,7 @@ class LogSistem
     private static function namaAktor(?string $idAktor): string
     {
         try {
-            if ($user = request()?->user('sanctum')) {
+            if ($user = (request()?->user('sanctum') ?? auth()->user())) {
                 return (string) $user->nama;
             }
 
