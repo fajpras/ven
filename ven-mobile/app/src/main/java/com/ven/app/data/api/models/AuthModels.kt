@@ -37,9 +37,25 @@ data class UserModel(
     @SerializedName("role")
     val role: String? = null,
 
+    @SerializedName("deskripsi")
+    val deskripsi: String? = null,
+
+    @SerializedName("nomor_hp")
+    val nomorHp: String? = null,
+
     @SerializedName("status")
-    val status: String? = null
-)
+    val status: String? = null,
+
+    @SerializedName("onboarding_selesai")
+    val onboardingSelesai: Boolean? = null,
+) {
+    /**
+     * Admin tidak menjalani onboarding; pengguna diarahkan ke Interest sampai
+     * status onboarding tersimpan di server.
+     */
+    val needsOnboarding: Boolean
+        get() = role == "pengguna" && onboardingSelesai != true
+}
 
 data class GoogleAuthRequest(
     @SerializedName("id_token")

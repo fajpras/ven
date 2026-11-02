@@ -4,6 +4,8 @@
     <string name="interest_title">Interest</string>
     <string name="interest_maybe_later">Maybe later</string>
     <string name="interest_save">Save</string>
+    <string name="interest_empty">No interests available yet</string>
+    <string name="interest_retry">Retry</string>
 
     <!-- Auth Strings -->
     <string name="login_title">Login</string>

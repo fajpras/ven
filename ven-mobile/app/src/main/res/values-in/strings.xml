@@ -4,6 +4,8 @@
     <string name="interest_title">Minat</string>
     <string name="interest_maybe_later">Nanti saja</string>
     <string name="interest_save">Simpan</string>
+    <string name="interest_empty">Belum ada kategori minat</string>
+    <string name="interest_retry">Coba lagi</string>
 
     <!-- Auth Strings -->
     <string name="login_title">Masuk</string>
