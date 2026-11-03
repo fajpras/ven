@@ -1,0 +1,40 @@
+# AI Agent Rules - VEN (Virtual Exhibition Navigator)
+
+Dokumen ini memuat panduan utama bagi AI Coding Agent dalam mengembangkan dan memelihara ekosistem VEN (Backend Laravel & Mobile Android).
+
+---
+
+## 1. Arsitektur Proyek
+- **Backend API**: `backend-api/backend` (Laravel 11/13, PHP 8.3, MySQL Multi-Role)
+- **Mobile Client**: `ven-mobile` (Android Kotlin, Jetpack Compose, Material 3)
+
+---
+
+## 2. Prinsip Kerja AI Agent
+1. **Koding Bersih & Struktur Rapi (Clean Code & Architecture)**:
+   - Patuhi aturan di `.agents/rules/clean-code.md` dan skill `clean-code-architecture`.
+   - Gunakan *skinny controller*, pisahkan logika bisnis ke `app/Services/`, dan validasi ke `app/Http/Requests/`.
+   - Di Android, terapkan Unidirectional Data Flow (UDF) dengan memisahkan `Screen.kt` (stateless), `Route.kt` (stateful), `ViewModel.kt`, dan `UiState.kt` dalam subfolder fitur masing-masing.
+   - Tidak meninggalkan dead code, import yang tidak terpakai, atau debug statement liar (`dd()`, `dump()`, `Log.d` sementara).
+2. **Verifikasi Melalui Testing (TDD First)**:
+   - Sebelum menyatakan tugas selesai, selalu jalankan test suite terkait di `backend-api/backend` via PHPUnit (`vendor/phpunit/phpunit/phpunit <path-test>`).
+   - Testing wajib menggunakan database `ven_testing`, dilarang mengubah konfigurasi untuk menyentuh database produksi `ven`.
+3. **Keamanan & Privasi Data**:
+   - Seluruh data sensitif pihak ketiga (Google ID) wajib dienkripsi dengan AES-256-GCM dan didampingi Blind Index via `VEN_CUSTOM_KEY`.
+   - Jangan pernah menampilkan plain kata sandi, token OTP, atau kunci enkripsi di logging atau JSON response publik.
+   - Patuhi arsitektur MySQL Multi-Role (*Least Privilege*): `mysql_user`, `mysql_admin`, `mysql_dba`, `mysql` (app).
+4. **Database Concurrency & Logging**:
+   - Observer aktivitas harus mengimplementasikan `ShouldHandleEventsAfterCommit`.
+   - Pemanggilan manual `LogSistem::aktivitas` tidak boleh dilakukan di dalam transaksi data yang belum di-commit untuk mencegah *lock-wait* antar koneksi PDO.
+
+---
+
+## 3. Skills yang Tersedia
+Bila menangani tugas spesifik, aktifkan skill di `.agents/skills/`:
+- `clean-code-architecture`: Standar koding bersih, refactoring, dan penataan struktur folder profesional.
+- `laravel-backend-expert`: Standar backend Laravel, controller, service, multi-koneksi DB VEN.
+- `laravel-best-practices`: Indeks aturan mendalam untuk optimasi query, Eloquent, validasi, dan job queue.
+- `android-compose-expert`: Standar Android Kotlin, Jetpack Compose, MVVM/MVI.
+- `ven-security-audit`: Standar keamanan AES-256-GCM, Blind Index, OTP, RBAC.
+- `ven-tdd-testing`: Standar pengujian PHPUnit dan isolasi fixture test.
+
