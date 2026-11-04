@@ -6,6 +6,7 @@ import com.ven.app.data.api.ApiClient
 import com.ven.app.data.api.ApiPencarian
 import com.ven.app.data.api.models.KaryaItemModel
 import com.ven.app.ui.components.feature.MediaGridItem
+import com.ven.app.util.DateFormatter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -348,12 +349,15 @@ class ExploreViewModel(
 
     private fun KaryaItemModel.toFeedItem(): PostsFeedItem {
         val author = pengguna?.namaPanggilan ?: pengguna?.nama ?: "kreator"
+        val relativeTime = DateFormatter.formatRelativeTime(createdAt)
         return PostsFeedItem(
             id = idKarya,
             username = if (author.startsWith("@")) author else "@$author",
             userId = pengguna?.idPengguna,
             userAvatarUrl = pengguna?.fotoProfil,
             title = judul,
+            category = kategori?.nama,
+            timestampText = relativeTime,
             description = deskripsi ?: "",
             imageUrl = fileUrl ?: file,
             pameranId = idPameran?.toString(),
