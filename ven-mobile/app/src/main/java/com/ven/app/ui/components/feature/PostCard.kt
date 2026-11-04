@@ -1,14 +1,18 @@
 package com.ven.app.ui.components.feature
 
 import androidx.compose.animation.animateContentSize
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -21,6 +25,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.UriHandler
 import androidx.compose.ui.res.stringResource
@@ -37,6 +42,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.ven.app.R
+import com.ven.app.ui.components.ui.rememberAsyncImageBitmap
 import com.ven.app.ui.icons.VexIcon
 import com.ven.app.ui.icons.VexIcons
 import com.ven.app.ui.theme.ThemeMode
@@ -266,7 +272,7 @@ fun PostCaption(
 }
 
 /**
- * Kartu Post Karya Seni / Pameran untuk Feed di Home Screen.
+ * Kartu Post Karya Seni / Pameran untuk Feed di Home Screen dan Explore Posts Feed.
  *
  * Sesuai spesifikasi DESIGN.md §6.3 & §8.6:
  * - Header Kartu:
@@ -276,7 +282,8 @@ fun PostCaption(
  *     2. Ikon Play / Kubus 3D ([VexIcons.Play]): Membuka Virtual Exhibition Room 3D.
  * - Media Post (Gambar Karya):
  *   - Tampilan penuh selebar layar (edge-to-edge), tanpa radius sudut (0dp, sudut tajam).
- * - Konten Bawah Media (Caption):
+ * - Konten Bawah Media (Judul & Caption):
+ *   - Menampilkan judul karya tebal di atas caption bila tersedia.
  *   - Menampilkan `username` dan `description`.
  *   - Fitur 'see more' / 'see less' untuk deskripsi yang panjang.
  *   - Tautan URL (link) di dalam deskripsi dapat diklik langsung.
@@ -287,6 +294,7 @@ fun PostCard(
     onRequestMeetingClick: () -> Unit,
     onView3dClick: () -> Unit,
     modifier: Modifier = Modifier,
+    title: String? = null,
     description: String = "",
     imageUrl: String? = null,
     aspectRatio: Float = 4f / 5f,
@@ -364,6 +372,8 @@ fun PostCard(
         // ---------------------------------------------------------
         // Media Post (Gambar Karya - Full Edge-to-Edge, 0dp Radius)
         // ---------------------------------------------------------
+        val bitmap = rememberAsyncImageBitmap(imageUrl)
+
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -371,11 +381,53 @@ fun PostCard(
                 .background(placeholderColor),
             contentAlignment = Alignment.Center,
         ) {
-            // Bila belum ada Coil image loader, tampilkan placeholder visual netral
+            if (bitmap != null) {
+                Image(
+                    bitmap = bitmap,
+                    contentDescription = description.ifBlank { "Karya $username" },
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop,
+                )
+            } else {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
+                    modifier = Modifier.padding(16.dp),
+                ) {
+                    VexIcon(
+                        id = VexIcons.Play,
+                        contentDescription = null,
+                        size = 32.dp,
+                        tint = colors.textMuted.copy(alpha = 0.5f),
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = if (!imageUrl.isNullOrBlank()) "Memuat karya..." else "Karya Seni Virtual",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = colors.textMuted,
+                    )
+                }
+            }
+        }
+
+        // ---------------------------------------------------------
+        // Judul Karya (Bila tersedia)
+        // ---------------------------------------------------------
+        if (!title.isNullOrBlank()) {
             Text(
-                text = "Media Content",
-                style = MaterialTheme.typography.bodyMedium,
-                color = colors.textMuted,
+                text = title,
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontWeight = FontWeight.Bold,
+                ),
+                color = colors.text,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(
+                        start = VexSpace.s6,
+                        end = VexSpace.s6,
+                        top = VexSpace.s3,
+                        bottom = 2.dp,
+                    ),
             )
         }
 
@@ -396,7 +448,7 @@ fun PostCard(
                     .padding(
                         start = VexSpace.s6,
                         end = VexSpace.s6,
-                        top = VexSpace.s3,
+                        top = if (!title.isNullOrBlank()) 2.dp else VexSpace.s3,
                         bottom = VexSpace.s4,
                     ),
             )
@@ -414,7 +466,8 @@ private fun PostCardDarkPreview() {
     VexTheme(mode = ThemeMode.Dark) {
         PostCard(
             username = "Graaph",
-            description = "Concept art eksplorasi arsitektur cyberpunk dan pencahayaan neon untuk kompetisi open source. Kunjungi showroom 3D di https://vex.art/exhibit/digital-concept untuk melihat detail tekstur dan aset interaktif! Jangan lupa tinggalkan feedback Anda sebelum expo dimulai.",
+            title = "Cyberpunk Low Poly Mech Robot 3D",
+            description = "Eksplorasi desain antarmuka aplikasi mobile dengan tautan https://vex.art/exhibit untuk detail.",
             onRequestMeetingClick = {},
             onView3dClick = {},
         )
@@ -427,7 +480,8 @@ private fun PostCardLightPreview() {
     VexTheme(mode = ThemeMode.Light) {
         PostCard(
             username = "Graaph",
-            description = "Concept art eksplorasi arsitektur cyberpunk dan pencahayaan neon untuk kompetisi open source. Kunjungi showroom 3D di https://vex.art/exhibit/digital-concept untuk melihat detail tekstur dan aset interaktif! Jangan lupa tinggalkan feedback Anda sebelum expo dimulai.",
+            title = "Zero-Day Threat Defense Visualizer",
+            description = "Contoh deskripsi pendek karya seni.",
             onRequestMeetingClick = {},
             onView3dClick = {},
         )

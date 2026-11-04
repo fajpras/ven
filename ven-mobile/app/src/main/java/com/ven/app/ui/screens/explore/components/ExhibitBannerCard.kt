@@ -28,6 +28,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import com.ven.app.ui.components.ui.rememberAsyncImageBitmap
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.Image
 import com.ven.app.R
@@ -48,9 +49,11 @@ fun ExhibitBannerCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     imageRes: Int? = null,
+    bannerUrl: String? = null,
 ) {
     val colors = VexTheme.colors
     val shape = RoundedCornerShape(VexRadius.md)
+    val bitmap = rememberAsyncImageBitmap(bannerUrl)
 
     Box(
         modifier = modifier
@@ -65,7 +68,14 @@ fun ExhibitBannerCard(
                 onClick = onClick,
             ),
     ) {
-        if (imageRes != null) {
+        if (bitmap != null) {
+            Image(
+                bitmap = bitmap,
+                contentDescription = title,
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop,
+            )
+        } else if (imageRes != null) {
             Image(
                 painter = painterResource(id = imageRes),
                 contentDescription = title,

@@ -1,6 +1,8 @@
 package com.ven.app.ui.components.feature
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import com.ven.app.ui.components.ui.rememberAsyncImageBitmap
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -50,6 +52,8 @@ fun EventBanner(
 ) {
     val colors = VexTheme.colors
 
+    val bitmap = rememberAsyncImageBitmap(imageUrl)
+
     Box(
         modifier = modifier
             .width(240.dp)
@@ -58,6 +62,14 @@ fun EventBanner(
             .background(backgroundColor)
             .clickable(onClick = onClick),
     ) {
+        if (bitmap != null) {
+            Image(
+                bitmap = bitmap,
+                contentDescription = title,
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop,
+            )
+        }
         // Overlay gradient hitam transparan di bagian bawah agar teks judul & tanggal kontras terbaca
         Box(
             modifier = Modifier

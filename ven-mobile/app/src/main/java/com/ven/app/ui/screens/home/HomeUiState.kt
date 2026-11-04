@@ -1,6 +1,9 @@
 package com.ven.app.ui.screens.home
 
 import androidx.compose.runtime.Immutable
+import com.ven.app.data.api.models.KaryaItemModel
+import com.ven.app.data.api.models.PameranItemModel
+import com.ven.app.ui.screens.explore.PostsFeedItem
 
 /**
  * Data model untuk item banner pameran yang akan datang ("Coming Soon").
@@ -29,12 +32,53 @@ data class PostItem(
 
 /**
  * UI State untuk Home Screen.
- * Sesuai prinsip Clean Architecture & MVI/MVVM.
+ * Sesuai prinsip Clean Architecture & MVI/MVVM dengan dukungan paginasi chunk.
  */
 @Immutable
 data class HomeUiState(
     val isLoading: Boolean = false,
+    val isRefreshing: Boolean = false,
+    val isLoadingMore: Boolean = false,
+    val canLoadMore: Boolean = true,
+    val currentPage: Int = 1,
     val comingSoonEvents: List<ComingSoonEvent> = emptyList(),
     val posts: List<PostItem> = emptyList(),
     val errorMessage: String? = null,
 )
+
+/**
+ * Helper mapper dari DTO ke UI models.
+ */
+fun PameranItemModel.toComingSoonEvent(): ComingSoonEvent {
+    val dateDisplay = createdAt?.take(10) ?: "Coming Soon"
+    return ComingSoonEvent(
+        id = idPameran.toString(),
+        title = judul,
+        dateText = dateDisplay,
+        imageUrl = banner,
+    )
+}
+
+fun KaryaItemModel.toPostItem(): PostItem {
+    val author = pengguna?.namaPanggilan ?: pengguna?.nama ?: "Anonim"
+    return PostItem(
+        id = idKarya,
+        username = "@$author",
+        title = judul,
+        imageUrl = fileUrl ?: file,
+        pameranId = idPameran?.toString(),
+        description = deskripsi ?: "",
+    )
+}
+
+fun PostItem.toFeedItem(): PostsFeedItem {
+    return PostsFeedItem(
+        id = id,
+        username = username,
+        title = title,
+        description = description,
+        imageUrl = imageUrl,
+        pameranId = pameranId,
+        aspectRatio = aspectRatio,
+    )
+}

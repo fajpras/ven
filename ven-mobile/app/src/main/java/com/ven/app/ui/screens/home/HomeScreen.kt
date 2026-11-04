@@ -6,11 +6,18 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -34,15 +41,10 @@ import com.ven.app.ui.theme.VexTheme
  * 1. TopBar ([VexTopBar.Home]):
  *    - Tombol "+" di kiri (membuka Create Flow).
  *    - Logo VEN di kanan.
- *    - Latar menyatu dengan kanvas (#1F1F1F), tanpa garis pembatas bawah.
  * 2. Seksi "Coming Soon":
- *    - Judul: "Coming Soon" (20sp SemiBold, padding horizontal 24dp).
- *    - Carousel horizontal poster pameran ([CarouselExhibitions] + [EventBanner]) dengan snap behavior, rasio 16:9, radius 8–12dp.
- *    - Garis pembatas 1dp warna border (#313131).
+ *    - Carousel horizontal poster pameran.
  * 3. Feed Karya ([PostCard]):
- *    - Header: @username di kiri, ikon kalender (Request Meeting) & ikon play (Virtual 3D Room) di kanan.
- *    - Media post: Gambar selebar layar (edge-to-edge), 0dp radius.
- * 4. Bottom Navigation Bar ([BottomNavTab.Home] aktif).
+ *    - Mendukung chunked loading / paginasi otomatis saat mendekati akhir list.
  */
 @Composable
 fun HomeScreen(
@@ -53,8 +55,25 @@ fun HomeScreen(
     onView3dClick: (pameranId: String?) -> Unit,
     onBannerClick: (eventId: String) -> Unit,
     modifier: Modifier = Modifier,
+    onLoadMore: () -> Unit = {},
 ) {
     val colors = VexTheme.colors
+    val listState = rememberLazyListState()
+
+    // Deteksi scroll chunk: memicu pemuatan data berikutnya secara halus
+    val shouldLoadMore by remember {
+        derivedStateOf {
+            val total = listState.layoutInfo.totalItemsCount
+            val lastVisible = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
+            total > 0 && lastVisible >= total - 3
+        }
+    }
+
+    LaunchedEffect(shouldLoadMore) {
+        if (shouldLoadMore && uiState.canLoadMore && !uiState.isLoadingMore && !uiState.isLoading) {
+            onLoadMore()
+        }
+    }
 
     AppScaffold(
         currentTab = BottomNavTab.Home,
@@ -67,6 +86,7 @@ fun HomeScreen(
         },
     ) { innerPadding ->
         LazyColumn(
+            state = listState,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding),
@@ -96,7 +116,7 @@ fun HomeScreen(
             }
 
             // ---------------------------------------------------------
-            // Seksi 2: Feed Post Karya
+            // Seksi 2: Feed Post Karya (Chunked & Cached)
             // ---------------------------------------------------------
             if (uiState.posts.isNotEmpty()) {
                 items(
@@ -105,12 +125,31 @@ fun HomeScreen(
                 ) { post ->
                     PostCard(
                         username = post.username,
+                        title = post.title,
                         description = post.description,
                         imageUrl = post.imageUrl,
                         aspectRatio = post.aspectRatio,
                         onRequestMeetingClick = { onRequestMeetingClick(post.id) },
                         onView3dClick = { onView3dClick(post.pameranId) },
                     )
+                }
+
+                // Indikator loading saat memuat chunk berikutnya
+                if (uiState.isLoadingMore) {
+                    item {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 16.dp),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(24.dp),
+                                color = colors.primaryText,
+                                strokeWidth = 2.dp,
+                            )
+                        }
+                    }
                 }
             } else if (!uiState.isLoading) {
                 // Empty State Feed
@@ -156,7 +195,7 @@ val SampleHomeUiState = HomeUiState(
             username = "Graaph",
             title = "Digital Painting Concept",
             pameranId = "ex1",
-            description = "Concept art eksplorasi arsitektur cyberpunk dan pencahayaan neon untuk kompetisi open source. Kunjungi showroom 3D di https://vex.art/exhibit/digital-concept untuk melihat detail tekstur dan aset interaktif! Jangan lupa tinggalkan feedback Anda sebelum expo dimulai.",
+            description = "Concept art eksplorasi arsitektur cyberpunk dan pencahayaan neon untuk kompetisi open source.",
         ),
         PostItem(
             id = "p2",

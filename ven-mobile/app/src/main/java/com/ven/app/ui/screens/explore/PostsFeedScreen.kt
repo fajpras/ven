@@ -25,7 +25,10 @@ import com.ven.app.ui.theme.VexTheme
 data class PostsFeedItem(
     val id: String,
     val username: String,
-    val description: String,
+    val title: String = "",
+    val description: String = "",
+    val imageUrl: String? = null,
+    val pameranId: String? = null,
     val aspectRatio: Float = 4f / 5f,
 )
 
@@ -81,10 +84,12 @@ fun PostsFeedScreen(
             ) { _, post ->
                 PostCard(
                     username = post.username,
+                    title = post.title,
                     description = post.description,
+                    imageUrl = post.imageUrl,
                     aspectRatio = post.aspectRatio,
                     onRequestMeetingClick = { onRequestMeetingClick(post.id) },
-                    onView3dClick = { onView3dClick(post.id) },
+                    onView3dClick = { onView3dClick(post.pameranId ?: post.id) },
                 )
             }
         }
@@ -99,11 +104,13 @@ internal val dummyPostsFeed = listOf(
     PostsFeedItem(
         id = "feed_1",
         username = "Graaph",
-        description = "Peletakan kalimat ini akan diisi dengan deskripsi yang akan menjelaskan dengan lebih rinci lagi dari apa yang ingin disampaikan oleh kr...",
+        title = "Cyberpunk Low Poly Mech Robot 3D",
+        description = "Peletakan kalimat ini akan diisi dengan deskripsi yang akan menjelaskan dengan lebih rinci lagi dari apa yang ingin disampaikan oleh kreator.",
     ),
     PostsFeedItem(
         id = "feed_2",
         username = "Shaf.One",
+        title = "Fintech Neo-Glass Mobile Banking",
         description = "Eksplorasi desain antarmuka aplikasi mobile dengan pendekatan minimalis dan tipografi tebal. Kunjungi https://vex.art/exhibit untuk detail lengkap.",
     ),
 )
