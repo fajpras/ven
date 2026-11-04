@@ -23,6 +23,7 @@ class DatabaseSeeder extends Seeder
                 KategoriSeeder::class,
                 PenggunaSeeder::class,
                 PameranSeeder::class,
+                KaryaDanPameranSeeder::class,
             ]);
         } finally {
             DB::setDefaultConnection($original);

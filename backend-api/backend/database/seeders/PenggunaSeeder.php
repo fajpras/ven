@@ -11,6 +11,20 @@ class PenggunaSeeder extends Seeder
 {
     public function run(): void
     {
+        $original = \Illuminate\Support\Facades\DB::getDefaultConnection();
+        if (config()->has('database.connections.mysql_dba')) {
+            \Illuminate\Support\Facades\DB::setDefaultConnection('mysql_dba');
+        }
+
+        try {
+            $this->seedPengguna();
+        } finally {
+            \Illuminate\Support\Facades\DB::setDefaultConnection($original);
+        }
+    }
+
+    private function seedPengguna(): void
+    {
         // 1. Akun Admin Utama
         Pengguna::updateOrCreate(
             ['email' => 'admin@ven.test'],

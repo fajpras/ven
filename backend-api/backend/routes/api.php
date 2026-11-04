@@ -43,6 +43,7 @@ Route::middleware(CatatKeamanan::class)->group(function () {
             Route::get('model-3d', 'templates');
             Route::get('model-3d/{model3d}', 'templateShow');
             Route::get('pameran', 'index');
+            Route::get('pameran/rekomendasi', 'rekomendasi');
             Route::post('pameran', 'store');
             Route::get('pameran/{pameran}', 'show')->whereNumber('pameran');
             Route::put('pameran/{pameran}', 'update')->whereNumber('pameran');
@@ -71,6 +72,7 @@ Route::middleware(CatatKeamanan::class)->group(function () {
         });
 
         Route::post('ai/tanya', [Pengguna\AIChatController::class, 'ask'])->middleware('throttle:10,1');
+        Route::get('pencarian', [Pengguna\PencarianController::class, 'search']);
 
         Route::prefix('admin')->middleware(HanyaAdmin::class)->group(function () {
             Route::controller(Admin\PenggunaController::class)->group(function () {
