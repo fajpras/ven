@@ -22,7 +22,7 @@
     <string name="auth_placeholder_username">Username</string>
     <string name="auth_placeholder_confirm_password">Confirm Password</string>
     <string name="register_error_email">Invalid email format</string>
-    <string name="register_error_username">Username must be at least 3 characters</string>
+    <string name="register_error_username">Username 3-30 karakter, hanya huruf, angka, titik, dan garis bawah</string>
     <string name="register_error_confirm">Passwords do not match</string>
     <string name="auth_login_error_empty">Email/Username and Password cannot be empty</string>
     <string name="register_error_failed">Registration failed, please try again</string>
@@ -112,6 +112,15 @@
     <string name="settings_phone_label">Phone</string>
     <string name="settings_description_label">Description</string>
     <string name="settings_interest_label">Interest</string>
+    <string name="settings_username_error">Username 3-30 karakter, hanya huruf, angka, titik, dan garis bawah</string>
+    <string name="settings_name_error">Nama wajib diisi, maksimal 30 karakter</string>
+    <string name="settings_phone_error">Nomor HP harus 8-15 digit dan boleh diawali +</string>
+    <string name="settings_description_error">Deskripsi maksimal 150 karakter</string>
+    <string name="settings_description_counter">%1$d/150</string>
+    <string name="settings_photo_invalid">Pilih foto JPG, PNG, atau WebP</string>
+    <string name="settings_photo_too_large">Ukuran foto maksimal 5 MB</string>
+    <string name="settings_photo_uploading">Mengunggah foto...</string>
+    <string name="settings_session_expired">Sesi Anda berakhir. Silakan masuk kembali.</string>
 
     <string name="settings_new_email_label">New email</string>
     <string name="settings_password_label">Password</string>
@@ -263,4 +272,12 @@
     <string name="create_sheet_post_desc">Share artwork, photos, or designs to the feed</string>
     <string name="create_sheet_exhibit_title">New Exhibit (3D)</string>
     <string name="create_sheet_exhibit_desc">Build an interactive 3D virtual exhibition room</string>
+
+    <!-- Account Deactivation (UC-04) -->
+    <string name="settings_deactivate_button">Deaktivasi Akun</string>
+    <string name="settings_deactivate_terms">Saya memahami bahwa akun saya akan dinonaktifkan sementara dan dapat diaktifkan kembali dengan masuk kembali.</string>
+    <string name="settings_deactivate_confirm_title">Konfirmasi Deaktivasi Akun</string>
+    <string name="settings_deactivate_confirm_msg">Apakah Anda yakin ingin menonaktifkan akun sementara? Anda dapat mengaktifkannya kembali dengan masuk kembali ke aplikasi.</string>
+    <string name="settings_deactivate_confirm_yes">Ya</string>
+    <string name="settings_deactivate_confirm_no">Batal</string>
 </resources>

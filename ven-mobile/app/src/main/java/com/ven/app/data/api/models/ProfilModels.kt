@@ -12,3 +12,11 @@ data class KategoriModel(
     @SerializedName("kategori")
     val nama: String,
 )
+
+/**
+ * Hanya mengambil jumlah total dari respons paginasi Laravel.
+ */
+data class PaginatorTotal(
+    @SerializedName("total")
+    val total: Int = 0,
+)

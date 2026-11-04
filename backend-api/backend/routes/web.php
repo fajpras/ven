@@ -18,7 +18,7 @@ Route::prefix('admin')->group(function () {
     Route::post('/login', [AdminAuthController::class, 'login'])->middleware('throttle:5,1')->name('admin.login.submit');
 
     // Admin Protected Views
-    Route::middleware(HanyaAdminWeb::class)->group(function () {
+    Route::middleware([HanyaAdminWeb::class, 'admin.db'])->group(function () {
         Route::post('/logout', [AdminAuthController::class, 'logout'])->name('admin.logout');
 
         Route::get('/', function () {

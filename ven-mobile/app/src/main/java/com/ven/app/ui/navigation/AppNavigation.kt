@@ -1,4 +1,4 @@
-package com.ven.app.ui.navigation
+﻿package com.ven.app.ui.navigation
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -10,10 +10,12 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.ui.platform.LocalContext
@@ -22,7 +24,9 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.ven.app.data.api.ApiLogin
 import com.ven.app.data.api.SessionManager
+import kotlinx.coroutines.launch
 import com.ven.app.data.preference.ThemePreferences
 import com.ven.app.ui.components.feature.CreateOptionsBottomSheet
 import com.ven.app.ui.components.layout.AppScaffold
@@ -38,32 +42,29 @@ import com.ven.app.ui.screens.create.exhibit.CreateExhibitTemplateScreen
 import com.ven.app.ui.screens.create.exhibit.editor.CreateExhibitEditorScreen
 import com.ven.app.ui.screens.create.post.CreatePostScreen
 import com.ven.app.ui.screens.explore.ExploreScreen
-import com.ven.app.ui.screens.explore.ExploreViewModel
 import com.ven.app.ui.screens.explore.PostsFeedScreen
 import com.ven.app.ui.screens.explore.dummyPostsFeed
 import com.ven.app.ui.screens.home.HomeScreen
 import com.ven.app.ui.screens.home.HomeUiState
-import com.ven.app.ui.screens.home.HomeViewModel
 import com.ven.app.ui.screens.home.SampleHomeUiState
-import com.ven.app.ui.screens.home.toFeedItem
 import com.ven.app.ui.screens.onboarding.InterestRoute
 import com.ven.app.ui.screens.profile.ProfileScreen
-import com.ven.app.ui.screens.profile.UserProfileDetailScreen
-import com.ven.app.ui.screens.profile.dummyProfileUiState
+import com.ven.app.ui.screens.profile.ProfileViewModel
 import com.ven.app.ui.screens.requestmeeting.RequestMeetingEvent
 import com.ven.app.ui.screens.requestmeeting.RequestMeetingScreen
 import com.ven.app.ui.screens.requestmeeting.RequestMeetingViewModel
 import com.ven.app.ui.screens.schedule.ScheduleScreen
-import com.ven.app.ui.screens.settings.AccountStatusScreen
-import com.ven.app.ui.screens.settings.ChangeEmailScreen
-import com.ven.app.ui.screens.settings.ChangePasswordScreen
+import com.ven.app.ui.screens.settings.AccountStatusRoute
+import com.ven.app.ui.screens.settings.ChangeEmailRoute
+import com.ven.app.ui.screens.settings.ChangeEmailViewModel
+import com.ven.app.ui.screens.settings.ChangePasswordRoute
 import com.ven.app.ui.screens.settings.HistoryScreen
 import com.ven.app.ui.screens.settings.LanguageScreen
 import com.ven.app.ui.screens.settings.ProfileSettingsRoute
 import com.ven.app.ui.screens.settings.SettingsPlaceholderScreen
 import com.ven.app.ui.screens.settings.SettingsScreen
 import com.ven.app.ui.screens.settings.ThemeScreen
-import com.ven.app.ui.screens.settings.VerifyEmailScreen
+import com.ven.app.ui.screens.settings.VerifyEmailRoute
 import com.ven.app.ui.screens.settings.dummyHistoryEntries
 import com.ven.app.ui.theme.VexTheme
 
@@ -76,6 +77,7 @@ fun AppNavHost(showExplore: Boolean = false) {
     val context = LocalContext.current
     val themePreferences = remember { ThemePreferences.getInstance(context) }
     val sessionManager = remember { SessionManager.getInstance(context) }
+    val coroutineScope = rememberCoroutineScope()
     val currentTheme by themePreferences.themeMode.collectAsStateWithLifecycle()
     var selectedLanguage by remember { mutableStateOf("English") }
     var isAccountDisabled by remember { mutableStateOf(false) }
@@ -83,9 +85,8 @@ fun AppNavHost(showExplore: Boolean = false) {
     val startDestination = if (showExplore) Screen.Home.route else Screen.Login.route
     val navController = rememberNavController()
     val forgotViewModel: ForgotPasswordViewModel = viewModel()
-    val homeViewModel: HomeViewModel = viewModel()
-    val exploreViewModel: ExploreViewModel = viewModel()
     val forgotState by forgotViewModel.uiState.collectAsStateWithLifecycle()
+    val changeEmailViewModel: ChangeEmailViewModel = viewModel()
 
     LaunchedEffect(Unit) {
         forgotViewModel.events.collect { event ->
@@ -148,16 +149,16 @@ fun AppNavHost(showExplore: Boolean = false) {
                         popUpTo(Screen.Register.route) { inclusive = true }
                     }
                 },
+                onNavigateToHome = {
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                },
                 onNavigateToLogin = {
                     if (!navController.popBackStack()) {
                         navController.navigate(Screen.Login.route) {
                             popUpTo(Screen.Register.route) { inclusive = true }
                         }
-                    }
-                },
-                onGoogleClick = {
-                    navController.navigate(Screen.OnboardingInterest.route) {
-                        popUpTo(Screen.Register.route) { inclusive = true }
                     }
                 },
             )
@@ -169,7 +170,15 @@ fun AppNavHost(showExplore: Boolean = false) {
         composable(Screen.OnboardingInterest.route) {
             InterestRoute(
                 onFinished = {
+                    sessionManager.getUser()?.let { pengguna ->
+                        sessionManager.updateUser(pengguna.copy(onboardingSelesai = true))
+                    }
                     navController.navigate(Screen.Home.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                },
+                onSessionExpired = {
+                    navController.navigate(Screen.Login.route) {
                         popUpTo(0) { inclusive = true }
                     }
                 },
@@ -206,7 +215,7 @@ fun AppNavHost(showExplore: Boolean = false) {
                 state = forgotState,
                 onNewPasswordChange = forgotViewModel::onNewPasswordChange,
                 onConfirmPasswordChange = forgotViewModel::onConfirmPasswordChange,
-                onResetClick = { forgotViewModel.resetPassword(toHome = true) },
+                onResetClick = { forgotViewModel.resetPassword(toHome = false) },
                 onBackClick = { navController.popBackStack() },
             )
         }
@@ -216,8 +225,6 @@ fun AppNavHost(showExplore: Boolean = false) {
         // -------------------------------------------------------------
         composable(Screen.Home.route) {
             MainHomeScreen(
-                homeViewModel = homeViewModel,
-                exploreViewModel = exploreViewModel,
                 initialTab = if (showExplore) BottomNavTab.Explore else BottomNavTab.Home,
                 onRequestMeetingClick = { postId ->
                     navController.navigate(Screen.RequestMeeting.createRoute(postId))
@@ -236,9 +243,6 @@ fun AppNavHost(showExplore: Boolean = false) {
                 },
                 onNavigateToExhibitEditor = { id ->
                     navController.navigate(Screen.CreateExhibitEditor.createRoute(id))
-                },
-                onNavigateToUserProfile = { userId ->
-                    navController.navigate(Screen.UserProfile.createRoute(userId))
                 },
             )
         }
@@ -314,14 +318,8 @@ fun AppNavHost(showExplore: Boolean = false) {
             ),
         ) { backStackEntry ->
             val postId = backStackEntry.arguments?.getString("postId").orEmpty()
-            val exploreFeed by exploreViewModel.uiState.collectAsStateWithLifecycle()
-            val homeFeed by homeViewModel.uiState.collectAsStateWithLifecycle()
-
-            val combinedPosts = (exploreFeed.feedPosts + homeFeed.posts.map { it.toFeedItem() }).distinctBy { it.id }
-            val displayPosts = if (combinedPosts.isNotEmpty()) combinedPosts else dummyPostsFeed
-
             PostsFeedScreen(
-                posts = displayPosts,
+                posts = dummyPostsFeed,
                 onBackClick = { navController.popBackStack() },
                 onRequestMeetingClick = { id ->
                     navController.navigate(Screen.RequestMeeting.createRoute(id))
@@ -330,34 +328,6 @@ fun AppNavHost(showExplore: Boolean = false) {
                     navController.navigate(Screen.CreateExhibitEditor.createRoute(id.ifBlank { "tpl_small" }))
                 },
                 initialPostId = postId.ifBlank { null },
-                onUserClick = { userId ->
-                    navController.navigate(Screen.UserProfile.createRoute(userId))
-                },
-            )
-        }
-
-        // -------------------------------------------------------------
-        // 5b-2. SubPage: Detail Profil Pengguna Publik
-        // -------------------------------------------------------------
-        composable(
-            route = Screen.UserProfile.route,
-            arguments = listOf(
-                navArgument("userId") {
-                    type = NavType.StringType
-                    defaultValue = ""
-                },
-            ),
-        ) { backStackEntry ->
-            val userId = backStackEntry.arguments?.getString("userId").orEmpty()
-            UserProfileDetailScreen(
-                userId = userId,
-                onBackClick = { navController.popBackStack() },
-                onMediaClick = { media ->
-                    navController.navigate(Screen.PostsFeed.createRoute(media.id))
-                },
-                onExhibitClick = { exhibitId ->
-                    navController.navigate(Screen.CreateExhibitEditor.createRoute(exhibitId))
-                },
             )
         }
 
@@ -425,9 +395,12 @@ fun AppNavHost(showExplore: Boolean = false) {
                 onNavigateToPrivacyPolicy = { navController.navigate(Screen.SettingsPrivacy.route) },
                 onNavigateToHelp = { navController.navigate(Screen.SettingsHelp.route) },
                 onLogoutConfirmed = {
-                    sessionManager.clearSession()
-                    navController.navigate(Screen.Login.route) {
-                        popUpTo(0) { inclusive = true }
+                    coroutineScope.launch {
+                        runCatching { ApiLogin.logout() }
+                        sessionManager.clearSession()
+                        navController.navigate(Screen.Login.route) {
+                            popUpTo(0) { inclusive = true }
+                        }
                     }
                 },
             )
@@ -437,14 +410,20 @@ fun AppNavHost(showExplore: Boolean = false) {
             ProfileSettingsRoute(
                 onBackClick = { navController.popBackStack() },
                 onSaved = { navController.popBackStack() },
+                onSessionExpired = {
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                },
             )
         }
 
         composable(Screen.SettingsEmail.route) {
-            ChangeEmailScreen(
+            ChangeEmailRoute(
+                viewModel = changeEmailViewModel,
                 onBackClick = { navController.popBackStack() },
-                onSendOtpClick = { newEmail ->
-                    navController.navigate(Screen.SettingsVerifyEmail.createRoute(newEmail))
+                onOtpSent = {
+                    navController.navigate(Screen.SettingsVerifyEmail.route)
                 },
             )
         }
@@ -457,23 +436,20 @@ fun AppNavHost(showExplore: Boolean = false) {
                     defaultValue = ""
                 },
             ),
-        ) { backStackEntry ->
-            val email = backStackEntry.arguments?.getString("email").orEmpty()
-            VerifyEmailScreen(
-                email = email,
+        ) {
+            VerifyEmailRoute(
+                viewModel = changeEmailViewModel,
                 onBackClick = { navController.popBackStack() },
-                onVerifySuccess = {
+                onVerified = {
                     navController.popBackStack(Screen.Settings.route, inclusive = false)
                 },
             )
         }
 
         composable(Screen.SettingsPassword.route) {
-            ChangePasswordScreen(
+            ChangePasswordRoute(
                 onBackClick = { navController.popBackStack() },
-                onSendOtpClick = {
-                    navController.popBackStack()
-                },
+                onSaved = { navController.popBackStack() },
             )
         }
 
@@ -496,10 +472,14 @@ fun AppNavHost(showExplore: Boolean = false) {
         }
 
         composable(Screen.SettingsAccountStatus.route) {
-            AccountStatusScreen(
-                isDisabledInitial = isAccountDisabled,
-                onStatusChange = { isAccountDisabled = it },
+            AccountStatusRoute(
                 onBackClick = { navController.popBackStack() },
+                onDeactivated = {
+                    sessionManager.clearSession()
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                },
             )
         }
 
@@ -528,8 +508,6 @@ fun AppNavHost(showExplore: Boolean = false) {
 
 @Composable
 fun MainHomeScreen(
-    homeViewModel: HomeViewModel = viewModel(),
-    exploreViewModel: ExploreViewModel = viewModel(),
     uiState: HomeUiState = SampleHomeUiState,
     initialTab: BottomNavTab = BottomNavTab.Home,
     onRequestMeetingClick: (postId: String) -> Unit = {},
@@ -538,11 +516,24 @@ fun MainHomeScreen(
     onNavigateToCreatePost: () -> Unit = {},
     onNavigateToCreateExhibit: () -> Unit = {},
     onNavigateToExhibitEditor: (templateIdOrExhibitId: String) -> Unit = {},
-    onNavigateToUserProfile: (userId: String) -> Unit = {},
 ) {
     var currentTab by rememberSaveable { mutableStateOf(initialTab) }
-    var profileState by remember { mutableStateOf(dummyProfileUiState) }
+    val profileViewModel: ProfileViewModel = viewModel()
+    val profileState by profileViewModel.uiState.collectAsStateWithLifecycle()
     var isCreateSheetOpen by remember { mutableStateOf(false) }
+
+    LaunchedEffect(currentTab) {
+        if (currentTab == BottomNavTab.Profile) {
+            profileViewModel.muat()
+        }
+    }
+
+    LifecycleResumeEffect(Unit) {
+        if (currentTab == BottomNavTab.Profile) {
+            profileViewModel.muat()
+        }
+        onPauseOrDispose { }
+    }
 
     val handleCreateClick = {
         isCreateSheetOpen = true
@@ -564,16 +555,13 @@ fun MainHomeScreen(
 
     when (currentTab) {
         BottomNavTab.Home -> {
-            val liveHomeState by homeViewModel.uiState.collectAsStateWithLifecycle()
             HomeScreen(
-                uiState = liveHomeState,
+                uiState = uiState,
                 onTabSelected = { currentTab = it },
                 onCreateClick = handleCreateClick,
                 onRequestMeetingClick = onRequestMeetingClick,
                 onView3dClick = { pameranId -> onNavigateToExhibitEditor(pameranId ?: "tpl_small") },
                 onBannerClick = { eventId -> onNavigateToExhibitEditor(eventId) },
-                onLoadMore = homeViewModel::loadNextChunk,
-                onUserClick = onNavigateToUserProfile,
             )
         }
         BottomNavTab.Schedule -> {
@@ -591,8 +579,6 @@ fun MainHomeScreen(
                 onTabSelected = { currentTab = it },
                 onMediaClick = { media -> onNavigateToPostsFeed(media.id) },
                 onExhibitClick = { exhibit -> onNavigateToExhibitEditor(exhibit.id) },
-                onAccountClick = onNavigateToUserProfile,
-                viewModel = exploreViewModel,
             )
         }
         BottomNavTab.Profile -> {
@@ -601,8 +587,9 @@ fun MainHomeScreen(
                 onTabSelected = { currentTab = it },
                 onCreateClick = handleCreateClick,
                 onMenuClick = onNavigateToSettings,
-                onProfileTabChange = { profileState = profileState.copy(selectedTab = it) },
-                onSkillSheetToggle = { profileState = profileState.copy(isSkillSheetOpen = it) },
+                onProfileTabChange = profileViewModel::pilihTab,
+                onSkillSheetToggle = profileViewModel::aturSkillSheet,
+                onRetryClick = profileViewModel::muat,
                 onMediaClick = { media ->
                     if (profileState.selectedTab == com.ven.app.ui.screens.profile.ProfileTab.Exhibits) {
                         onNavigateToExhibitEditor(media.id)

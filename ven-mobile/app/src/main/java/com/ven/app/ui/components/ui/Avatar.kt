@@ -12,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -31,7 +32,7 @@ enum class AvatarSize(val dp: Dp) {
  * Komponen Avatar melingkar untuk VEN (Virtual Exhibition).
  * Sesuai DESIGN.md §6.1:
  * - Ukuran Sm (24dp), Md (40dp), Lg (96dp).
- * - Menampilkan gambar karya/pengguna bila [imageUrl] atau [imageRes] tersedia dengan 2-level caching.
+ * - Menampilkan gambar karya/pengguna bila [imageRes] tersedia.
  * - Menampilkan inisial huruf besar pada latar [surfaceInput] bila belum ada gambar.
  */
 @Composable
@@ -40,15 +41,10 @@ fun Avatar(
     modifier: Modifier = Modifier,
     size: AvatarSize = AvatarSize.Md,
     @DrawableRes imageRes: Int? = null,
-    imageUrl: String? = null,
+    imageBitmap: ImageBitmap? = null,
     contentDescription: String? = null,
 ) {
     val colors = VexTheme.colors
-    val bitmap = rememberAsyncImageBitmap(
-        url = imageUrl,
-        maxWidth = 160,
-        maxHeight = 160,
-    )
 
     Box(
         modifier = modifier
@@ -56,9 +52,9 @@ fun Avatar(
             .clip(CircleShape),
         contentAlignment = Alignment.Center,
     ) {
-        if (bitmap != null) {
+        if (imageBitmap != null) {
             Image(
-                bitmap = bitmap,
+                bitmap = imageBitmap,
                 contentDescription = contentDescription,
                 modifier = Modifier.matchParentSize(),
                 contentScale = ContentScale.Crop,

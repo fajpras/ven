@@ -12,13 +12,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ven.app.R
 import com.ven.app.ui.components.layout.VexBottomActionBar
 import com.ven.app.ui.components.layout.VexTopBar
@@ -40,17 +40,15 @@ import com.ven.app.ui.theme.VexTheme
  */
 @Composable
 fun ChangeEmailScreen(
+    state: ChangeEmailUiState,
+    onEmailChange: (String) -> Unit,
+    onPasswordChange: (String) -> Unit,
+    onConfirmPasswordChange: (String) -> Unit,
     onBackClick: () -> Unit,
-    onSendOtpClick: (newEmail: String) -> Unit,
+    onSendOtpClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val colors = VexTheme.colors
-
-    var newEmail by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var confirmPassword by remember { mutableStateOf("") }
-
-    val isFormValid = newEmail.isNotBlank() && password.isNotBlank() && (password == confirmPassword)
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -65,9 +63,10 @@ fun ChangeEmailScreen(
             VexBottomActionBar {
                 VexButton(
                     text = stringResource(R.string.settings_send_otp),
-                    onClick = { onSendOtpClick(newEmail) },
+                    onClick = onSendOtpClick,
                     variant = VexButtonVariant.Primary,
-                    enabled = isFormValid,
+                    enabled = state.isFormValid,
+                    loading = state.isLoading,
                 )
             }
         },
@@ -82,8 +81,8 @@ fun ChangeEmailScreen(
                 .padding(bottom = VexSpace.s8),
         ) {
             VexTextField(
-                value = newEmail,
-                onValueChange = { newEmail = it },
+                value = state.emailBaru,
+                onValueChange = onEmailChange,
                 variant = VexTextFieldVariant.Boxed,
                 label = stringResource(R.string.settings_new_email_label),
             )
@@ -91,8 +90,8 @@ fun ChangeEmailScreen(
             Spacer(modifier = Modifier.height(VexSpace.s4))
 
             VexPasswordField(
-                value = password,
-                onValueChange = { password = it },
+                value = state.kataSandi,
+                onValueChange = onPasswordChange,
                 variant = VexTextFieldVariant.Boxed,
                 label = stringResource(R.string.settings_password_label),
             )
@@ -100,8 +99,8 @@ fun ChangeEmailScreen(
             Spacer(modifier = Modifier.height(VexSpace.s4))
 
             VexPasswordField(
-                value = confirmPassword,
-                onValueChange = { confirmPassword = it },
+                value = state.konfirmasiKataSandi,
+                onValueChange = onConfirmPasswordChange,
                 variant = VexTextFieldVariant.Boxed,
                 label = stringResource(R.string.settings_confirm_password_label),
             )
@@ -113,8 +112,46 @@ fun ChangeEmailScreen(
                 style = MaterialTheme.typography.bodySmall,
                 color = colors.textMuted,
             )
+
+            state.errorMessage?.let {
+                Spacer(modifier = Modifier.height(VexSpace.s3))
+                Text(
+                    text = it,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colors.danger,
+                )
+            }
         }
     }
+}
+
+/**
+ * Menghubungkan [ChangeEmailScreen] dengan [ChangeEmailViewModel] yang dibagikan.
+ * Setelah OTP terbit, memicu [onOtpSent] untuk berpindah ke layar verifikasi.
+ */
+@Composable
+fun ChangeEmailRoute(
+    viewModel: ChangeEmailViewModel,
+    onBackClick: () -> Unit,
+    onOtpSent: () -> Unit,
+) {
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+
+    LaunchedEffect(state.isOtpSent) {
+        if (state.isOtpSent) {
+            viewModel.onOtpConsumed()
+            onOtpSent()
+        }
+    }
+
+    ChangeEmailScreen(
+        state = state,
+        onEmailChange = viewModel::onEmailChange,
+        onPasswordChange = viewModel::onKataSandiChange,
+        onConfirmPasswordChange = viewModel::onKonfirmasiChange,
+        onBackClick = onBackClick,
+        onSendOtpClick = viewModel::kirimOtp,
+    )
 }
 
 // ---------------------------------------------------------
@@ -126,6 +163,10 @@ fun ChangeEmailScreen(
 private fun ChangeEmailDarkPreview() {
     VexTheme(mode = ThemeMode.Dark) {
         ChangeEmailScreen(
+            state = ChangeEmailUiState(),
+            onEmailChange = {},
+            onPasswordChange = {},
+            onConfirmPasswordChange = {},
             onBackClick = {},
             onSendOtpClick = {},
         )
@@ -137,6 +178,10 @@ private fun ChangeEmailDarkPreview() {
 private fun ChangeEmailLightPreview() {
     VexTheme(mode = ThemeMode.Light) {
         ChangeEmailScreen(
+            state = ChangeEmailUiState(),
+            onEmailChange = {},
+            onPasswordChange = {},
+            onConfirmPasswordChange = {},
             onBackClick = {},
             onSendOtpClick = {},
         )

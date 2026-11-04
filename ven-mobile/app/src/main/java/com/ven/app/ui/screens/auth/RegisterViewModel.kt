@@ -12,6 +12,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ven.app.data.api.ApiLogin
 import com.ven.app.data.api.ApiRegister
 import com.ven.app.data.api.SessionManager
+import com.ven.app.data.api.models.AuthData
 import com.ven.app.util.GoogleAuthHelper
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -38,6 +39,7 @@ object PasswordValidator {
 }
 
 private val EMAIL_REGEX = "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}\$".toRegex()
+private val USERNAME_REGEX = "^[A-Za-z0-9._]{3,30}\$".toRegex()
 
 data class RegisterUiState(
     val email: String = "",
@@ -52,7 +54,7 @@ data class RegisterUiState(
     val infoMessage: String? = null,
 ) {
     val isEmailValid: Boolean get() = EMAIL_REGEX.matches(email.trim())
-    val isUsernameValid: Boolean get() = username.trim().length >= 3
+    val isUsernameValid: Boolean get() = USERNAME_REGEX.matches(username.trim())
     val isPasswordStrong: Boolean get() = PasswordValidator.isStrong(password)
     val isPasswordMatch: Boolean get() = password == confirmPassword
 
@@ -63,6 +65,7 @@ data class RegisterUiState(
 
 sealed interface RegisterEvent {
     data object NavigateToOnboarding : RegisterEvent
+    data object NavigateToHome : RegisterEvent
 }
 
 class RegisterViewModel : ViewModel() {
@@ -77,7 +80,7 @@ class RegisterViewModel : ViewModel() {
         _uiState.update { it.copy(email = value, errorMessage = null) }
 
     fun onUsernameChange(value: String) =
-        _uiState.update { it.copy(username = value, errorMessage = null) }
+        _uiState.update { it.copy(username = value.take(30), errorMessage = null) }
 
     fun onPasswordChange(value: String) =
         _uiState.update { it.copy(password = value, errorMessage = null) }
@@ -143,7 +146,7 @@ class RegisterViewModel : ViewModel() {
         }
     }
 
-    fun submitRegisterWithOtp() {
+    fun submitRegisterWithOtp(context: Context) {
         val state = _uiState.value
         if (state.otp.trim().length < 6) {
             _uiState.update { it.copy(errorMessage = "Kode verifikasi harus 6 digit") }
@@ -162,9 +165,16 @@ class RegisterViewModel : ViewModel() {
                 otp = state.otp.trim()
             )
 
-            result.onSuccess {
+            result.onSuccess { authData ->
+                simpanSesi(context, authData)
                 _uiState.update { it.copy(isLoading = false) }
-                _events.send(RegisterEvent.NavigateToOnboarding)
+                _events.send(
+                    if (authData.pengguna?.onboardingSelesai == true) {
+                        RegisterEvent.NavigateToHome
+                    } else {
+                        RegisterEvent.NavigateToOnboarding
+                    },
+                )
             }.onFailure { exception ->
                 _uiState.update {
                     it.copy(
@@ -175,22 +185,74 @@ class RegisterViewModel : ViewModel() {
             }
         }
     }
+
+    fun daftarDenganGoogle(context: Context) {
+        if (_uiState.value.isLoading) return
+
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true, errorMessage = null, infoMessage = null) }
+
+            val googleResult = GoogleAuthHelper.getGoogleIdToken(context)
+            val idToken = googleResult.getOrElse { exception ->
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        errorMessage = exception.message ?: "Gagal autentikasi Google",
+                    )
+                }
+                return@launch
+            }
+
+            ApiLogin.loginGoogle(idToken = idToken).onSuccess { authData ->
+                simpanSesi(context, authData)
+                _uiState.update { it.copy(isLoading = false) }
+                _events.send(
+                    if (authData.pengguna?.onboardingSelesai == true) {
+                        RegisterEvent.NavigateToHome
+                    } else {
+                        RegisterEvent.NavigateToOnboarding
+                    },
+                )
+            }.onFailure {
+                ApiRegister.registerGoogle(idToken = idToken).onSuccess { authData ->
+                    simpanSesi(context, authData)
+                    _uiState.update { it.copy(isLoading = false) }
+                    _events.send(RegisterEvent.NavigateToOnboarding)
+                }.onFailure { exception ->
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            errorMessage = exception.message ?: "Gagal mendaftar dengan Google",
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    private fun simpanSesi(context: Context, authData: AuthData) {
+        val sesi = SessionManager.getInstance(context)
+        sesi.saveToken(authData.token)
+        sesi.saveUser(authData.pengguna)
+    }
 }
 
 /** Penghubung antara RegisterViewModel dan RegisterScreen (stateless). */
 @Composable
 fun RegisterRoute(
     onNavigateToOnboarding: () -> Unit,
+    onNavigateToHome: () -> Unit,
     onNavigateToLogin: () -> Unit,
-    onGoogleClick: () -> Unit = onNavigateToOnboarding,
     viewModel: RegisterViewModel = viewModel(),
 ) {
+    val context = LocalContext.current
     val state by viewModel.uiState.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
             when (event) {
                 RegisterEvent.NavigateToOnboarding -> onNavigateToOnboarding()
+                RegisterEvent.NavigateToHome -> onNavigateToHome()
             }
         }
     }
@@ -205,7 +267,7 @@ fun RegisterRoute(
                 errorMessage = state.errorMessage,
             ),
             onOtpChange = viewModel::onOtpChange,
-            onVerifyClick = { viewModel.submitRegisterWithOtp() },
+            onVerifyClick = { viewModel.submitRegisterWithOtp(context) },
             onResendClick = viewModel::resendOtp,
             onBackClick = viewModel::dismissOtpDialog,
         )
@@ -219,7 +281,7 @@ fun RegisterRoute(
         onPasswordChange = viewModel::onPasswordChange,
         onConfirmPasswordChange = viewModel::onConfirmPasswordChange,
         onRegisterClick = viewModel::requestOtpAndOpenDialog,
-        onGoogleClick = onGoogleClick,
+        onGoogleClick = { viewModel.daftarDenganGoogle(context) },
         onLoginClick = onNavigateToLogin,
     )
 }

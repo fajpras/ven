@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -22,8 +23,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.ven.app.R
@@ -39,6 +43,9 @@ import com.ven.app.ui.icons.VexIcons
 import com.ven.app.ui.theme.ThemeMode
 import com.ven.app.ui.theme.VexSpace
 import com.ven.app.ui.theme.VexTheme
+
+private val USERNAME_REGEX = Regex("^[A-Za-z0-9._]{3,30}$")
+private val PHONE_REGEX = Regex("^\\+?[0-9]{8,15}$")
 
 /**
  * Halaman Pengaturan & Edit Profil pengguna.
@@ -58,17 +65,44 @@ fun ProfileSettingsScreen(
     modifier: Modifier = Modifier,
     initialIsEditing: Boolean = false,
     isSaving: Boolean = false,
+    isUploadingPhoto: Boolean = false,
     errorMessage: String? = null,
     onRetryClick: () -> Unit = {},
+    fotoProfilUrl: String? = null,
+    fotoBitmap: ImageBitmap? = null,
+    onPhotoClick: () -> Unit = {},
 ) {
     val colors = VexTheme.colors
     var isEditing by remember { mutableStateOf(initialIsEditing) }
+    var showErrors by remember { mutableStateOf(false) }
 
     var username by remember { mutableStateOf(initialData.username) }
     var name by remember { mutableStateOf(initialData.name) }
     var phone by remember { mutableStateOf(initialData.phone) }
     var description by remember { mutableStateOf(initialData.description) }
     var selectedInterestIds by remember { mutableStateOf(initialData.interestIds) }
+
+    val usernameValid = USERNAME_REGEX.matches(username.trim())
+    val nameValid = name.trim().isNotEmpty() && name.length <= 30
+    val phoneValid = phone.isBlank() || PHONE_REGEX.matches(phone.trim())
+    val descriptionValid = description.length <= 150
+    val canSave = !isSaving && !isUploadingPhoto && usernameValid && nameValid &&
+        phoneValid && descriptionValid
+
+    fun simpan() {
+        showErrors = true
+        if (!canSave) return
+
+        onSaveProfile(
+            ProfileSettingsData(
+                username = username.trim(),
+                name = name.trim(),
+                phone = phone.trim(),
+                description = description.trim(),
+                interestIds = selectedInterestIds,
+            ),
+        )
+    }
 
     val topBarTitle = if (isEditing) {
         stringResource(R.string.settings_edit_profile_title)
@@ -92,18 +126,8 @@ fun ProfileSettingsScreen(
                 trailingContent = {
                     if (isEditing) {
                         TextButton(
-                            enabled = !isSaving && categories.isNotEmpty(),
-                            onClick = {
-                                onSaveProfile(
-                                    ProfileSettingsData(
-                                        username = username,
-                                        name = name,
-                                        phone = phone,
-                                        description = description,
-                                        interestIds = selectedInterestIds,
-                                    )
-                                )
-                            },
+                            enabled = canSave,
+                            onClick = { simpan() },
                         ) {
                             Text(
                                 text = stringResource(R.string.settings_save_changes),
@@ -143,61 +167,122 @@ fun ProfileSettingsScreen(
             Avatar(
                 initials = username.ifBlank { "G" },
                 size = AvatarSize.Lg,
+                imageBitmap = fotoBitmap,
             )
 
             Spacer(modifier = Modifier.height(VexSpace.s2))
 
             Text(
-                text = stringResource(R.string.settings_new_photo),
+                text = if (isUploadingPhoto) {
+                    stringResource(R.string.settings_photo_uploading)
+                } else {
+                    stringResource(R.string.settings_new_photo)
+                },
                 style = MaterialTheme.typography.bodyMedium.copy(
                     fontWeight = FontWeight.Medium,
                 ),
-                color = colors.primaryText,
+                color = if (isUploadingPhoto) colors.textMuted else colors.primaryText,
                 modifier = Modifier
-                    .clickable { /* TODO: upload/change photo */ }
+                    .clickable(enabled = isEditing && !isUploadingPhoto) { onPhotoClick() }
                     .padding(VexSpace.s1),
             )
+
+            if (errorMessage != null) {
+                Spacer(modifier = Modifier.height(VexSpace.s4))
+                Text(
+                    text = errorMessage,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colors.danger,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                if (categories.isEmpty()) {
+                    TextButton(onClick = onRetryClick) {
+                        Text(
+                            text = stringResource(R.string.interest_retry),
+                            color = colors.primaryText,
+                        )
+                    }
+                }
+            }
 
             Spacer(modifier = Modifier.height(VexSpace.s6))
 
             // Form Fields
             VexTextField(
                 value = username,
-                onValueChange = { if (isEditing) username = it },
+                onValueChange = {
+                    if (isEditing) {
+                        username = it.take(30)
+                        showErrors = false
+                    }
+                },
                 variant = VexTextFieldVariant.Boxed,
                 label = stringResource(R.string.settings_username_label),
                 enabled = isEditing,
+                isError = isEditing && (showErrors || username.isNotEmpty()) && !usernameValid,
+                errorMessage = stringResource(R.string.settings_username_error),
             )
 
             Spacer(modifier = Modifier.height(VexSpace.s4))
 
             VexTextField(
                 value = name,
-                onValueChange = { if (isEditing) name = it },
+                onValueChange = {
+                    if (isEditing) {
+                        name = it.take(30)
+                        showErrors = false
+                    }
+                },
                 variant = VexTextFieldVariant.Boxed,
                 label = stringResource(R.string.settings_name_label),
                 enabled = isEditing,
+                isError = showErrors && !nameValid,
+                errorMessage = stringResource(R.string.settings_name_error),
             )
 
             Spacer(modifier = Modifier.height(VexSpace.s4))
 
             VexTextField(
                 value = phone,
-                onValueChange = { if (isEditing) phone = it },
+                onValueChange = {
+                    if (isEditing) {
+                        phone = it.filter { karakter -> karakter.isDigit() || karakter == '+' }
+                            .take(16)
+                        showErrors = false
+                    }
+                },
                 variant = VexTextFieldVariant.Boxed,
                 label = stringResource(R.string.settings_phone_label),
                 enabled = isEditing,
+                isError = isEditing && (showErrors || phone.isNotEmpty()) && !phoneValid,
+                errorMessage = stringResource(R.string.settings_phone_error),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
             )
 
             Spacer(modifier = Modifier.height(VexSpace.s4))
 
             VexTextField(
                 value = description,
-                onValueChange = { if (isEditing) description = it },
+                onValueChange = {
+                    if (isEditing) {
+                        description = it.take(150)
+                        showErrors = false
+                    }
+                },
                 variant = VexTextFieldVariant.Boxed,
                 label = stringResource(R.string.settings_description_label),
                 enabled = isEditing,
                 singleLine = false,
+            )
+
+            Text(
+                text = stringResource(R.string.settings_description_counter, description.length),
+                style = MaterialTheme.typography.bodySmall,
+                color = if (descriptionValid) colors.textMuted else colors.danger,
+                textAlign = TextAlign.End,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = VexSpace.s1, end = VexSpace.s2),
             )
 
             Spacer(modifier = Modifier.height(VexSpace.s6))
@@ -235,20 +320,6 @@ fun ProfileSettingsScreen(
                     )
                 }
 
-                if (errorMessage != null) {
-                    Spacer(modifier = Modifier.height(VexSpace.s3))
-                    Text(
-                        text = errorMessage,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = colors.danger,
-                    )
-                    TextButton(onClick = onRetryClick) {
-                        Text(
-                            text = stringResource(R.string.interest_retry),
-                            color = colors.primaryText,
-                        )
-                    }
-                }
             }
         }
     }
