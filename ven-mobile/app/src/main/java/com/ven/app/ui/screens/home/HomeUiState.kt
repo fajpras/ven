@@ -23,6 +23,8 @@ data class ComingSoonEvent(
 data class PostItem(
     val id: String,
     val username: String,
+    val userId: String? = null,
+    val userAvatarUrl: String? = null,
     val title: String,
     val imageUrl: String? = null,
     val pameranId: String? = null,
@@ -64,6 +66,8 @@ fun KaryaItemModel.toPostItem(): PostItem {
     return PostItem(
         id = idKarya,
         username = "@$author",
+        userId = pengguna?.idPengguna,
+        userAvatarUrl = pengguna?.fotoProfil,
         title = judul,
         imageUrl = fileUrl ?: file,
         pameranId = idPameran?.toString(),
@@ -75,6 +79,8 @@ fun PostItem.toFeedItem(): PostsFeedItem {
     return PostsFeedItem(
         id = id,
         username = username,
+        userId = userId,
+        userAvatarUrl = userAvatarUrl,
         title = title,
         description = description,
         imageUrl = imageUrl,

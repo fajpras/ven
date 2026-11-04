@@ -6,8 +6,10 @@ import com.ven.app.data.api.models.PaginatedData
 import com.ven.app.data.api.models.PameranItemModel
 import com.ven.app.data.api.models.SearchSummaryModel
 import com.ven.app.data.api.models.UserModel
+import com.ven.app.data.api.models.UserProfileDetailModel
 import retrofit2.Response
 import retrofit2.http.GET
+import retrofit2.http.Path
 import retrofit2.http.Query
 
 interface ApiPencarian {
@@ -38,5 +40,9 @@ interface ApiPencarian {
         @Query("tipe") tipe: String = "pengguna",
         @Query("page") page: Int = 1,
     ): Response<ApiResponse<PaginatedData<UserModel>>>
-}
 
+    @GET("pengguna/{id}")
+    suspend fun getDetailPengguna(
+        @Path("id") idPengguna: String,
+    ): Response<ApiResponse<UserProfileDetailModel>>
+}

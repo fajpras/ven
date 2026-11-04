@@ -34,6 +34,7 @@ class ExploreViewModel(
     fun muatDiscoveryMedia() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
+                // Muat daftar karya
                 val res = apiPencarian.searchKarya(query = null, tipe = "karya", page = 1)
                 if (res.isSuccessful) {
                     val paginated = res.body()?.data
@@ -58,6 +59,23 @@ class ExploreViewModel(
                                 canLoadMorePosts = hasMore,
                             )
                         }
+                    }
+                }
+
+                // Muat data pengguna nyata untuk riwayat pencarian awal (Recents)
+                val userRes = apiPencarian.searchPengguna(null)
+                if (userRes.isSuccessful) {
+                    val users = userRes.body()?.data?.data ?: emptyList()
+                    val realRecents = users.take(6).map { u ->
+                        RecentSearchItem.Account(
+                            id = u.idPengguna ?: "",
+                            username = "@" + (u.namaPanggilan ?: "user"),
+                            fullName = u.nama ?: "",
+                            avatarUrl = u.fotoProfil,
+                        )
+                    }
+                    if (realRecents.isNotEmpty()) {
+                        _uiState.update { it.copy(recentSearches = realRecents) }
                     }
                 }
             } catch (_: Exception) {
@@ -153,6 +171,7 @@ class ExploreViewModel(
                                 id = u.idPengguna ?: "",
                                 username = u.namaPanggilan ?: "",
                                 fullName = u.nama ?: "",
+                                avatarUrl = u.fotoProfil,
                             )
                         } ?: emptyList()
 
@@ -195,6 +214,7 @@ class ExploreViewModel(
                                 id = u.idPengguna ?: "",
                                 username = u.namaPanggilan ?: "",
                                 fullName = u.nama ?: "",
+                                avatarUrl = u.fotoProfil,
                             )
                         } ?: emptyList()
 
@@ -307,11 +327,32 @@ class ExploreViewModel(
         }
     }
 
+    fun onAccountClicked(account: ExploreAccountItem) {
+        _uiState.update { state ->
+            val newEntry = RecentSearchItem.Account(
+                id = account.id,
+                username = if (account.username.startsWith("@")) account.username else "@${account.username}",
+                fullName = account.fullName,
+                avatarUrl = account.avatarUrl,
+            )
+            val updated = (listOf(newEntry) + state.recentSearches.filterNot { it.id == account.id }).take(10)
+            state.copy(recentSearches = updated)
+        }
+    }
+
+    fun removeRecentSearch(item: RecentSearchItem) {
+        _uiState.update { state ->
+            state.copy(recentSearches = state.recentSearches.filterNot { it.id == item.id })
+        }
+    }
+
     private fun KaryaItemModel.toFeedItem(): PostsFeedItem {
         val author = pengguna?.namaPanggilan ?: pengguna?.nama ?: "kreator"
         return PostsFeedItem(
             id = idKarya,
             username = if (author.startsWith("@")) author else "@$author",
+            userId = pengguna?.idPengguna,
+            userAvatarUrl = pengguna?.fotoProfil,
             title = judul,
             description = deskripsi ?: "",
             imageUrl = fileUrl ?: file,

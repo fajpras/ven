@@ -56,6 +56,7 @@ fun HomeScreen(
     onBannerClick: (eventId: String) -> Unit,
     modifier: Modifier = Modifier,
     onLoadMore: () -> Unit = {},
+    onUserClick: (userId: String) -> Unit = {},
 ) {
     val colors = VexTheme.colors
     val listState = rememberLazyListState()
@@ -125,12 +126,16 @@ fun HomeScreen(
                 ) { post ->
                     PostCard(
                         username = post.username,
+                        userAvatarUrl = post.userAvatarUrl,
                         title = post.title,
                         description = post.description,
                         imageUrl = post.imageUrl,
                         aspectRatio = post.aspectRatio,
                         onRequestMeetingClick = { onRequestMeetingClick(post.id) },
                         onView3dClick = { onView3dClick(post.pameranId) },
+                        onUsernameClick = {
+                            post.userId?.let { onUserClick(it) }
+                        },
                     )
                 }
 

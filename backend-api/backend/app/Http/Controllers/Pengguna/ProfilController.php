@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Pengguna;
 
 use App\Http\Controllers\Controller;
+use App\Models\Karya;
 use App\Models\Kategori;
+use App\Models\Pameran;
 use App\Models\Pengguna;
 use App\Models\PenggunaPublik;
 use App\Enums\TujuanOtp;
@@ -188,5 +190,37 @@ class ProfilController extends Controller
         );
 
         return $this->ok(null, 'Minat kategori dihapus.');
+    }
+
+    /**
+     * Mengambil detail profil publik pengguna lain beserta karya dan pamerannya.
+     */
+    public function detailPengguna(Pengguna $pengguna): JsonResponse
+    {
+        $karya = Karya::where('id_pengguna', $pengguna->id_pengguna)
+            ->with(['kategori'])
+            ->latest('created_at')
+            ->get();
+
+        $pameran = Pameran::where('id_pengguna', $pengguna->id_pengguna)
+            ->with(['model3d'])
+            ->latest('id_pameran')
+            ->get();
+
+        return $this->ok([
+            'pengguna' => [
+                'id_pengguna' => $pengguna->id_pengguna,
+                'nama' => $pengguna->nama,
+                'nama_panggilan' => $pengguna->nama_panggilan,
+                'foto_profil' => $pengguna->foto_profil,
+                'deskripsi' => $pengguna->deskripsi,
+                'email' => $pengguna->email,
+                'post_count' => $karya->count(),
+                'exhibit_count' => $pameran->count(),
+                'kategori' => $pengguna->kategori()->get(['kategori.id_kategori', 'kategori.kategori']),
+            ],
+            'karya' => $karya,
+            'pameran' => $pameran,
+        ]);
     }
 }

@@ -48,6 +48,7 @@ import com.ven.app.ui.screens.home.SampleHomeUiState
 import com.ven.app.ui.screens.home.toFeedItem
 import com.ven.app.ui.screens.onboarding.InterestRoute
 import com.ven.app.ui.screens.profile.ProfileScreen
+import com.ven.app.ui.screens.profile.UserProfileDetailScreen
 import com.ven.app.ui.screens.profile.dummyProfileUiState
 import com.ven.app.ui.screens.requestmeeting.RequestMeetingEvent
 import com.ven.app.ui.screens.requestmeeting.RequestMeetingScreen
@@ -236,6 +237,9 @@ fun AppNavHost(showExplore: Boolean = false) {
                 onNavigateToExhibitEditor = { id ->
                     navController.navigate(Screen.CreateExhibitEditor.createRoute(id))
                 },
+                onNavigateToUserProfile = { userId ->
+                    navController.navigate(Screen.UserProfile.createRoute(userId))
+                },
             )
         }
 
@@ -326,6 +330,34 @@ fun AppNavHost(showExplore: Boolean = false) {
                     navController.navigate(Screen.CreateExhibitEditor.createRoute(id.ifBlank { "tpl_small" }))
                 },
                 initialPostId = postId.ifBlank { null },
+                onUserClick = { userId ->
+                    navController.navigate(Screen.UserProfile.createRoute(userId))
+                },
+            )
+        }
+
+        // -------------------------------------------------------------
+        // 5b-2. SubPage: Detail Profil Pengguna Publik
+        // -------------------------------------------------------------
+        composable(
+            route = Screen.UserProfile.route,
+            arguments = listOf(
+                navArgument("userId") {
+                    type = NavType.StringType
+                    defaultValue = ""
+                },
+            ),
+        ) { backStackEntry ->
+            val userId = backStackEntry.arguments?.getString("userId").orEmpty()
+            UserProfileDetailScreen(
+                userId = userId,
+                onBackClick = { navController.popBackStack() },
+                onMediaClick = { media ->
+                    navController.navigate(Screen.PostsFeed.createRoute(media.id))
+                },
+                onExhibitClick = { exhibitId ->
+                    navController.navigate(Screen.CreateExhibitEditor.createRoute(exhibitId))
+                },
             )
         }
 
@@ -506,6 +538,7 @@ fun MainHomeScreen(
     onNavigateToCreatePost: () -> Unit = {},
     onNavigateToCreateExhibit: () -> Unit = {},
     onNavigateToExhibitEditor: (templateIdOrExhibitId: String) -> Unit = {},
+    onNavigateToUserProfile: (userId: String) -> Unit = {},
 ) {
     var currentTab by rememberSaveable { mutableStateOf(initialTab) }
     var profileState by remember { mutableStateOf(dummyProfileUiState) }
@@ -540,6 +573,7 @@ fun MainHomeScreen(
                 onView3dClick = { pameranId -> onNavigateToExhibitEditor(pameranId ?: "tpl_small") },
                 onBannerClick = { eventId -> onNavigateToExhibitEditor(eventId) },
                 onLoadMore = homeViewModel::loadNextChunk,
+                onUserClick = onNavigateToUserProfile,
             )
         }
         BottomNavTab.Schedule -> {
@@ -557,6 +591,7 @@ fun MainHomeScreen(
                 onTabSelected = { currentTab = it },
                 onMediaClick = { media -> onNavigateToPostsFeed(media.id) },
                 onExhibitClick = { exhibit -> onNavigateToExhibitEditor(exhibit.id) },
+                onAccountClick = onNavigateToUserProfile,
                 viewModel = exploreViewModel,
             )
         }

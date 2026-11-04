@@ -6,7 +6,7 @@ import com.ven.app.ui.components.feature.MediaGridItem
 
 /**
  * Tab pilihan pada halaman hasil pencarian Explore sesuai DESIGN.md §8.5.3:
- * - ForYou: Gabungan seksi Accounts (maks 2-3) + Posts (grid 2 kolom).
+ * - ForYou: Gabungan seksi Accounts (maks 2-3) + Exhibits + Posts.
  * - Accounts: Daftar vertikal akun.
  * - Posts: Grid 2 kolom karya.
  * - Exhibits: Daftar vertikal banner pameran 16:9.
@@ -39,6 +39,7 @@ sealed interface RecentSearchItem {
         val username: String,
         val fullName: String,
         @param:DrawableRes val avatarRes: Int? = null,
+        val avatarUrl: String? = null,
     ) : RecentSearchItem
 }
 
@@ -51,6 +52,7 @@ data class ExploreAccountItem(
     val username: String,
     val fullName: String,
     @param:DrawableRes val avatarRes: Int? = null,
+    val avatarUrl: String? = null,
 )
 
 /**

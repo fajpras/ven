@@ -25,6 +25,8 @@ import com.ven.app.ui.theme.VexTheme
 data class PostsFeedItem(
     val id: String,
     val username: String,
+    val userId: String? = null,
+    val userAvatarUrl: String? = null,
     val title: String = "",
     val description: String = "",
     val imageUrl: String? = null,
@@ -48,6 +50,7 @@ fun PostsFeedScreen(
     onView3dClick: (postId: String) -> Unit,
     modifier: Modifier = Modifier,
     initialPostId: String? = null,
+    onUserClick: ((userId: String) -> Unit)? = null,
 ) {
     val listState = rememberLazyListState()
 
@@ -84,12 +87,16 @@ fun PostsFeedScreen(
             ) { _, post ->
                 PostCard(
                     username = post.username,
+                    userAvatarUrl = post.userAvatarUrl,
                     title = post.title,
                     description = post.description,
                     imageUrl = post.imageUrl,
                     aspectRatio = post.aspectRatio,
                     onRequestMeetingClick = { onRequestMeetingClick(post.id) },
                     onView3dClick = { onView3dClick(post.pameranId ?: post.id) },
+                    onUsernameClick = {
+                        post.userId?.let { onUserClick?.invoke(it) }
+                    },
                 )
             }
         }

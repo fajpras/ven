@@ -42,6 +42,8 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.ven.app.R
+import com.ven.app.ui.components.ui.Avatar
+import com.ven.app.ui.components.ui.AvatarSize
 import com.ven.app.ui.components.ui.rememberAsyncImageBitmap
 import com.ven.app.ui.icons.VexIcon
 import com.ven.app.ui.icons.VexIcons
@@ -294,6 +296,7 @@ fun PostCard(
     onRequestMeetingClick: () -> Unit,
     onView3dClick: () -> Unit,
     modifier: Modifier = Modifier,
+    userAvatarUrl: String? = null,
     title: String? = null,
     description: String = "",
     imageUrl: String? = null,
@@ -327,14 +330,28 @@ fun PostCard(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            // Kiri: Username pembuat karya (mis. "@Graaph")
-            Text(
-                text = if (username.startsWith("@")) username else "@$username",
-                style = MaterialTheme.typography.titleMedium.copy(
-                    fontWeight = FontWeight.SemiBold,
-                ),
-                color = colors.text,
-            )
+            // Kiri: Avatar + Username pembuat karya (mis. "@Graaph") - clickable ke detail profil
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier
+                    .then(
+                        if (onUsernameClick != null) Modifier.clickable(onClick = onUsernameClick) else Modifier
+                    ),
+            ) {
+                Avatar(
+                    initials = username.removePrefix("@").take(2).uppercase(),
+                    size = AvatarSize.Sm,
+                    imageUrl = userAvatarUrl,
+                )
+                Text(
+                    text = if (username.startsWith("@")) username else "@$username",
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.SemiBold,
+                    ),
+                    color = colors.text,
+                )
+            }
 
             // Kanan: Baris 2 Ikon Aksi (Kalender & Play)
             Row(

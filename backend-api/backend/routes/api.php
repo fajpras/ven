@@ -73,6 +73,7 @@ Route::middleware(CatatKeamanan::class)->group(function () {
 
         Route::post('ai/tanya', [Pengguna\AIChatController::class, 'ask'])->middleware('throttle:10,1');
         Route::get('pencarian', [Pengguna\PencarianController::class, 'search']);
+        Route::get('pengguna/{pengguna}', [Pengguna\ProfilController::class, 'detailPengguna'])->whereUuid('pengguna');
 
         Route::prefix('admin')->middleware(HanyaAdmin::class)->group(function () {
             Route::controller(Admin\PenggunaController::class)->group(function () {

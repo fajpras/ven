@@ -68,6 +68,7 @@ fun ExploreScreen(
     onMediaClick: (MediaGridItem) -> Unit,
     modifier: Modifier = Modifier,
     onExhibitClick: (ExhibitItem) -> Unit = {},
+    onAccountClick: (userId: String) -> Unit = {},
     initialUiState: ExploreUiState = dummyExploreUiState,
     viewModel: ExploreViewModel? = null,
 ) {
@@ -148,20 +149,31 @@ fun ExploreScreen(
                 }
             },
             onHistoryItemClick = { item ->
-                val q = when (item) {
-                    is RecentSearchItem.Query -> item.query
-                    is RecentSearchItem.Account -> item.username
-                }
-                if (viewModel != null) {
-                    viewModel.onQueryChange(q)
-                } else {
-                    localUiState = localUiState.copy(searchQuery = q)
+                when (item) {
+                    is RecentSearchItem.Account -> {
+                        onAccountClick(item.id)
+                    }
+                    is RecentSearchItem.Query -> {
+                        if (viewModel != null) {
+                            viewModel.onQueryChange(item.query)
+                        } else {
+                            localUiState = localUiState.copy(searchQuery = item.query)
+                        }
+                    }
                 }
             },
             onRemoveHistoryItem = { item ->
-                localUiState = localUiState.copy(
-                    recentSearches = localUiState.recentSearches.filterNot { it.id == item.id },
-                )
+                if (viewModel != null) {
+                    viewModel.removeRecentSearch(item)
+                } else {
+                    localUiState = localUiState.copy(
+                        recentSearches = localUiState.recentSearches.filterNot { it.id == item.id },
+                    )
+                }
+            },
+            onAccountClick = { account ->
+                viewModel?.onAccountClicked(account)
+                onAccountClick(account.id)
             },
             onMediaClick = onMediaClick,
             onExhibitClick = onExhibitClick,
@@ -189,6 +201,7 @@ fun ExploreContent(
     onMediaClick: (MediaGridItem) -> Unit,
     modifier: Modifier = Modifier,
     onExhibitClick: (ExhibitItem) -> Unit = {},
+    onAccountClick: (ExploreAccountItem) -> Unit = {},
     onLoadMore: () -> Unit = {},
 ) {
     val colors = VexTheme.colors
@@ -213,7 +226,7 @@ fun ExploreContent(
                 ExploreResults(
                     uiState = uiState,
                     onTabChange = onTabChange,
-                    onAccountClick = { },
+                    onAccountClick = onAccountClick,
                     onMediaClick = onMediaClick,
                     onExhibitClick = onExhibitClick,
                     onLoadMore = onLoadMore,
@@ -442,7 +455,7 @@ private fun ExploreResults(
 
         when (uiState.selectedTab) {
             ExploreSearchTab.ForYou -> {
-                // Grid 2 kolom dengan header seksi Accounts
+                // Grid 2 kolom dengan header seksi Accounts, Exhibits, dan Posts
                 MediaGrid(
                     items = uiState.resultPosts,
                     columns = 2,
@@ -462,6 +475,22 @@ private fun ExploreResults(
                                         onClick = { onAccountClick(account) },
                                     )
                                 }
+                            }
+                            if (uiState.resultExhibits.isNotEmpty()) {
+                                VexSectionLabel(
+                                    title = stringResource(R.string.explore_tab_exhibits),
+                                )
+                                uiState.resultExhibits.take(3).forEach { exhibit ->
+                                    ExhibitBannerCard(
+                                        title = exhibit.title,
+                                        bannerUrl = exhibit.bannerUrl,
+                                        imageRes = exhibit.bannerRes,
+                                        onClick = { onExhibitClick(exhibit) },
+                                        modifier = Modifier.padding(horizontal = VexSpace.s6, vertical = VexSpace.s2),
+                                    )
+                                }
+                            }
+                            if (uiState.resultPosts.isNotEmpty()) {
                                 VexSectionLabel(
                                     title = stringResource(R.string.explore_section_posts),
                                 )

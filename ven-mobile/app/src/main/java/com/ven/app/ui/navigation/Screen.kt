@@ -27,6 +27,11 @@ sealed class Screen(val route: String) {
         fun createRoute(postId: String = "") = "posts_feed?postId=$postId"
     }
 
+    // Detail Profil Pengguna Publik (Instagram Style)
+    data object UserProfile : Screen("user_profile/{userId}") {
+        fun createRoute(userId: String) = "user_profile/$userId"
+    }
+
     // Create Content Flow
     data object CreatePost : Screen("create_post")
     data object CreateExhibit : Screen("create_exhibit")

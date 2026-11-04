@@ -31,7 +31,7 @@ enum class AvatarSize(val dp: Dp) {
  * Komponen Avatar melingkar untuk VEN (Virtual Exhibition).
  * Sesuai DESIGN.md §6.1:
  * - Ukuran Sm (24dp), Md (40dp), Lg (96dp).
- * - Menampilkan gambar karya/pengguna bila [imageRes] tersedia.
+ * - Menampilkan gambar karya/pengguna bila [imageUrl] atau [imageRes] tersedia dengan 2-level caching.
  * - Menampilkan inisial huruf besar pada latar [surfaceInput] bila belum ada gambar.
  */
 @Composable
@@ -40,9 +40,15 @@ fun Avatar(
     modifier: Modifier = Modifier,
     size: AvatarSize = AvatarSize.Md,
     @DrawableRes imageRes: Int? = null,
+    imageUrl: String? = null,
     contentDescription: String? = null,
 ) {
     val colors = VexTheme.colors
+    val bitmap = rememberAsyncImageBitmap(
+        url = imageUrl,
+        maxWidth = 160,
+        maxHeight = 160,
+    )
 
     Box(
         modifier = modifier
@@ -50,7 +56,14 @@ fun Avatar(
             .clip(CircleShape),
         contentAlignment = Alignment.Center,
     ) {
-        if (imageRes != null) {
+        if (bitmap != null) {
+            Image(
+                bitmap = bitmap,
+                contentDescription = contentDescription,
+                modifier = Modifier.matchParentSize(),
+                contentScale = ContentScale.Crop,
+            )
+        } else if (imageRes != null) {
             Image(
                 painter = painterResource(id = imageRes),
                 contentDescription = contentDescription,
