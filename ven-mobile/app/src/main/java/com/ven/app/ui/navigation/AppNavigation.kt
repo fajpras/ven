@@ -1,4 +1,4 @@
-﻿package com.ven.app.ui.navigation
+package com.ven.app.ui.navigation
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -42,14 +42,16 @@ import com.ven.app.ui.screens.create.exhibit.CreateExhibitTemplateScreen
 import com.ven.app.ui.screens.create.exhibit.editor.CreateExhibitEditorScreen
 import com.ven.app.ui.screens.create.post.CreatePostScreen
 import com.ven.app.ui.screens.explore.ExploreScreen
+import com.ven.app.ui.screens.explore.ExploreViewModel
 import com.ven.app.ui.screens.explore.PostsFeedScreen
-import com.ven.app.ui.screens.explore.dummyPostsFeed
 import com.ven.app.ui.screens.home.HomeScreen
 import com.ven.app.ui.screens.home.HomeUiState
-import com.ven.app.ui.screens.home.SampleHomeUiState
+import com.ven.app.ui.screens.home.HomeViewModel
+import com.ven.app.ui.screens.home.toFeedItem
 import com.ven.app.ui.screens.onboarding.InterestRoute
 import com.ven.app.ui.screens.profile.ProfileScreen
 import com.ven.app.ui.screens.profile.ProfileViewModel
+import com.ven.app.ui.screens.profile.UserProfileDetailScreen
 import com.ven.app.ui.screens.requestmeeting.RequestMeetingEvent
 import com.ven.app.ui.screens.requestmeeting.RequestMeetingScreen
 import com.ven.app.ui.screens.requestmeeting.RequestMeetingViewModel
@@ -85,6 +87,8 @@ fun AppNavHost(showExplore: Boolean = false) {
     val startDestination = if (showExplore) Screen.Home.route else Screen.Login.route
     val navController = rememberNavController()
     val forgotViewModel: ForgotPasswordViewModel = viewModel()
+    val homeViewModel: HomeViewModel = viewModel()
+    val exploreViewModel: ExploreViewModel = viewModel()
     val forgotState by forgotViewModel.uiState.collectAsStateWithLifecycle()
     val changeEmailViewModel: ChangeEmailViewModel = viewModel()
 
@@ -225,6 +229,8 @@ fun AppNavHost(showExplore: Boolean = false) {
         // -------------------------------------------------------------
         composable(Screen.Home.route) {
             MainHomeScreen(
+                homeViewModel = homeViewModel,
+                exploreViewModel = exploreViewModel,
                 initialTab = if (showExplore) BottomNavTab.Explore else BottomNavTab.Home,
                 onRequestMeetingClick = { postId ->
                     navController.navigate(Screen.RequestMeeting.createRoute(postId))
@@ -243,6 +249,9 @@ fun AppNavHost(showExplore: Boolean = false) {
                 },
                 onNavigateToExhibitEditor = { id ->
                     navController.navigate(Screen.CreateExhibitEditor.createRoute(id))
+                },
+                onNavigateToUserProfile = { userId ->
+                    navController.navigate(Screen.UserProfile.createRoute(userId))
                 },
             )
         }
@@ -318,8 +327,13 @@ fun AppNavHost(showExplore: Boolean = false) {
             ),
         ) { backStackEntry ->
             val postId = backStackEntry.arguments?.getString("postId").orEmpty()
+            val exploreFeed by exploreViewModel.uiState.collectAsStateWithLifecycle()
+            val homeFeed by homeViewModel.uiState.collectAsStateWithLifecycle()
+
+            val combinedPosts = (exploreFeed.feedPosts + homeFeed.posts.map { it.toFeedItem() }).distinctBy { it.id }
+
             PostsFeedScreen(
-                posts = dummyPostsFeed,
+                posts = combinedPosts,
                 onBackClick = { navController.popBackStack() },
                 onRequestMeetingClick = { id ->
                     navController.navigate(Screen.RequestMeeting.createRoute(id))
@@ -328,6 +342,34 @@ fun AppNavHost(showExplore: Boolean = false) {
                     navController.navigate(Screen.CreateExhibitEditor.createRoute(id.ifBlank { "tpl_small" }))
                 },
                 initialPostId = postId.ifBlank { null },
+                onUserClick = { userId ->
+                    navController.navigate(Screen.UserProfile.createRoute(userId))
+                },
+            )
+        }
+
+        // -------------------------------------------------------------
+        // 5b-2. SubPage: Detail Profil Pengguna Publik
+        // -------------------------------------------------------------
+        composable(
+            route = Screen.UserProfile.route,
+            arguments = listOf(
+                navArgument("userId") {
+                    type = NavType.StringType
+                    defaultValue = ""
+                },
+            ),
+        ) { backStackEntry ->
+            val userId = backStackEntry.arguments?.getString("userId").orEmpty()
+            UserProfileDetailScreen(
+                userId = userId,
+                onBackClick = { navController.popBackStack() },
+                onMediaClick = { media ->
+                    navController.navigate(Screen.PostsFeed.createRoute(media.id))
+                },
+                onExhibitClick = { exhibitId ->
+                    navController.navigate(Screen.CreateExhibitEditor.createRoute(exhibitId))
+                },
             )
         }
 
@@ -508,7 +550,9 @@ fun AppNavHost(showExplore: Boolean = false) {
 
 @Composable
 fun MainHomeScreen(
-    uiState: HomeUiState = SampleHomeUiState,
+    homeViewModel: HomeViewModel = viewModel(),
+    exploreViewModel: ExploreViewModel = viewModel(),
+    uiState: HomeUiState = HomeUiState(),
     initialTab: BottomNavTab = BottomNavTab.Home,
     onRequestMeetingClick: (postId: String) -> Unit = {},
     onNavigateToSettings: () -> Unit = {},
@@ -516,6 +560,7 @@ fun MainHomeScreen(
     onNavigateToCreatePost: () -> Unit = {},
     onNavigateToCreateExhibit: () -> Unit = {},
     onNavigateToExhibitEditor: (templateIdOrExhibitId: String) -> Unit = {},
+    onNavigateToUserProfile: (userId: String) -> Unit = {},
 ) {
     var currentTab by rememberSaveable { mutableStateOf(initialTab) }
     val profileViewModel: ProfileViewModel = viewModel()
@@ -555,13 +600,16 @@ fun MainHomeScreen(
 
     when (currentTab) {
         BottomNavTab.Home -> {
+            val liveHomeState by homeViewModel.uiState.collectAsStateWithLifecycle()
             HomeScreen(
-                uiState = uiState,
+                uiState = liveHomeState,
                 onTabSelected = { currentTab = it },
                 onCreateClick = handleCreateClick,
                 onRequestMeetingClick = onRequestMeetingClick,
                 onView3dClick = { pameranId -> onNavigateToExhibitEditor(pameranId ?: "tpl_small") },
                 onBannerClick = { eventId -> onNavigateToExhibitEditor(eventId) },
+                onLoadMore = homeViewModel::loadNextChunk,
+                onUserClick = onNavigateToUserProfile,
             )
         }
         BottomNavTab.Schedule -> {
@@ -579,6 +627,8 @@ fun MainHomeScreen(
                 onTabSelected = { currentTab = it },
                 onMediaClick = { media -> onNavigateToPostsFeed(media.id) },
                 onExhibitClick = { exhibit -> onNavigateToExhibitEditor(exhibit.id) },
+                onAccountClick = onNavigateToUserProfile,
+                viewModel = exploreViewModel,
             )
         }
         BottomNavTab.Profile -> {

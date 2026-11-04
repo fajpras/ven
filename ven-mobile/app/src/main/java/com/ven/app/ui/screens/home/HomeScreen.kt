@@ -183,36 +183,7 @@ fun HomeScreen(
 // Previews untuk Dark Mode & Light Mode
 // ---------------------------------------------------------
 
-val SampleHomeUiState = HomeUiState(
-    comingSoonEvents = listOf(
-        ComingSoonEvent(
-            id = "1",
-            title = "Open Source Competition",
-            dateText = "24th Sep 2026",
-        ),
-        ComingSoonEvent(
-            id = "2",
-            title = "PBL EXPO 2026",
-            dateText = "1st Oct 2026",
-        ),
-    ),
-    posts = listOf(
-        PostItem(
-            id = "p1",
-            username = "Graaph",
-            title = "Digital Painting Concept",
-            pameranId = "ex1",
-            description = "Concept art eksplorasi arsitektur cyberpunk dan pencahayaan neon untuk kompetisi open source.",
-        ),
-        PostItem(
-            id = "p2",
-            username = "StudioVex",
-            title = "3D Environment Design",
-            pameranId = "ex2",
-            description = "Desain lingkungan 3D untuk PBL EXPO 2026. Info lebih lanjut kunjungi https://vex.art/expo-2026",
-        ),
-    ),
-)
+val SampleHomeUiState = HomeUiState()
 
 @Preview(name = "Home Screen - Dark Mode", showBackground = true, backgroundColor = 0xFF1F1F1F)
 @Composable
