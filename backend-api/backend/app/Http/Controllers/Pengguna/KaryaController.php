@@ -8,6 +8,7 @@ use App\Models\Objek;
 use App\Models\PosisiObjek;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
@@ -41,17 +42,25 @@ class KaryaController extends Controller
     public function rekomendasi(Request $request)
     {
         $user = $request->user();
+        $page = $request->integer('page', 1);
+        $perPage = min($request->integer('per_page', 12), 24);
 
-        $query = Karya::query()->select('karya.*')->with(['kategori', self::PENGGUNA_PUBLIK]);
+        $cacheKey = 'rekomendasi_karya_'.($user ? $user->id_pengguna : 'guest').'_p_'.$page.'_'.$perPage;
 
-        if ($user->kategori()->exists()) {
-            $query->join('pengguna_kategori', fn ($join) => $join
-                ->on('karya.id_kategori', '=', 'pengguna_kategori.id_kategori')
-                ->where('pengguna_kategori.id_pengguna', '=', $user->id_pengguna))
-                ->orderByDesc('pengguna_kategori.bobot');
-        }
+        $karya = Cache::remember($cacheKey, 60, function () use ($user, $perPage) {
+            $query = Karya::query()->select('karya.*')->with(['kategori', self::PENGGUNA_PUBLIK]);
 
-        return $this->ok($query->latest('karya.created_at')->paginate(24));
+            if ($user && $user->kategori()->exists()) {
+                $query->leftJoin('pengguna_kategori', fn ($join) => $join
+                    ->on('karya.id_kategori', '=', 'pengguna_kategori.id_kategori')
+                    ->where('pengguna_kategori.id_pengguna', '=', $user->id_pengguna))
+                    ->orderByRaw('COALESCE(pengguna_kategori.bobot, 0) DESC');
+            }
+
+            return $query->latest('karya.created_at')->paginate($perPage);
+        });
+
+        return $this->ok($karya);
     }
 
     public function show(Karya $karya)

@@ -10,6 +10,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -37,11 +38,14 @@ import com.ven.app.ui.screens.create.exhibit.CreateExhibitTemplateScreen
 import com.ven.app.ui.screens.create.exhibit.editor.CreateExhibitEditorScreen
 import com.ven.app.ui.screens.create.post.CreatePostScreen
 import com.ven.app.ui.screens.explore.ExploreScreen
+import com.ven.app.ui.screens.explore.ExploreViewModel
 import com.ven.app.ui.screens.explore.PostsFeedScreen
 import com.ven.app.ui.screens.explore.dummyPostsFeed
 import com.ven.app.ui.screens.home.HomeScreen
 import com.ven.app.ui.screens.home.HomeUiState
+import com.ven.app.ui.screens.home.HomeViewModel
 import com.ven.app.ui.screens.home.SampleHomeUiState
+import com.ven.app.ui.screens.home.toFeedItem
 import com.ven.app.ui.screens.onboarding.InterestRoute
 import com.ven.app.ui.screens.profile.ProfileScreen
 import com.ven.app.ui.screens.profile.dummyProfileUiState
@@ -78,6 +82,8 @@ fun AppNavHost(showExplore: Boolean = false) {
     val startDestination = if (showExplore) Screen.Home.route else Screen.Login.route
     val navController = rememberNavController()
     val forgotViewModel: ForgotPasswordViewModel = viewModel()
+    val homeViewModel: HomeViewModel = viewModel()
+    val exploreViewModel: ExploreViewModel = viewModel()
     val forgotState by forgotViewModel.uiState.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
@@ -209,6 +215,8 @@ fun AppNavHost(showExplore: Boolean = false) {
         // -------------------------------------------------------------
         composable(Screen.Home.route) {
             MainHomeScreen(
+                homeViewModel = homeViewModel,
+                exploreViewModel = exploreViewModel,
                 initialTab = if (showExplore) BottomNavTab.Explore else BottomNavTab.Home,
                 onRequestMeetingClick = { postId ->
                     navController.navigate(Screen.RequestMeeting.createRoute(postId))
@@ -302,8 +310,14 @@ fun AppNavHost(showExplore: Boolean = false) {
             ),
         ) { backStackEntry ->
             val postId = backStackEntry.arguments?.getString("postId").orEmpty()
+            val exploreFeed by exploreViewModel.uiState.collectAsStateWithLifecycle()
+            val homeFeed by homeViewModel.uiState.collectAsStateWithLifecycle()
+
+            val combinedPosts = (exploreFeed.feedPosts + homeFeed.posts.map { it.toFeedItem() }).distinctBy { it.id }
+            val displayPosts = if (combinedPosts.isNotEmpty()) combinedPosts else dummyPostsFeed
+
             PostsFeedScreen(
-                posts = dummyPostsFeed,
+                posts = displayPosts,
                 onBackClick = { navController.popBackStack() },
                 onRequestMeetingClick = { id ->
                     navController.navigate(Screen.RequestMeeting.createRoute(id))
@@ -482,6 +496,8 @@ fun AppNavHost(showExplore: Boolean = false) {
 
 @Composable
 fun MainHomeScreen(
+    homeViewModel: HomeViewModel = viewModel(),
+    exploreViewModel: ExploreViewModel = viewModel(),
     uiState: HomeUiState = SampleHomeUiState,
     initialTab: BottomNavTab = BottomNavTab.Home,
     onRequestMeetingClick: (postId: String) -> Unit = {},
@@ -491,7 +507,7 @@ fun MainHomeScreen(
     onNavigateToCreateExhibit: () -> Unit = {},
     onNavigateToExhibitEditor: (templateIdOrExhibitId: String) -> Unit = {},
 ) {
-    var currentTab by remember { mutableStateOf(initialTab) }
+    var currentTab by rememberSaveable { mutableStateOf(initialTab) }
     var profileState by remember { mutableStateOf(dummyProfileUiState) }
     var isCreateSheetOpen by remember { mutableStateOf(false) }
 
@@ -515,13 +531,15 @@ fun MainHomeScreen(
 
     when (currentTab) {
         BottomNavTab.Home -> {
+            val liveHomeState by homeViewModel.uiState.collectAsStateWithLifecycle()
             HomeScreen(
-                uiState = uiState,
+                uiState = liveHomeState,
                 onTabSelected = { currentTab = it },
                 onCreateClick = handleCreateClick,
                 onRequestMeetingClick = onRequestMeetingClick,
                 onView3dClick = { pameranId -> onNavigateToExhibitEditor(pameranId ?: "tpl_small") },
                 onBannerClick = { eventId -> onNavigateToExhibitEditor(eventId) },
+                onLoadMore = homeViewModel::loadNextChunk,
             )
         }
         BottomNavTab.Schedule -> {
@@ -539,6 +557,7 @@ fun MainHomeScreen(
                 onTabSelected = { currentTab = it },
                 onMediaClick = { media -> onNavigateToPostsFeed(media.id) },
                 onExhibitClick = { exhibit -> onNavigateToExhibitEditor(exhibit.id) },
+                viewModel = exploreViewModel,
             )
         }
         BottomNavTab.Profile -> {

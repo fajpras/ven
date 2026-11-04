@@ -1,5 +1,6 @@
 package com.ven.app.ui.screens.explore
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -25,6 +26,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -67,8 +69,20 @@ fun ExploreScreen(
     modifier: Modifier = Modifier,
     onExhibitClick: (ExhibitItem) -> Unit = {},
     initialUiState: ExploreUiState = dummyExploreUiState,
+    viewModel: ExploreViewModel? = null,
 ) {
-    var uiState by remember { mutableStateOf(initialUiState) }
+    var localUiState by remember { mutableStateOf(initialUiState) }
+    val vmState = viewModel?.uiState?.collectAsStateWithLifecycle()?.value
+    val uiState = vmState ?: localUiState
+
+    // Intercept back button saat pencarian aktif atau filter sheet terbuka
+    androidx.activity.compose.BackHandler(enabled = uiState.isSearchActive || uiState.isFilterSheetOpen) {
+        if (uiState.isFilterSheetOpen) {
+            if (viewModel != null) viewModel.setFilterSheetOpen(false) else localUiState = localUiState.copy(isFilterSheetOpen = false)
+        } else {
+            if (viewModel != null) viewModel.setSearchActive(false) else localUiState = localUiState.copy(isSearchActive = false, searchQuery = "")
+        }
+    }
 
     AppScaffold(
         currentTab = BottomNavTab.Explore,
@@ -78,46 +92,80 @@ fun ExploreScreen(
         ExploreContent(
             uiState = uiState,
             onSearchActiveChange = { active ->
-                uiState = if (active) {
-                    uiState.copy(isSearchActive = true)
+                if (viewModel != null) {
+                    viewModel.setSearchActive(active)
                 } else {
-                    uiState.copy(isSearchActive = false, searchQuery = "")
+                    localUiState = if (active) {
+                        localUiState.copy(isSearchActive = true)
+                    } else {
+                        localUiState.copy(isSearchActive = false, searchQuery = "")
+                    }
                 }
             },
             onQueryChange = { query ->
-                uiState = uiState.copy(searchQuery = query)
+                if (viewModel != null) {
+                    viewModel.onQueryChange(query)
+                } else {
+                    localUiState = localUiState.copy(searchQuery = query)
+                }
             },
             onTabChange = { tab ->
-                uiState = uiState.copy(selectedTab = tab)
+                if (viewModel != null) {
+                    viewModel.onTabChange(tab)
+                } else {
+                    localUiState = localUiState.copy(selectedTab = tab)
+                }
             },
             onOpenFilterSheet = {
-                uiState = uiState.copy(isFilterSheetOpen = true)
+                if (viewModel != null) {
+                    viewModel.setFilterSheetOpen(true)
+                } else {
+                    localUiState = localUiState.copy(isFilterSheetOpen = true)
+                }
             },
             onDismissFilterSheet = {
-                uiState = uiState.copy(isFilterSheetOpen = false)
+                if (viewModel != null) {
+                    viewModel.setFilterSheetOpen(false)
+                } else {
+                    localUiState = localUiState.copy(isFilterSheetOpen = false)
+                }
             },
             onCategoryToggle = { category ->
-                val updated = uiState.selectedCategories.toMutableSet().apply {
-                    if (!add(category)) remove(category)
+                if (viewModel != null) {
+                    viewModel.toggleCategory(category)
+                } else {
+                    val updated = localUiState.selectedCategories.toMutableSet().apply {
+                        if (!add(category)) remove(category)
+                    }
+                    localUiState = localUiState.copy(selectedCategories = updated)
                 }
-                uiState = uiState.copy(selectedCategories = updated)
             },
             onResetFilter = {
-                uiState = uiState.copy(selectedCategories = emptySet())
+                if (viewModel != null) {
+                    viewModel.resetFilter()
+                } else {
+                    localUiState = localUiState.copy(selectedCategories = emptySet())
+                }
             },
             onHistoryItemClick = { item ->
-                uiState = when (item) {
-                    is RecentSearchItem.Query -> uiState.copy(searchQuery = item.query)
-                    is RecentSearchItem.Account -> uiState.copy(searchQuery = item.username)
+                val q = when (item) {
+                    is RecentSearchItem.Query -> item.query
+                    is RecentSearchItem.Account -> item.username
+                }
+                if (viewModel != null) {
+                    viewModel.onQueryChange(q)
+                } else {
+                    localUiState = localUiState.copy(searchQuery = q)
                 }
             },
             onRemoveHistoryItem = { item ->
-                uiState = uiState.copy(
-                    recentSearches = uiState.recentSearches.filterNot { it.id == item.id },
+                localUiState = localUiState.copy(
+                    recentSearches = localUiState.recentSearches.filterNot { it.id == item.id },
                 )
             },
             onMediaClick = onMediaClick,
             onExhibitClick = onExhibitClick,
+            onLoadMore = { viewModel?.loadMorePostsChunk() },
             modifier = Modifier.padding(bottom = innerPadding.calculateBottomPadding()),
         )
     }
@@ -141,6 +189,7 @@ fun ExploreContent(
     onMediaClick: (MediaGridItem) -> Unit,
     modifier: Modifier = Modifier,
     onExhibitClick: (ExhibitItem) -> Unit = {},
+    onLoadMore: () -> Unit = {},
 ) {
     val colors = VexTheme.colors
 
@@ -167,6 +216,7 @@ fun ExploreContent(
                     onAccountClick = { },
                     onMediaClick = onMediaClick,
                     onExhibitClick = onExhibitClick,
+                    onLoadMore = onLoadMore,
                     modifier = Modifier.weight(1f),
                 )
             }
@@ -184,6 +234,8 @@ fun ExploreContent(
                 ExploreDiscovery(
                     items = uiState.discoveryMedia,
                     onMediaClick = onMediaClick,
+                    onLoadMore = onLoadMore,
+                    isLoadingMore = uiState.isLoadingMorePosts,
                     modifier = Modifier.weight(1f),
                 )
             }
@@ -285,6 +337,8 @@ private fun ExploreDiscovery(
     items: List<MediaGridItem>,
     onMediaClick: (MediaGridItem) -> Unit,
     modifier: Modifier = Modifier,
+    onLoadMore: () -> Unit = {},
+    isLoadingMore: Boolean = false,
 ) {
     if (items.isEmpty()) {
         EmptyExploreView(
@@ -300,6 +354,8 @@ private fun ExploreDiscovery(
         onItemClick = onMediaClick,
         contentPadding = PaddingValues(bottom = VexSpace.s6),
         modifier = modifier,
+        onLoadMore = onLoadMore,
+        isLoadingMore = isLoadingMore,
     )
 }
 
@@ -360,6 +416,7 @@ private fun ExploreResults(
     onMediaClick: (MediaGridItem) -> Unit,
     onExhibitClick: (ExhibitItem) -> Unit,
     modifier: Modifier = Modifier,
+    onLoadMore: () -> Unit = {},
 ) {
     val colors = VexTheme.colors
 
@@ -391,6 +448,8 @@ private fun ExploreResults(
                     columns = 2,
                     onItemClick = onMediaClick,
                     contentPadding = PaddingValues(bottom = VexSpace.s6),
+                    onLoadMore = onLoadMore,
+                    isLoadingMore = uiState.isLoadingMorePosts,
                     header = {
                         Column(modifier = Modifier.fillMaxWidth()) {
                             if (uiState.resultAccounts.isNotEmpty()) {
@@ -446,6 +505,8 @@ private fun ExploreResults(
                         columns = 2,
                         onItemClick = onMediaClick,
                         contentPadding = PaddingValues(bottom = VexSpace.s6),
+                        onLoadMore = onLoadMore,
+                        isLoadingMore = uiState.isLoadingMorePosts,
                         modifier = Modifier.fillMaxSize(),
                     )
                 }
@@ -472,6 +533,7 @@ private fun ExploreResults(
                             ExhibitBannerCard(
                                 title = exhibit.title,
                                 imageRes = exhibit.bannerRes,
+                                bannerUrl = exhibit.bannerUrl,
                                 onClick = { onExhibitClick(exhibit) },
                             )
                         }

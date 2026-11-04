@@ -11,24 +11,36 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.ven.app.R
+import com.ven.app.ui.components.ui.rememberAsyncImageBitmap
 import com.ven.app.ui.theme.ThemeMode
 import com.ven.app.ui.theme.VexAspect
 import com.ven.app.ui.theme.VexTheme
@@ -46,7 +58,7 @@ data class MediaGridItem(
 )
 
 /**
- * Tile individual karya seni/poster untuk grid media.
+ * Tile individual karya seni/poster untuk grid media dengan sistematis Memory & Disk Caching (360x480 thumbnail).
  */
 @Composable
 fun MediaGridTile(
@@ -56,6 +68,13 @@ fun MediaGridTile(
     aspectRatio: Float = VexAspect.poster,
 ) {
     val colors = VexTheme.colors
+
+    // Memuat bitmap dari Memory LruCache (0ms) atau Disk Cache ter-downsample (360x480)
+    val bitmap = rememberAsyncImageBitmap(
+        url = item.imageUrl,
+        maxWidth = 360,
+        maxHeight = 480,
+    )
 
     Box(
         modifier = modifier
@@ -70,25 +89,53 @@ fun MediaGridTile(
             ),
         contentAlignment = Alignment.Center,
     ) {
-        if (item.imageRes != null) {
+        if (bitmap != null) {
+            Image(
+                bitmap = bitmap,
+                contentDescription = item.title,
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop,
+            )
+        } else if (item.imageRes != null) {
             Image(
                 painter = painterResource(id = item.imageRes),
                 contentDescription = item.title,
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Crop,
             )
-        } else {
+        }
+
+        // Overlay gradient dan label judul karya
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            Color.Transparent,
+                            Color.Black.copy(alpha = 0.80f),
+                        ),
+                        startY = 60f,
+                    ),
+                ),
+            contentAlignment = Alignment.BottomStart,
+        ) {
             Text(
-                text = item.title.ifBlank { "Media" },
-                style = MaterialTheme.typography.bodySmall,
-                color = colors.textMuted,
+                text = item.title.ifBlank { "Karya Seni" },
+                style = MaterialTheme.typography.labelSmall.copy(
+                    fontWeight = FontWeight.SemiBold,
+                ),
+                color = Color.White,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
             )
         }
     }
 }
 
 /**
- * Grid Media untuk Explore dan Profile.
+ * Grid Media untuk Explore dan Profile dengan dukungan paginasi scroll otomatis (chunk).
  * Sesuai spesifikasi DESIGN.md §5.3 & §6.3:
  * - Standar 3 kolom, celah antar item 2dp.
  * - Sudut tajam tanpa radius (0dp).
@@ -101,14 +148,37 @@ fun MediaGrid(
     onItemClick: (MediaGridItem) -> Unit = {},
     contentPadding: PaddingValues = PaddingValues(0.dp),
     header: (@Composable () -> Unit)? = null,
+    onLoadMore: (() -> Unit)? = null,
+    isLoadingMore: Boolean = false,
 ) {
+    val spacing = 2.dp
+    val gridState = rememberLazyGridState()
+
+    if (onLoadMore != null) {
+        val shouldLoadMore by remember {
+            derivedStateOf {
+                val total = gridState.layoutInfo.totalItemsCount
+                val lastVisible = gridState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
+                total > 0 && lastVisible >= total - 4
+            }
+        }
+        LaunchedEffect(shouldLoadMore) {
+            if (shouldLoadMore && !isLoadingMore) {
+                onLoadMore()
+            }
+        }
+    }
+
     LazyVerticalGrid(
+        state = gridState,
         columns = GridCells.Fixed(columns),
-        modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(2.dp),
-        verticalArrangement = Arrangement.spacedBy(2.dp),
+        modifier = modifier.fillMaxSize(),
         contentPadding = contentPadding,
+        horizontalArrangement = Arrangement.spacedBy(spacing),
+        verticalArrangement = Arrangement.spacedBy(spacing),
     ) {
+        val maxLineSpan = columns
+
         if (header != null) {
             item(span = { GridItemSpan(maxLineSpan) }) {
                 header()
@@ -125,6 +195,23 @@ fun MediaGrid(
                 onClick = { onItemClick(item) },
             )
         }
+
+        if (isLoadingMore) {
+            item(span = { GridItemSpan(maxLineSpan) }) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 12.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(20.dp),
+                        color = VexTheme.colors.primaryText,
+                        strokeWidth = 2.dp,
+                    )
+                }
+            }
+        }
     }
 }
 
@@ -136,23 +223,11 @@ fun MediaGrid(
 @Composable
 private fun MediaGridDarkPreview() {
     val sampleItems = listOf(
-        MediaGridItem("1", "Poster 1", R.drawable.poster_1),
-        MediaGridItem("2", "Poster 2", R.drawable.poster_2),
-        MediaGridItem("3", "Poster 3", R.drawable.poster_3),
+        MediaGridItem("1", "Cyberpunk Robot 3D", R.drawable.ic_panel),
+        MediaGridItem("2", "Zero-Day Threat Defense", R.drawable.ic_panel),
+        MediaGridItem("3", "Fintech Mobile Banking", R.drawable.ic_panel),
     )
     VexTheme(mode = ThemeMode.Dark) {
-        MediaGrid(items = sampleItems)
-    }
-}
-
-@Preview(name = "MediaGrid - Light Mode", showBackground = true, backgroundColor = 0xFFFFFFFF)
-@Composable
-private fun MediaGridLightPreview() {
-    val sampleItems = listOf(
-        MediaGridItem("1", "Poster 1", R.drawable.poster_1),
-        MediaGridItem("2", "Poster 2", R.drawable.poster_2),
-    )
-    VexTheme(mode = ThemeMode.Light) {
         MediaGrid(items = sampleItems)
     }
 }
