@@ -1,6 +1,5 @@
 package com.ven.app.ui.screens.explore
 
-import com.ven.app.R
 import com.ven.app.ui.components.feature.MediaGridItem
 
 /**
@@ -25,84 +24,32 @@ val exploreCategories: List<String> = listOf(
 )
 
 /**
- * Riwayat pencarian dummy sesuai wireframe `Wireframe - Explore history.png`.
+ * Riwayat pencarian awal. Default kosong, dimuat secara dinamis dari API/database.
  */
-val dummyRecentSearches: List<RecentSearchItem> = listOf(
-    RecentSearchItem.Query(id = "recent_q1", query = "vex"),
-    RecentSearchItem.Account(
-        id = "recent_a1",
-        username = "gra._.aph",
-        fullName = "Terra Faqih Satria Madjid",
-        avatarRes = R.drawable.poster_1,
-    ),
-    RecentSearchItem.Account(
-        id = "recent_a2",
-        username = "shaf.one",
-        fullName = "Shafwan Fuad",
-        avatarRes = R.drawable.poster_2,
-    ),
-)
+val dummyRecentSearches: List<RecentSearchItem> = emptyList()
 
 /**
- * Grid media Discovery dummy (Explore default) sesuai wireframe `Wireframe - Explore.png`.
- * Memakai aset lokal poster_1/2/3 secara berulang, termasuk tile span 2 kolom
- * untuk poster horizontal "Open Source Competition".
+ * Grid media Discovery awal. Default kosong, dimuat secara dinamis dari API/database.
  */
-val dummyDiscoveryMedia: List<MediaGridItem> = listOf(
-    MediaGridItem("d1", "Semidz", R.drawable.poster_1),
-    MediaGridItem("d2", "PBL Expo", R.drawable.poster_2),
-    MediaGridItem("d3", "Virtual Exhibition VEX", R.drawable.poster_3),
-    MediaGridItem("d4", "EcoTrack", R.drawable.poster_1),
-    MediaGridItem("d5", "Sunflow", R.drawable.poster_2),
-    MediaGridItem("d6", "Problem & Solution", R.drawable.poster_3),
-    MediaGridItem("d7", "Lilies", R.drawable.poster_1),
-    MediaGridItem("d8", "Open Source Competition", R.drawable.poster_2, span = 2),
-    MediaGridItem("d9", "Click", R.drawable.poster_3),
-    MediaGridItem("d10", "PooPe", R.drawable.poster_1),
-    MediaGridItem("d11", "Social Media App", R.drawable.poster_2),
-    MediaGridItem("d12", "Sunflow Mobile", R.drawable.poster_3),
-)
+val dummyDiscoveryMedia: List<MediaGridItem> = emptyList()
 
 /**
- * Hasil pencarian dummy untuk tab Accounts sesuai wireframe `Wireframe - Explore account.png`.
+ * Hasil pencarian akun awal. Default kosong, dimuat secara dinamis dari API/database.
  */
-val dummyResultAccounts: List<ExploreAccountItem> = listOf(
-    ExploreAccountItem(
-        id = "acc_1",
-        username = "vex.pbl204",
-        fullName = "Virtual Exhibition (VEX)",
-        avatarRes = R.drawable.poster_1,
-    ),
-    ExploreAccountItem(
-        id = "acc_2",
-        username = "valuexnet.310",
-        fullName = "Value Exchange Network (VEN)",
-        avatarRes = R.drawable.poster_2,
-    ),
-)
+val dummyResultAccounts: List<ExploreAccountItem> = emptyList()
 
 /**
- * Hasil pencarian dummy untuk tab Posts (grid 2 kolom).
+ * Hasil pencarian post awal. Default kosong, dimuat secara dinamis dari API/database.
  */
-val dummyResultPosts: List<MediaGridItem> = listOf(
-    MediaGridItem("rp1", "Semidz", R.drawable.poster_1),
-    MediaGridItem("rp2", "PBL Expo", R.drawable.poster_2),
-    MediaGridItem("rp3", "Virtual Exhibition VEX", R.drawable.poster_3),
-    MediaGridItem("rp4", "EcoTrack", R.drawable.poster_1),
-    MediaGridItem("rp5", "Sunflow", R.drawable.poster_2),
-    MediaGridItem("rp6", "Problem & Solution", R.drawable.poster_3),
-)
+val dummyResultPosts: List<MediaGridItem> = emptyList()
 
 /**
- * Hasil pencarian dummy untuk tab Exhibits (banner 16:9).
+ * Hasil pencarian pameran awal. Default kosong, dimuat secara dinamis dari API/database.
  */
-val dummyResultExhibits: List<ExhibitItem> = listOf(
-    ExhibitItem("ex_1", "Open Source Competition", R.drawable.poster_2),
-    ExhibitItem("ex_2", "PBL EXPO 2026", R.drawable.poster_1),
-)
+val dummyResultExhibits: List<ExhibitItem> = emptyList()
 
 /**
- * State awal ExploreScreen dengan seluruh dummy data terisi.
+ * State awal ExploreScreen dengan list kosong yang akan diisi oleh ExploreViewModel.
  */
 val dummyExploreUiState = ExploreUiState(
     isSearchActive = false,

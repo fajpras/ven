@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -41,12 +42,15 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.ven.app.R
 import com.ven.app.ui.components.ui.Avatar
 import com.ven.app.ui.components.ui.AvatarSize
+import com.ven.app.ui.components.ui.VexSkillChip
 import com.ven.app.ui.components.ui.rememberAsyncImageBitmap
 import com.ven.app.ui.icons.VexIcon
 import com.ven.app.ui.icons.VexIcons
+import com.ven.app.ui.theme.CategoryColorMap
 import com.ven.app.ui.theme.ThemeMode
 import com.ven.app.ui.theme.VexSize
 import com.ven.app.ui.theme.VexSpace
@@ -117,6 +121,7 @@ fun parseCaptionTextWithUrls(input: String): List<CaptionTextPart> {
  */
 fun buildPostCaptionAnnotatedString(
     username: String,
+    title: String? = null,
     description: String,
     textColor: Color,
     linkColor: Color,
@@ -147,7 +152,21 @@ fun buildPostCaptionAnnotatedString(
                 }
             }
 
-            if (description.isNotEmpty() && !description.startsWith("\n")) {
+            // Format B: Judul Karya ditebalkan di samping nama pembuat
+            if (!title.isNullOrBlank()) {
+                append("  ")
+                withStyle(
+                    SpanStyle(
+                        fontWeight = FontWeight.Bold,
+                        color = textColor,
+                    )
+                ) {
+                    append(title)
+                }
+                if (description.isNotEmpty()) {
+                    append("\n")
+                }
+            } else if (description.isNotEmpty() && !description.startsWith("\n")) {
                 append(" ")
             }
         }
@@ -206,7 +225,8 @@ fun PostCaption(
     username: String,
     description: String,
     modifier: Modifier = Modifier,
-    collapsedMaxLines: Int = 2,
+    title: String? = null,
+    collapsedMaxLines: Int = 3,
     seeMoreText: String = stringResource(R.string.post_see_more),
     seeLessText: String = stringResource(R.string.post_see_less),
     onUsernameClick: (() -> Unit)? = null,
@@ -216,13 +236,14 @@ fun PostCaption(
     val uriHandler = LocalUriHandler.current
 
     var isExpanded by remember { mutableStateOf(false) }
-    val isLikelyLong = remember(description, collapsedMaxLines) {
-        description.length > 90 || description.count { it == '\n' } >= collapsedMaxLines
+    val isLikelyLong = remember(title, description, collapsedMaxLines) {
+        description.length > 80 || description.count { it == '\n' } >= (collapsedMaxLines - 1)
     }
-    var hasVisualOverflow by remember(description) { mutableStateOf(isLikelyLong) }
+    var hasVisualOverflow by remember(title, description) { mutableStateOf(isLikelyLong) }
 
     val captionText = remember(
         username,
+        title,
         description,
         colors.text,
         colors.primaryText,
@@ -232,6 +253,7 @@ fun PostCaption(
     ) {
         buildPostCaptionAnnotatedString(
             username = username,
+            title = title,
             description = description,
             textColor = colors.text,
             linkColor = colors.primaryText,
@@ -276,19 +298,12 @@ fun PostCaption(
 /**
  * Kartu Post Karya Seni / Pameran untuk Feed di Home Screen dan Explore Posts Feed.
  *
- * Sesuai spesifikasi DESIGN.md §6.3 & §8.6:
- * - Header Kartu:
- *   - Kiri: Nama pembuat karya `@username` (18sp SemiBold 600, warna text).
- *   - Kanan: Baris 2 ikon aksi (24dp, warna text, jarak 16dp):
- *     1. Ikon Jadwal ([VexIcons.ScheduleAction]): Membuka alur Request Meeting.
- *     2. Ikon Play / Kubus 3D ([VexIcons.Play]): Membuka Virtual Exhibition Room 3D.
- * - Media Post (Gambar Karya):
- *   - Tampilan penuh selebar layar (edge-to-edge), tanpa radius sudut (0dp, sudut tajam).
- * - Konten Bawah Media (Judul & Caption):
- *   - Menampilkan judul karya tebal di atas caption bila tersedia.
- *   - Menampilkan `username` dan `description`.
- *   - Fitur 'see more' / 'see less' untuk deskripsi yang panjang.
- *   - Tautan URL (link) di dalam deskripsi dapat diklik langsung.
+ * Mengadopsi arsitektur visual Instagram Modern:
+ * - Header: Avatar + @username kreator (dapat diklik membuka profil).
+ * - Media Post: Gambar edge-to-edge penuh.
+ * - Action Bar: Ikon Aksi (Request Meeting & Ruang 3D) di kiri + Pill Kategori di kanan.
+ * - Caption: Format B (Username & Judul Karya di baris 1, deskripsi di baris 2).
+ * - Timestamp: Waktu unggah halus di baris paling bawah.
  */
 @Composable
 fun PostCard(
@@ -298,11 +313,13 @@ fun PostCard(
     modifier: Modifier = Modifier,
     userAvatarUrl: String? = null,
     title: String? = null,
+    category: String? = null,
+    timestampText: String? = null,
     description: String = "",
     imageUrl: String? = null,
     aspectRatio: Float = 4f / 5f,
     placeholderColor: Color = VexTheme.colors.surfaceInput,
-    collapsedMaxLines: Int = 2,
+    collapsedMaxLines: Int = 3,
     seeMoreText: String = stringResource(R.string.post_see_more),
     seeLessText: String = stringResource(R.string.post_see_less),
     onUsernameClick: (() -> Unit)? = null,
@@ -316,7 +333,7 @@ fun PostCard(
             .background(colors.bg),
     ) {
         // ---------------------------------------------------------
-        // Header Kartu Post
+        // 1. Header Kartu Post (Bersih: Avatar & Username)
         // ---------------------------------------------------------
         Row(
             modifier = Modifier
@@ -324,13 +341,13 @@ fun PostCard(
                 .padding(
                     start = VexSpace.s6,
                     end = VexSpace.s6,
-                    top = VexSpace.s4,
+                    top = VexSpace.s3,
                     bottom = VexSpace.s3,
                 ),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            // Kiri: Avatar + Username pembuat karya (mis. "@Graaph") - clickable ke detail profil
+            // Kiri: Avatar + Username pembuat karya (clickable ke detail profil)
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -352,42 +369,10 @@ fun PostCard(
                     color = colors.text,
                 )
             }
-
-            // Kanan: Baris 2 Ikon Aksi (Kalender & Play)
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(VexSpace.s4),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                // Ikon Jadwal -> Request Meeting
-                IconButton(
-                    onClick = onRequestMeetingClick,
-                    modifier = Modifier.padding(0.dp),
-                ) {
-                    VexIcon(
-                        id = VexIcons.ScheduleAction,
-                        contentDescription = stringResource(R.string.home_request_meeting),
-                        size = VexSize.icon,
-                        tint = colors.text,
-                    )
-                }
-
-                // Ikon Play / Kubus 3D -> Lihat Pameran 3D
-                IconButton(
-                    onClick = onView3dClick,
-                    modifier = Modifier.padding(0.dp),
-                ) {
-                    VexIcon(
-                        id = VexIcons.Play,
-                        contentDescription = stringResource(R.string.home_view_3d),
-                        size = VexSize.icon,
-                        tint = colors.text,
-                    )
-                }
-            }
         }
 
         // ---------------------------------------------------------
-        // Media Post (Gambar Karya - Full Edge-to-Edge, 0dp Radius)
+        // 2. Media Post (Gambar Karya - Full Edge-to-Edge, 0dp Radius)
         // ---------------------------------------------------------
         val bitmap = rememberAsyncImageBitmap(imageUrl)
 
@@ -428,32 +413,70 @@ fun PostCard(
         }
 
         // ---------------------------------------------------------
-        // Judul Karya (Bila tersedia)
+        // 3. Action Bar Tepat di Bawah Media (Instagram Layout)
         // ---------------------------------------------------------
-        if (!title.isNullOrBlank()) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleMedium.copy(
-                    fontWeight = FontWeight.Bold,
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(
+                    start = VexSpace.s6,
+                    end = VexSpace.s6,
+                    top = VexSpace.s3,
+                    bottom = VexSpace.s2,
                 ),
-                color = colors.text,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(
-                        start = VexSpace.s6,
-                        end = VexSpace.s6,
-                        top = VexSpace.s3,
-                        bottom = 2.dp,
-                    ),
-            )
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            // Kiri: Aksi Pameran (Request Meeting & View 3D Room)
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(VexSpace.s4),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                IconButton(
+                    onClick = onRequestMeetingClick,
+                    modifier = Modifier.size(32.dp),
+                ) {
+                    VexIcon(
+                        id = VexIcons.ScheduleAction,
+                        contentDescription = stringResource(R.string.home_request_meeting),
+                        size = VexSize.icon,
+                        tint = colors.text,
+                    )
+                }
+
+                IconButton(
+                    onClick = onView3dClick,
+                    modifier = Modifier.size(32.dp),
+                ) {
+                    VexIcon(
+                        id = VexIcons.Play,
+                        contentDescription = stringResource(R.string.home_view_3d),
+                        size = VexSize.icon,
+                        tint = colors.text,
+                    )
+                }
+            }
+
+            // Kanan: Chip Kategori Mungil Elegan (bila ada)
+            if (!category.isNullOrBlank()) {
+                val catColor = CategoryColorMap[category]
+                    ?: CategoryColorMap["Others"]
+                    ?: colors.primary
+                VexSkillChip(
+                    text = category,
+                    categoryColor = catColor,
+                    onClick = {},
+                )
+            }
         }
 
         // ---------------------------------------------------------
-        // Caption Post: Username, Description, See More & Clickable Links
+        // 4. Caption Post: Format B (Username + Judul, lalu Deskripsi di baris baru)
         // ---------------------------------------------------------
-        if (description.isNotBlank()) {
+        if (description.isNotBlank() || !title.isNullOrBlank()) {
             PostCaption(
                 username = username,
+                title = title,
                 description = description,
                 collapsedMaxLines = collapsedMaxLines,
                 seeMoreText = seeMoreText,
@@ -465,7 +488,29 @@ fun PostCard(
                     .padding(
                         start = VexSpace.s6,
                         end = VexSpace.s6,
-                        top = if (!title.isNullOrBlank()) 2.dp else VexSpace.s3,
+                        top = 2.dp,
+                        bottom = if (timestampText.isNullOrBlank()) VexSpace.s4 else 2.dp,
+                    ),
+            )
+        }
+
+        // ---------------------------------------------------------
+        // 5. Timestamp Muted (Khas Instagram)
+        // ---------------------------------------------------------
+        if (!timestampText.isNullOrBlank()) {
+            Text(
+                text = timestampText.uppercase(),
+                style = MaterialTheme.typography.labelSmall.copy(
+                    fontWeight = FontWeight.Medium,
+                    letterSpacing = 0.5.sp,
+                ),
+                color = colors.textMuted.copy(alpha = 0.7f),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(
+                        start = VexSpace.s6,
+                        end = VexSpace.s6,
+                        top = 4.dp,
                         bottom = VexSpace.s4,
                     ),
             )

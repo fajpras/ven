@@ -4,6 +4,7 @@ import androidx.compose.runtime.Immutable
 import com.ven.app.data.api.models.KaryaItemModel
 import com.ven.app.data.api.models.PameranItemModel
 import com.ven.app.ui.screens.explore.PostsFeedItem
+import com.ven.app.util.DateFormatter
 
 /**
  * Data model untuk item banner pameran yang akan datang ("Coming Soon").
@@ -26,6 +27,8 @@ data class PostItem(
     val userId: String? = null,
     val userAvatarUrl: String? = null,
     val title: String,
+    val category: String? = null,
+    val timestampText: String? = null,
     val imageUrl: String? = null,
     val pameranId: String? = null,
     val aspectRatio: Float = 4f / 5f,
@@ -63,12 +66,15 @@ fun PameranItemModel.toComingSoonEvent(): ComingSoonEvent {
 
 fun KaryaItemModel.toPostItem(): PostItem {
     val author = pengguna?.namaPanggilan ?: pengguna?.nama ?: "Anonim"
+    val relativeTime = DateFormatter.formatRelativeTime(createdAt)
     return PostItem(
         id = idKarya,
         username = "@$author",
         userId = pengguna?.idPengguna,
         userAvatarUrl = pengguna?.fotoProfil,
         title = judul,
+        category = kategori?.nama,
+        timestampText = relativeTime,
         imageUrl = fileUrl ?: file,
         pameranId = idPameran?.toString(),
         description = deskripsi ?: "",
@@ -82,6 +88,8 @@ fun PostItem.toFeedItem(): PostsFeedItem {
         userId = userId,
         userAvatarUrl = userAvatarUrl,
         title = title,
+        category = category,
+        timestampText = timestampText,
         description = description,
         imageUrl = imageUrl,
         pameranId = pameranId,

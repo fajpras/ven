@@ -42,9 +42,11 @@ fun Avatar(
     size: AvatarSize = AvatarSize.Md,
     @DrawableRes imageRes: Int? = null,
     imageBitmap: ImageBitmap? = null,
+    imageUrl: String? = null,
     contentDescription: String? = null,
 ) {
     val colors = VexTheme.colors
+    val resolvedImageBitmap = imageBitmap ?: imageUrl?.let { rememberAsyncImageBitmap(it) }
 
     Box(
         modifier = modifier
@@ -52,9 +54,9 @@ fun Avatar(
             .clip(CircleShape),
         contentAlignment = Alignment.Center,
     ) {
-        if (imageBitmap != null) {
+        if (resolvedImageBitmap != null) {
             Image(
-                bitmap = imageBitmap,
+                bitmap = resolvedImageBitmap,
                 contentDescription = contentDescription,
                 modifier = Modifier.matchParentSize(),
                 contentScale = ContentScale.Crop,
