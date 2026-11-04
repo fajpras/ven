@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Pengguna;
 
 use App\Http\Controllers\Controller;
+use App\Mail\AkunDinonaktifkanMail;
 use App\Models\Karya;
 use App\Models\Kategori;
 use App\Models\Pameran;
@@ -18,6 +19,8 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 
@@ -37,16 +40,75 @@ class ProfilController extends Controller
         $pengguna = $request->user();
 
         $validated = $request->validate([
-            'nama' => ['sometimes', 'string', 'max:30'],
-            'nama_panggilan' => ['nullable', 'string', 'max:40', 'alpha_dash:ascii',
-                Rule::unique('pengguna', 'nama_panggilan')->ignore($pengguna->id_pengguna, 'id_pengguna')],
-            'deskripsi' => ['nullable', 'string', 'max:1000'],
+            'nama' => ['sometimes', 'required', 'string', 'max:30'],
+            'nama_panggilan' => [
+                'sometimes',
+                'required',
+                'string',
+                'min:3',
+                'max:30',
+                'regex:/^[A-Za-z0-9._]+$/',
+                Rule::unique('pengguna', 'nama_panggilan')->ignore($pengguna->id_pengguna, 'id_pengguna'),
+            ],
+            'nomor_hp' => [
+                'nullable',
+                'string',
+                'regex:/^\+?[0-9]{8,15}$/',
+                Rule::unique('pengguna', 'nomor_hp')->ignore($pengguna->id_pengguna, 'id_pengguna'),
+            ],
+            'deskripsi' => ['nullable', 'string', 'max:150'],
             'foto_profil' => ['nullable', 'url:https', 'max:255'],
+        ], [
+            'nama.required' => 'Nama wajib diisi.',
+            'nama.max' => 'Nama maksimal 30 karakter.',
+            'nama_panggilan.required' => 'Username wajib diisi.',
+            'nama_panggilan.min' => 'Username minimal 3 karakter.',
+            'nama_panggilan.max' => 'Username maksimal 30 karakter.',
+            'nama_panggilan.regex' => 'Username hanya boleh berisi huruf, angka, titik, dan garis bawah.',
+            'nama_panggilan.unique' => 'Username sudah digunakan.',
+            'nomor_hp.regex' => 'Nomor HP harus 8-15 digit dan boleh diawali tanda +.',
+            'nomor_hp.unique' => 'Nomor HP sudah digunakan akun lain.',
+            'deskripsi.max' => 'Deskripsi maksimal 150 karakter.',
         ]);
 
         $pengguna->forceFill($validated)->save();
 
         return $this->ok($pengguna, 'Profil diperbarui.');
+    }
+
+    public function updateFoto(Request $request): JsonResponse
+    {
+        $pengguna = $request->user();
+
+        $request->validate([
+            'foto' => ['required', 'file', 'max:5120', 'mimes:jpg,jpeg,png,webp'],
+        ]);
+
+        $urlLama = $pengguna->getRawOriginal('foto_profil');
+        $pathBaru = $request->file('foto')->store('foto-profil', 'public');
+
+        $pengguna->forceFill([
+            'foto_profil' => $request->getSchemeAndHttpHost() . '/storage/' . $pathBaru,
+        ])->save();
+
+        $pathLama = $this->pathDariUrl($urlLama);
+        if ($pathLama && Storage::disk('public')->exists($pathLama)) {
+            Storage::disk('public')->delete($pathLama);
+        }
+
+        return $this->ok($pengguna->fresh(), 'Foto profil diperbarui.');
+    }
+
+    private function pathDariUrl(?string $url): ?string
+    {
+        if (! $url) {
+            return null;
+        }
+
+        $penanda = '/storage/';
+        $posisi = strpos($url, $penanda);
+
+        return $posisi === false ? null : substr($url, $posisi + strlen($penanda));
     }
 
     public function kirimOtpGantiEmail(KirimOtpGantiEmailRequest $request): JsonResponse
@@ -58,6 +120,15 @@ class ProfilController extends Controller
         }
 
         $this->layananOtp->terbitkan(TujuanOtp::GantiEmail, $request->validated('email_baru'), $pengguna->id_pengguna);
+
+        LogSistem::aktivitas(
+            entitas: 'pengguna',
+            jenis: 'profil',
+            pesan: 'Kode verifikasi OTP untuk pengiriman email baru telah dikirim',
+            status: 'berhasil',
+            idPengguna: $pengguna->id_pengguna,
+            aksi: 'ubah',
+        );
 
         return $this->ok(null, 'Kode verifikasi telah dikirim ke email baru.');
     }
@@ -100,18 +171,45 @@ class ProfilController extends Controller
 
     public function updateStatus(Request $request)
     {
-        $validated = $request->validate(['status' => ['required', 'in:aktif,nonaktifkan']]);
-
         $pengguna = $request->user();
+
+        $validated = $request->validate([
+            'status' => ['required', 'in:aktif,nonaktifkan'],
+            'kata_sandi' => [Rule::requiredIf((bool) $pengguna->kata_sandi), 'nullable', 'string', 'max:72'],
+        ]);
+
+        if ($pengguna->kata_sandi && ! Hash::check((string) ($validated['kata_sandi'] ?? ''), $pengguna->kata_sandi)) {
+            LogSistem::aktivitas(
+                entitas: $pengguna->nama,
+                jenis: 'profil',
+                pesan: 'Gagal menonaktifkan akun: kata sandi salah',
+                status: 'gagal',
+                idPengguna: $pengguna->id_pengguna,
+                aksi: 'ubah',
+            );
+
+            return $this->error('Kata sandi yang Anda masukkan salah.', 422);
+        }
 
         if ($validated['status'] === 'nonaktifkan') {
             $pengguna->forceFill(['status' => 'nonaktifkan'])->save();
             $pengguna->tokens()->delete();
 
-            return $this->ok(null, 'Akun dinonaktifkan. Masuk kembali kapan saja untuk mengaktifkan.');
+            $this->kirimEmailNonaktif($pengguna);
+
+            return $this->ok(null, 'Akun Anda telah dinonaktifkan. Masuk kembali kapan saja untuk mengaktifkan.');
         }
 
         return $this->ok($pengguna, 'Akun sudah aktif.');
+    }
+
+    private function kirimEmailNonaktif(Pengguna $pengguna): void
+    {
+        try {
+            Mail::to($pengguna->email)->send(new AkunDinonaktifkanMail($pengguna->nama));
+        } catch (\Throwable $kesalahan) {
+            report($kesalahan);
+        }
     }
 
     public function minat(Request $request)

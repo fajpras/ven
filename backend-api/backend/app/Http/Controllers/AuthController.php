@@ -113,6 +113,7 @@ class AuthController extends Controller
 
         $pengguna = Pengguna::create([
             'nama' => mb_substr($google['name'] ?: 'Pengguna', 0, 30),
+            'nama_panggilan' => $this->buatUsernameGoogle($google['email']),
             'email' => $google['email'],
             'google_id' => $google['sub'],
             'foto_profil' => $google['picture'],
@@ -200,6 +201,27 @@ class AuthController extends Controller
             'pengguna' => $penggunaPublik ?? $pengguna->fresh(),
             'token' => $pengguna->createToken('mobile', ['*'], now()->addDays(30))->plainTextToken,
         ];
+    }
+
+    private function buatUsernameGoogle(string $email): string
+    {
+        $dasar = Str::lower(Str::before($email, '@'));
+        $dasar = trim(preg_replace('/[^a-z0-9._]/', '', $dasar) ?? '', '._');
+        $dasar = mb_substr($dasar !== '' ? $dasar : 'pengguna', 0, 24);
+
+        if (mb_strlen($dasar) < 3) {
+            $dasar = str_pad($dasar, 3, '0');
+        }
+
+        $calon = $dasar;
+        $urut = 1;
+
+        while (Pengguna::where('nama_panggilan', $calon)->exists()) {
+            $akhiran = (string) $urut++;
+            $calon = mb_substr($dasar, 0, 30 - mb_strlen($akhiran)).$akhiran;
+        }
+
+        return $calon;
     }
 
     private function profilGoogle(Request $request): array|JsonResponse

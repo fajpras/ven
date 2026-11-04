@@ -11,10 +11,20 @@ class AkunAktif
     {
         $user = $request->user();
 
-        if ($user && $user->sanksiAktif()) {
+        if (! $user) {
+            return $next($request);
+        }
+
+        if ($user->sanksiAktif()) {
             $user->currentAccessToken()?->delete();
 
             return response()->json(['data' => null, 'message' => 'Akun Anda sedang dikenai sanksi.'], 403);
+        }
+
+        if ($user->status !== 'aktif') {
+            $user->currentAccessToken()?->delete();
+
+            return response()->json(['data' => null, 'message' => 'Akun Anda sedang dinonaktifkan.'], 403);
         }
 
         return $next($request);

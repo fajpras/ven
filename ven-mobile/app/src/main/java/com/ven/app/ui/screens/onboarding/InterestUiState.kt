@@ -13,6 +13,7 @@ data class InterestUiState(
     val isLoading: Boolean = false,
     val isSaving: Boolean = false,
     val errorMessage: String? = null,
+    val isSessionExpired: Boolean = false,
 ) {
     val canSave: Boolean
         get() = selectedIds.isNotEmpty() && !isLoading && !isSaving

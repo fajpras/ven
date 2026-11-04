@@ -24,6 +24,22 @@ class SessionManager(context: Context) {
         preferences.edit().putString(KEY_USER, userJson).apply()
     }
 
+    /**
+     * Menyimpan data pengguna terbaru tanpa menghilangkan field yang tidak
+     * dikirim oleh endpoint profil (mis. role dan status onboarding).
+     */
+    fun updateUser(user: UserModel?) {
+        if (user == null) return
+
+        val lama = getUser()
+        saveUser(
+            user.copy(
+                role = user.role ?: lama?.role,
+                onboardingSelesai = user.onboardingSelesai ?: lama?.onboardingSelesai,
+            ),
+        )
+    }
+
     fun getUser(): UserModel? {
         val userJson = preferences.getString(KEY_USER, null) ?: return null
         return try {

@@ -143,4 +143,40 @@ class ProfilMinatTest extends TestCase
             ->assertUnprocessable()
             ->assertJsonValidationErrors('kategori.0.id_kategori');
     }
+
+    public function test_update_profil_hanya_mencatat_satu_log_aktivitas(): void
+    {
+        $jumlahAwal = DB::connection('mysql')
+            ->table('log_aktivitas')
+            ->where('id_pengguna', $this->pengguna->id_pengguna)
+            ->count();
+
+        $this->actingAs($this->pengguna)
+            ->putJson('/api/profil', [
+                'nama' => 'User Profil Baru',
+                'deskripsi' => 'Bio baru',
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.nama', 'User Profil Baru');
+
+        $log = DB::connection('mysql')
+            ->table('log_aktivitas')
+            ->where('id_pengguna', $this->pengguna->id_pengguna)
+            ->where('jenis', 'profil')
+            ->where('aksi', 'ubah')
+            ->get();
+
+        $this->assertCount(1, $log);
+        $this->assertSame(
+            $jumlahAwal + 1,
+            DB::connection('mysql')
+                ->table('log_aktivitas')
+                ->where('id_pengguna', $this->pengguna->id_pengguna)
+                ->count()
+        );
+
+        $this->assertStringContainsString('Mengubah profil', (string) $log->first()->pesan);
+        $this->assertStringContainsString('nama', (string) $log->first()->pesan);
+        $this->assertStringContainsString('deskripsi', (string) $log->first()->pesan);
+    }
 }

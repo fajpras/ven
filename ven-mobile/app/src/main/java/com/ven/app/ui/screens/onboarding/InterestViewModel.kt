@@ -35,6 +35,7 @@ class InterestViewModel : ViewModel() {
             ApiProfil.kategori()
                 .onSuccess { categories ->
                     val minat = ApiProfil.minat()
+                    val pesan = minat.exceptionOrNull()?.message
 
                     _uiState.update {
                         it.copy(
@@ -43,15 +44,18 @@ class InterestViewModel : ViewModel() {
                                 .map { item -> item.idKategori }
                                 .toSet(),
                             isLoading = false,
-                            errorMessage = minat.exceptionOrNull()?.message,
+                            errorMessage = pesan,
+                            isSessionExpired = sesiBerakhir(pesan),
                         )
                     }
                 }
                 .onFailure { exception ->
+                    val pesan = exception.message ?: "Gagal memuat kategori minat"
                     _uiState.update {
                         it.copy(
                             isLoading = false,
-                            errorMessage = exception.message ?: "Gagal memuat kategori minat",
+                            errorMessage = pesan,
+                            isSessionExpired = sesiBerakhir(pesan),
                         )
                     }
                 }
@@ -91,13 +95,21 @@ class InterestViewModel : ViewModel() {
                     _events.send(InterestEvent.Saved)
                 }
                 .onFailure { exception ->
+                    val pesan = exception.message ?: "Gagal menyimpan kategori minat"
                     _uiState.update {
                         it.copy(
                             isSaving = false,
-                            errorMessage = exception.message ?: "Gagal menyimpan kategori minat",
+                            errorMessage = pesan,
+                            isSessionExpired = sesiBerakhir(pesan),
                         )
                     }
                 }
         }
+    }
+
+    private fun sesiBerakhir(pesan: String?): Boolean {
+        val teks = pesan.orEmpty().lowercase()
+        return "unauthenticated" in teks || "tidak terautentikasi" in teks ||
+            "tidak_terautentikasi" in teks
     }
 }

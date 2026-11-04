@@ -91,7 +91,7 @@ fun ProfileScreen(
         modifier = modifier,
         topBar = {
             VexTopBar.Profile(
-                username = profile?.username ?: "gra._.aph",
+                username = profile?.username.orEmpty(),
                 onCreateClick = onCreateClick,
                 onMenuClick = onMenuClick,
             )
@@ -169,6 +169,7 @@ fun ProfileScreen(
                                     initials = profile.username,
                                     size = AvatarSize.Lg,
                                     imageRes = profile.avatarRes,
+                                    imageBitmap = uiState.avatarBitmap,
                                     contentDescription = profile.fullName,
                                 )
 

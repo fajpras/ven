@@ -140,8 +140,7 @@ class AdminAccountController extends Controller
                 'berakhir' => $days ? now()->addDays($days) : null,
             ]);
 
-            $user->status = $validated['jenis_sanksi'] === 'diblokir' ? 'nonaktifkan' : 'ditangguhkan';
-            $user->save();
+            $user->sinkronStatusSanksi();
         } catch (\Throwable $e) {
             report($e);
 

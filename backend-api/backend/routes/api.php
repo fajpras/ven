@@ -29,6 +29,7 @@ Route::middleware(CatatKeamanan::class)->group(function () {
         Route::controller(Pengguna\ProfilController::class)->prefix('profil')->group(function () {
             Route::get('/', 'show');
             Route::put('/', 'update');
+            Route::post('foto', 'updateFoto');
             Route::post('email/kirim-otp', 'kirimOtpGantiEmail')->middleware('throttle:5,1');
             Route::put('email', 'gantiEmail')->middleware('throttle:5,1');
             Route::put('kata-sandi', 'updatePassword');

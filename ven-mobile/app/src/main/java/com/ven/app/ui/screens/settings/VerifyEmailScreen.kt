@@ -28,6 +28,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ven.app.R
 import com.ven.app.ui.components.layout.VexTopBar
 import com.ven.app.ui.components.ui.OtpInput
@@ -48,13 +49,15 @@ import kotlinx.coroutines.delay
 @Composable
 fun VerifyEmailScreen(
     email: String,
+    state: ChangeEmailUiState,
+    onOtpChange: (String) -> Unit,
+    onVerifyClick: () -> Unit,
+    onResendClick: () -> Unit,
     onBackClick: () -> Unit,
-    onVerifySuccess: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val colors = VexTheme.colors
 
-    var otp by remember { mutableStateOf("") }
     var cooldown by remember { mutableIntStateOf(60) }
 
     LaunchedEffect(cooldown) {
@@ -93,11 +96,30 @@ fun VerifyEmailScreen(
 
             // 6 Digit OtpInput
             OtpInput(
-                value = otp,
-                onValueChange = { otp = it },
+                value = state.otp,
+                onValueChange = onOtpChange,
                 digitCount = 6,
-                onOtpComplete = { onVerifySuccess() },
+                isError = state.errorMessage != null,
+                onOtpComplete = { onVerifyClick() },
             )
+
+            state.errorMessage?.let {
+                Spacer(modifier = Modifier.height(VexSpace.s2))
+                Text(
+                    text = it,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colors.danger,
+                )
+            }
+
+            state.infoMessage?.let {
+                Spacer(modifier = Modifier.height(VexSpace.s2))
+                Text(
+                    text = it,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colors.success,
+                )
+            }
 
             Spacer(modifier = Modifier.height(VexSpace.s6))
 
@@ -126,13 +148,55 @@ fun VerifyEmailScreen(
                 } else {
                     VexButton(
                         text = stringResource(R.string.settings_resend),
-                        onClick = { cooldown = 60 },
+                        onClick = {
+                            cooldown = 60
+                            onResendClick()
+                        },
                         variant = VexButtonVariant.TextLink,
+                        enabled = !state.isLoading,
                     )
                 }
+
+                Spacer(modifier = Modifier.height(VexSpace.s4))
+
+                VexButton(
+                    text = stringResource(R.string.verify_otp_button),
+                    onClick = onVerifyClick,
+                    variant = VexButtonVariant.Primary,
+                    loading = state.isLoading,
+                    enabled = state.otp.trim().length >= 6,
+                )
             }
         }
     }
+}
+
+/**
+ * Menghubungkan [VerifyEmailScreen] dengan [ChangeEmailViewModel] yang dibagikan
+ * dengan [ChangeEmailRoute]. Setelah verifikasi sukses, memicu [onVerified].
+ */
+@Composable
+fun VerifyEmailRoute(
+    viewModel: ChangeEmailViewModel,
+    onBackClick: () -> Unit,
+    onVerified: () -> Unit,
+) {
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+
+    LaunchedEffect(state.isSuccess) {
+        if (state.isSuccess) {
+            onVerified()
+        }
+    }
+
+    VerifyEmailScreen(
+        email = state.emailBaru,
+        state = state,
+        onOtpChange = viewModel::onOtpChange,
+        onVerifyClick = viewModel::gantiEmail,
+        onResendClick = viewModel::kirimUlangOtp,
+        onBackClick = onBackClick,
+    )
 }
 
 // ---------------------------------------------------------
@@ -145,8 +209,11 @@ private fun VerifyEmailDarkPreview() {
     VexTheme(mode = ThemeMode.Dark) {
         VerifyEmailScreen(
             email = "user@example.com",
+            state = ChangeEmailUiState(emailBaru = "user@example.com"),
+            onOtpChange = {},
+            onVerifyClick = {},
+            onResendClick = {},
             onBackClick = {},
-            onVerifySuccess = {},
         )
     }
 }
@@ -157,8 +224,11 @@ private fun VerifyEmailLightPreview() {
     VexTheme(mode = ThemeMode.Light) {
         VerifyEmailScreen(
             email = "user@example.com",
+            state = ChangeEmailUiState(emailBaru = "user@example.com"),
+            onOtpChange = {},
+            onVerifyClick = {},
+            onResendClick = {},
             onBackClick = {},
-            onVerifySuccess = {},
         )
     }
 }
