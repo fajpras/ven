@@ -163,7 +163,7 @@ class Pengguna extends Authenticatable
         }
 
         if ($this->status !== 'aktif') {
-            $this->forceFill(['status' => 'aktif'])->save();
+            $this->forceFill(['status' => 'aktif'])->saveQuietly();
         }
 
         return null;

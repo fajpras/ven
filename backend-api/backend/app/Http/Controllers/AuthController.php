@@ -172,8 +172,17 @@ class AuthController extends Controller
 
         $this->layananOtp->verifikasi(TujuanOtp::ResetKataSandi, $data['email'], $data['otp'], $pengguna->id_pengguna);
 
-        $pengguna->forceFill(['kata_sandi' => $data['kata_sandi']])->save();
+        $pengguna->forceFill(['kata_sandi' => $data['kata_sandi']])->saveQuietly();
         $pengguna->tokens()->delete();
+
+        LogSistem::aktivitas(
+            entitas: $pengguna->nama,
+            jenis: 'profil',
+            pesan: 'Kata sandi akun diatur ulang via lupa sandi',
+            status: 'berhasil',
+            idPengguna: $pengguna->id_pengguna,
+            aksi: 'ubah',
+        );
 
         event(new PasswordReset($pengguna));
 
@@ -182,10 +191,23 @@ class AuthController extends Controller
 
     private function masuk(Pengguna $pengguna, string $pesan): JsonResponse
     {
+        $statusAwal = $pengguna->status;
+
         if ($alasan = $pengguna->cekAksesLogin()) {
             LogSistem::keamanan('login_ditolak', 'akun tersanksi', 403, $pengguna->id_pengguna);
 
             return $this->forbidden($alasan);
+        }
+
+        if ($statusAwal === 'nonaktifkan' && $pengguna->status === 'aktif') {
+            LogSistem::aktivitas(
+                entitas: $pengguna->nama,
+                jenis: 'profil',
+                pesan: 'Status akun diubah menjadi aktif (login kembali)',
+                status: 'berhasil',
+                idPengguna: $pengguna->id_pengguna,
+                aksi: 'ubah',
+            );
         }
 
         event(new Login('sanctum', $pengguna, false));

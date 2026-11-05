@@ -122,7 +122,7 @@ class ProfilController extends Controller
         $this->layananOtp->terbitkan(TujuanOtp::GantiEmail, $request->validated('email_baru'), $pengguna->id_pengguna);
 
         LogSistem::aktivitas(
-            entitas: 'pengguna',
+            entitas: $pengguna->nama,
             jenis: 'profil',
             pesan: 'Kode verifikasi OTP untuk pengiriman email baru telah dikirim',
             status: 'berhasil',
@@ -163,8 +163,17 @@ class ProfilController extends Controller
             return $this->error('Kata sandi saat ini salah.', 422);
         }
 
-        $pengguna->forceFill(['kata_sandi' => $validated['kata_sandi']])->save();
-        $pengguna->tokens()->where('id', '!=', $pengguna->currentAccessToken()->id)->delete();
+        $pengguna->forceFill(['kata_sandi' => $validated['kata_sandi']])->saveQuietly();
+        $pengguna->tokens()->where('id', '!=', $pengguna->currentAccessToken()?->id)->delete();
+
+        LogSistem::aktivitas(
+            entitas: $pengguna->nama,
+            jenis: 'profil',
+            pesan: 'Kata sandi berhasil diubah',
+            status: 'berhasil',
+            idPengguna: $pengguna->id_pengguna,
+            aksi: 'ubah',
+        );
 
         return $this->ok(null, 'Kata sandi diperbarui.');
     }
@@ -192,15 +201,37 @@ class ProfilController extends Controller
         }
 
         if ($validated['status'] === 'nonaktifkan') {
-            $pengguna->forceFill(['status' => 'nonaktifkan'])->save();
+            $pengguna->forceFill(['status' => 'nonaktifkan'])->saveQuietly();
             $pengguna->tokens()->delete();
+
+            LogSistem::aktivitas(
+                entitas: $pengguna->nama,
+                jenis: 'profil',
+                pesan: 'Akun dinonaktifkan sementara oleh pemilik akun',
+                status: 'berhasil',
+                idPengguna: $pengguna->id_pengguna,
+                aksi: 'ubah',
+            );
 
             $this->kirimEmailNonaktif($pengguna);
 
             return $this->ok(null, 'Akun Anda telah dinonaktifkan. Masuk kembali kapan saja untuk mengaktifkan.');
         }
 
-        return $this->ok($pengguna, 'Akun sudah aktif.');
+        if ($pengguna->status !== 'aktif') {
+            $pengguna->forceFill(['status' => 'aktif'])->saveQuietly();
+
+            LogSistem::aktivitas(
+                entitas: $pengguna->nama,
+                jenis: 'profil',
+                pesan: 'Status akun diubah menjadi aktif',
+                status: 'berhasil',
+                idPengguna: $pengguna->id_pengguna,
+                aksi: 'ubah',
+            );
+        }
+
+        return $this->ok($pengguna->fresh(), 'Akun sudah aktif.');
     }
 
     private function kirimEmailNonaktif(Pengguna $pengguna): void
