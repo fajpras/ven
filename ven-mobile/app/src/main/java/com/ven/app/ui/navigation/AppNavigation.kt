@@ -1,8 +1,14 @@
 package com.ven.app.ui.navigation
 
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -118,6 +124,10 @@ fun AppNavHost(showExplore: Boolean = false) {
     NavHost(
         navController = navController,
         startDestination = startDestination,
+        enterTransition = { fadeIn(tween(220)) },
+        exitTransition = { fadeOut(tween(180)) },
+        popEnterTransition = { fadeIn(tween(180)) },
+        popExitTransition = { fadeOut(tween(220)) },
     ) {
         // -------------------------------------------------------------
         // 1. Alur Login
@@ -563,6 +573,11 @@ fun MainHomeScreen(
     onNavigateToUserProfile: (userId: String) -> Unit = {},
 ) {
     var currentTab by rememberSaveable { mutableStateOf(initialTab) }
+    val homeListState = rememberLazyListState()
+    val exploreGridState = rememberLazyGridState()
+    val scope = rememberCoroutineScope()
+    var lastHomeTapTime by remember { mutableStateOf(0L) }
+    var lastExploreTapTime by remember { mutableStateOf(0L) }
     val profileViewModel: ProfileViewModel = viewModel()
     val profileState by profileViewModel.uiState.collectAsStateWithLifecycle()
     var isCreateSheetOpen by remember { mutableStateOf(false) }
@@ -598,56 +613,100 @@ fun MainHomeScreen(
         )
     }
 
-    when (currentTab) {
-        BottomNavTab.Home -> {
-            val liveHomeState by homeViewModel.uiState.collectAsStateWithLifecycle()
-            HomeScreen(
-                uiState = liveHomeState,
-                onTabSelected = { currentTab = it },
-                onCreateClick = handleCreateClick,
-                onRequestMeetingClick = onRequestMeetingClick,
-                onView3dClick = { pameranId -> onNavigateToExhibitEditor(pameranId ?: "tpl_small") },
-                onBannerClick = { eventId -> onNavigateToExhibitEditor(eventId) },
-                onLoadMore = homeViewModel::loadNextChunk,
-                onUserClick = onNavigateToUserProfile,
-            )
-        }
-        BottomNavTab.Schedule -> {
-            ScheduleScreen(
-                onTabSelected = { currentTab = it },
-            )
-        }
-        BottomNavTab.Ai -> {
-            AiChatScreen(
-                onTabSelected = { currentTab = it },
-            )
-        }
-        BottomNavTab.Explore -> {
-            ExploreScreen(
-                onTabSelected = { currentTab = it },
-                onMediaClick = { media -> onNavigateToPostsFeed(media.id) },
-                onExhibitClick = { exhibit -> onNavigateToExhibitEditor(exhibit.id) },
-                onAccountClick = onNavigateToUserProfile,
-                viewModel = exploreViewModel,
-            )
-        }
-        BottomNavTab.Profile -> {
-            ProfileScreen(
-                uiState = profileState,
-                onTabSelected = { currentTab = it },
-                onCreateClick = handleCreateClick,
-                onMenuClick = onNavigateToSettings,
-                onProfileTabChange = profileViewModel::pilihTab,
-                onSkillSheetToggle = profileViewModel::aturSkillSheet,
-                onRetryClick = profileViewModel::muat,
-                onMediaClick = { media ->
-                    if (profileState.selectedTab == com.ven.app.ui.screens.profile.ProfileTab.Exhibits) {
-                        onNavigateToExhibitEditor(media.id)
-                    } else {
-                        onNavigateToPostsFeed(media.id)
-                    }
-                },
-            )
+    Crossfade(
+        targetState = currentTab,
+        animationSpec = tween(durationMillis = 200),
+        label = "MainHomeScreenTabCrossfade",
+    ) { tab ->
+        when (tab) {
+            BottomNavTab.Home -> {
+                val liveHomeState by homeViewModel.uiState.collectAsStateWithLifecycle()
+                HomeScreen(
+                    uiState = liveHomeState,
+                    listState = homeListState,
+                    onTabSelected = { currentTab = it },
+                    onTabReselected = { reselectedTab ->
+                        if (reselectedTab == BottomNavTab.Home) {
+                            val now = System.currentTimeMillis()
+                            if (now - lastHomeTapTime <= 450L) {
+                                scope.launch {
+                                    homeListState.animateScrollToItem(0)
+                                }
+                                homeViewModel.muatUlang(filterSeen = true)
+                                lastHomeTapTime = 0L
+                            } else {
+                                lastHomeTapTime = now
+                                scope.launch {
+                                    homeListState.animateScrollToItem(0)
+                                }
+                            }
+                        }
+                    },
+                    onRefresh = { homeViewModel.muatUlang(filterSeen = false) },
+                    onCreateClick = handleCreateClick,
+                    onRequestMeetingClick = onRequestMeetingClick,
+                    onView3dClick = { pameranId -> onNavigateToExhibitEditor(pameranId ?: "tpl_small") },
+                    onBannerClick = { eventId -> onNavigateToExhibitEditor(eventId) },
+                    onLoadMore = homeViewModel::loadNextChunk,
+                    onUserClick = onNavigateToUserProfile,
+                )
+            }
+            BottomNavTab.Schedule -> {
+                ScheduleScreen(
+                    onTabSelected = { currentTab = it },
+                )
+            }
+            BottomNavTab.Ai -> {
+                AiChatScreen(
+                    onTabSelected = { currentTab = it },
+                )
+            }
+            BottomNavTab.Explore -> {
+                ExploreScreen(
+                    onTabSelected = { currentTab = it },
+                    gridState = exploreGridState,
+                    onTabReselected = { reselectedTab ->
+                        if (reselectedTab == BottomNavTab.Explore) {
+                            val now = System.currentTimeMillis()
+                            if (now - lastExploreTapTime <= 450L) {
+                                scope.launch {
+                                    exploreGridState.animateScrollToItem(0)
+                                }
+                                exploreViewModel.muatUlang(filterSeen = true)
+                                lastExploreTapTime = 0L
+                            } else {
+                                lastExploreTapTime = now
+                                scope.launch {
+                                    exploreGridState.animateScrollToItem(0)
+                                }
+                            }
+                        }
+                    },
+                    onRefresh = { exploreViewModel.muatUlang(filterSeen = false) },
+                    onMediaClick = { media -> onNavigateToPostsFeed(media.id) },
+                    onExhibitClick = { exhibit -> onNavigateToExhibitEditor(exhibit.id) },
+                    onAccountClick = onNavigateToUserProfile,
+                    viewModel = exploreViewModel,
+                )
+            }
+            BottomNavTab.Profile -> {
+                ProfileScreen(
+                    uiState = profileState,
+                    onTabSelected = { currentTab = it },
+                    onCreateClick = handleCreateClick,
+                    onMenuClick = onNavigateToSettings,
+                    onProfileTabChange = profileViewModel::pilihTab,
+                    onSkillSheetToggle = profileViewModel::aturSkillSheet,
+                    onRetryClick = profileViewModel::muat,
+                    onMediaClick = { media ->
+                        if (profileState.selectedTab == com.ven.app.ui.screens.profile.ProfileTab.Exhibits) {
+                            onNavigateToExhibitEditor(media.id)
+                        } else {
+                            onNavigateToPostsFeed(media.id)
+                        }
+                    },
+                )
+            }
         }
     }
 }

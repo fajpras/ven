@@ -45,20 +45,16 @@ class KaryaController extends Controller
         $page = $request->integer('page', 1);
         $perPage = min($request->integer('per_page', 12), 24);
 
-        $cacheKey = 'rekomendasi_karya_'.($user ? $user->id_pengguna : 'guest').'_p_'.$page.'_'.$perPage;
+        $query = Karya::query()->select('karya.*')->with(['kategori', self::PENGGUNA_PUBLIK]);
 
-        $karya = Cache::remember($cacheKey, 60, function () use ($user, $perPage) {
-            $query = Karya::query()->select('karya.*')->with(['kategori', self::PENGGUNA_PUBLIK]);
+        if ($user && $user->kategori()->exists()) {
+            $query->leftJoin('pengguna_kategori', fn ($join) => $join
+                ->on('karya.id_kategori', '=', 'pengguna_kategori.id_kategori')
+                ->where('pengguna_kategori.id_pengguna', '=', $user->id_pengguna))
+                ->orderByRaw('COALESCE(pengguna_kategori.bobot, 0) DESC');
+        }
 
-            if ($user && $user->kategori()->exists()) {
-                $query->leftJoin('pengguna_kategori', fn ($join) => $join
-                    ->on('karya.id_kategori', '=', 'pengguna_kategori.id_kategori')
-                    ->where('pengguna_kategori.id_pengguna', '=', $user->id_pengguna))
-                    ->orderByRaw('COALESCE(pengguna_kategori.bobot, 0) DESC');
-            }
-
-            return $query->latest('karya.created_at')->paginate($perPage);
-        });
+        $karya = $query->latest('karya.created_at')->paginate($perPage);
 
         return $this->ok($karya);
     }

@@ -30,37 +30,103 @@ class ExploreViewModel(
     }
 
     /**
-     * Memuat karya awal dari database untuk ditampilkan pada grid Discovery dan Feed detail.
+     * Memuat ulang data Explore secara reaktif (pull-to-refresh & double tap).
      */
-    fun muatDiscoveryMedia() {
+    fun muatUlang(filterSeen: Boolean = false) {
+        _uiState.update { it.copy(isRefreshing = true) }
+        if (_uiState.value.isShowingResults) {
+            val q = _uiState.value.searchQuery
+            val tab = _uiState.value.selectedTab
+            searchJob?.cancel()
+            searchJob = viewModelScope.launch(Dispatchers.IO) {
+                lakukanPencarian(q, tab)
+                _uiState.update { it.copy(isRefreshing = false) }
+            }
+        } else {
+            muatDiscoveryMedia(isRefresh = true, filterSeen = filterSeen)
+        }
+    }
+
+    /**
+     * Memuat karya awal dari database untuk ditampilkan pada grid Discovery dan Feed detail.
+     * Mendukung filterSeen untuk menampilkan hal baru yang belum pernah dilihat saat refresh.
+     */
+    fun muatDiscoveryMedia(isRefresh: Boolean = false, filterSeen: Boolean = false) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
+                val currentSeen = if (filterSeen) {
+                    _uiState.value.seenMediaIds + _uiState.value.discoveryMedia.map { it.id }.toSet()
+                } else {
+                    _uiState.value.seenMediaIds
+                }
+
                 // Muat daftar karya
                 val res = apiPencarian.searchKarya(query = null, tipe = "karya", page = 1)
                 if (res.isSuccessful) {
                     val paginated = res.body()?.data
                     val rawKarya = paginated?.data ?: emptyList()
-                    val items = rawKarya.map { k ->
+                    var currentPage = 1
+                    var lastPage = paginated?.lastPage ?: 1
+
+                    var filteredKarya = if (filterSeen && currentSeen.isNotEmpty()) {
+                        rawKarya.filterNot { it.idKarya in currentSeen }
+                    } else {
+                        rawKarya
+                    }
+
+                    // Jika difilter dan halaman pertama sudah pernah dilihat semua, cari halaman berikutnya
+                    while (filteredKarya.isEmpty() && currentPage < lastPage) {
+                        currentPage++
+                        val nextRes = apiPencarian.searchKarya(query = null, tipe = "karya", page = currentPage)
+                        if (nextRes.isSuccessful) {
+                            val nextPaginated = nextRes.body()?.data
+                            val nextData = nextPaginated?.data ?: emptyList()
+                            lastPage = nextPaginated?.lastPage ?: lastPage
+                            val fresh = if (filterSeen && currentSeen.isNotEmpty()) {
+                                nextData.filterNot { it.idKarya in currentSeen }
+                            } else {
+                                nextData
+                            }
+                            filteredKarya = fresh
+                        } else {
+                            break
+                        }
+                    }
+
+                    val finalKarya = if (filteredKarya.isEmpty()) {
+                        rawKarya
+                    } else {
+                        filteredKarya
+                    }
+
+                    val items = finalKarya.map { k ->
                         MediaGridItem(
                             id = k.idKarya,
                             title = k.judul,
                             imageUrl = k.fileUrl ?: k.file,
                         )
                     }
-                    val feedList = rawKarya.map { it.toFeedItem() }
-                    val hasMore = paginated != null && paginated.currentPage < paginated.lastPage
+                    val feedList = finalKarya.map { it.toFeedItem() }
+                    val hasMore = currentPage < lastPage && items.isNotEmpty()
+                    val updatedSeen = currentSeen + items.map { it.id }.toSet()
 
                     if (items.isNotEmpty()) {
                         _uiState.update {
                             it.copy(
+                                isRefreshing = false,
                                 discoveryMedia = items,
                                 resultPosts = items,
                                 feedPosts = feedList,
-                                currentPostsPage = 1,
+                                currentPostsPage = currentPage,
                                 canLoadMorePosts = hasMore,
+                                seenMediaIds = updatedSeen,
                             )
                         }
+                    } else {
+                        _uiState.update { it.copy(isRefreshing = false) }
                     }
+                } else {
+                    _uiState.update { it.copy(isRefreshing = false) }
                 }
 
                 // Muat data pengguna nyata untuk riwayat pencarian awal (Recents)
@@ -80,6 +146,7 @@ class ExploreViewModel(
                     }
                 }
             } catch (_: Exception) {
+                _uiState.update { it.copy(isRefreshing = false) }
                 // Gunakan fallback data jika offline
             }
         }
@@ -191,6 +258,7 @@ class ExploreViewModel(
                                 id = p.idPameran.toString(),
                                 title = p.judul,
                                 bannerUrl = p.banner,
+                                category = p.tipe ?: "3D",
                             )
                         } ?: emptyList()
 
@@ -263,6 +331,7 @@ class ExploreViewModel(
                                 id = p.idPameran.toString(),
                                 title = p.judul,
                                 bannerUrl = p.banner,
+                                category = p.tipe ?: "3D",
                             )
                         } ?: emptyList()
 

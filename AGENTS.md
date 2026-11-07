@@ -19,11 +19,17 @@ Dokumen ini memuat panduan utama bagi AI Coding Agent dalam mengembangkan dan me
 2. **Verifikasi Melalui Testing (TDD First)**:
    - Sebelum menyatakan tugas selesai, selalu jalankan test suite terkait di `backend-api/backend` via PHPUnit (`vendor/phpunit/phpunit/phpunit <path-test>`).
    - Testing wajib menggunakan database `ven_testing`, dilarang mengubah konfigurasi untuk menyentuh database produksi `ven`.
-3. **Keamanan & Privasi Data**:
+3. **Larangan Git Push Otomatis untuk AI (Manual by User Only)**:
+   - AI Agent dilarang keras menjalankan perintah `git push` secara otomatis dalam bentuk apa pun.
+   - Semua pekerjaan AI hanya sebatas commit lokal (`git commit`).
+   - Eksekusi `git push` ke remote repository adalah hak eksklusif yang hanya dilakukan secara manual oleh Pengguna (Developer).
+   - Jangan membuat hook atau konfigurasi sistem yang menghalangi Pengguna dalam menjalankan `git push`.
+   - Commit yang sudah terjadi di masa lalu dibiarkan saja.
+4. **Keamanan & Privasi Data**:
    - Seluruh data sensitif pihak ketiga (Google ID) wajib dienkripsi dengan AES-256-GCM dan didampingi Blind Index via `VEN_CUSTOM_KEY`.
    - Jangan pernah menampilkan plain kata sandi, token OTP, atau kunci enkripsi di logging atau JSON response publik.
    - Patuhi arsitektur MySQL Multi-Role (*Least Privilege*): `mysql_user`, `mysql_admin`, `mysql_dba`, `mysql` (app).
-4. **Database Concurrency & Logging**:
+5. **Database Concurrency & Logging**:
    - Observer aktivitas harus mengimplementasikan `ShouldHandleEventsAfterCommit`.
    - Pemanggilan manual `LogSistem::aktivitas` tidak boleh dilakukan di dalam transaksi data yang belum di-commit untuk mencegah *lock-wait* antar koneksi PDO.
 

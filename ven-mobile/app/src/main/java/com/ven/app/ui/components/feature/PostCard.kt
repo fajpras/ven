@@ -1,6 +1,11 @@
 package com.ven.app.ui.components.feature
 
+import androidx.compose.animation.Crossfade
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -15,8 +20,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -264,7 +271,12 @@ fun PostCaption(
     }
 
     Column(
-        modifier = modifier.animateContentSize(),
+        modifier = modifier.animateContentSize(
+            animationSpec = spring(
+                dampingRatio = Spring.DampingRatioLowBouncy,
+                stiffness = Spring.StiffnessLow,
+            )
+        ),
     ) {
         Text(
             text = captionText,
@@ -333,7 +345,7 @@ fun PostCard(
             .background(colors.bg),
     ) {
         // ---------------------------------------------------------
-        // 1. Header Kartu Post (Bersih: Avatar & Username)
+        // 1. Header Kartu Post: Avatar & Username di kiri, Tombol Jadwal & Play di kanan
         // ---------------------------------------------------------
         Row(
             modifier = Modifier
@@ -369,10 +381,52 @@ fun PostCard(
                     color = colors.text,
                 )
             }
+
+            // Kanan: Tombol Jadwal (Meeting) dan Play (3D Room) berdesain elegan
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                // Tombol Request Meeting (Jadwal)
+                Surface(
+                    onClick = onRequestMeetingClick,
+                    shape = CircleShape,
+                    color = colors.surface.copy(alpha = 0.65f),
+                    border = BorderStroke(1.dp, colors.border.copy(alpha = 0.35f)),
+                    modifier = Modifier.size(34.dp),
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        VexIcon(
+                            id = VexIcons.ScheduleAction,
+                            contentDescription = stringResource(R.string.home_request_meeting),
+                            size = 17.dp,
+                            tint = colors.text,
+                        )
+                    }
+                }
+
+                // Tombol 3D Room (Play)
+                Surface(
+                    onClick = onView3dClick,
+                    shape = CircleShape,
+                    color = colors.surface.copy(alpha = 0.65f),
+                    border = BorderStroke(1.dp, colors.border.copy(alpha = 0.35f)),
+                    modifier = Modifier.size(34.dp),
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        VexIcon(
+                            id = VexIcons.Play,
+                            contentDescription = stringResource(R.string.home_view_3d),
+                            size = 17.dp,
+                            tint = colors.text,
+                        )
+                    }
+                }
+            }
         }
 
         // ---------------------------------------------------------
-        // 2. Media Post (Gambar Karya - Full Edge-to-Edge, 0dp Radius)
+        // 2. Media Post (Gambar Karya - Full Edge-to-Edge, 0dp Radius dengan Crossfade)
         // ---------------------------------------------------------
         val bitmap = rememberAsyncImageBitmap(imageUrl)
 
@@ -383,85 +437,61 @@ fun PostCard(
                 .background(placeholderColor),
             contentAlignment = Alignment.Center,
         ) {
-            if (bitmap != null) {
-                Image(
-                    bitmap = bitmap,
-                    contentDescription = description.ifBlank { "Karya $username" },
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop,
-                )
-            } else {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center,
-                    modifier = Modifier.padding(16.dp),
-                ) {
-                    VexIcon(
-                        id = VexIcons.Play,
-                        contentDescription = null,
-                        size = 32.dp,
-                        tint = colors.textMuted.copy(alpha = 0.5f),
+            Crossfade(
+                targetState = bitmap,
+                animationSpec = tween(durationMillis = 300),
+                label = "PostMediaCrossfade",
+            ) { targetBitmap ->
+                if (targetBitmap != null) {
+                    Image(
+                        bitmap = targetBitmap,
+                        contentDescription = description.ifBlank { "Karya $username" },
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop,
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = if (!imageUrl.isNullOrBlank()) "Memuat karya..." else "Karya Seni Virtual",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = colors.textMuted,
-                    )
+                } else {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(16.dp),
+                    ) {
+                        VexIcon(
+                            id = VexIcons.Play,
+                            contentDescription = null,
+                            size = 32.dp,
+                            tint = colors.textMuted.copy(alpha = 0.5f),
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = if (!imageUrl.isNullOrBlank()) "Memuat karya..." else "Karya Seni Virtual",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = colors.textMuted,
+                        )
+                    }
                 }
             }
         }
 
         // ---------------------------------------------------------
-        // 3. Action Bar Tepat di Bawah Media (Instagram Layout)
+        // 3. Chip Kategori Mungil Elegan (bila ada)
         // ---------------------------------------------------------
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(
-                    start = VexSpace.s6,
-                    end = VexSpace.s6,
-                    top = VexSpace.s3,
-                    bottom = VexSpace.s2,
-                ),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            // Kiri: Aksi Pameran (Request Meeting & View 3D Room)
+        if (!category.isNullOrBlank()) {
+            val catColor = CategoryColorMap[category]
+                ?: CategoryColorMap["Others"]
+                ?: colors.primary
             Row(
-                horizontalArrangement = Arrangement.spacedBy(VexSpace.s4),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(
+                        start = VexSpace.s6,
+                        end = VexSpace.s6,
+                        top = VexSpace.s3,
+                        bottom = 2.dp,
+                    ),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                IconButton(
-                    onClick = onRequestMeetingClick,
-                    modifier = Modifier.size(32.dp),
-                ) {
-                    VexIcon(
-                        id = VexIcons.ScheduleAction,
-                        contentDescription = stringResource(R.string.home_request_meeting),
-                        size = VexSize.icon,
-                        tint = colors.text,
-                    )
-                }
-
-                IconButton(
-                    onClick = onView3dClick,
-                    modifier = Modifier.size(32.dp),
-                ) {
-                    VexIcon(
-                        id = VexIcons.Play,
-                        contentDescription = stringResource(R.string.home_view_3d),
-                        size = VexSize.icon,
-                        tint = colors.text,
-                    )
-                }
-            }
-
-            // Kanan: Chip Kategori Mungil Elegan (bila ada)
-            if (!category.isNullOrBlank()) {
-                val catColor = CategoryColorMap[category]
-                    ?: CategoryColorMap["Others"]
-                    ?: colors.primary
                 VexSkillChip(
                     text = category,
                     categoryColor = catColor,

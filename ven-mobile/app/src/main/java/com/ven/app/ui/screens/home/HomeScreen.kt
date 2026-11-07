@@ -8,11 +8,14 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -46,6 +49,7 @@ import com.ven.app.ui.theme.VexTheme
  * 3. Feed Karya ([PostCard]):
  *    - Mendukung chunked loading / paginasi otomatis saat mendekati akhir list.
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     uiState: HomeUiState,
@@ -55,11 +59,13 @@ fun HomeScreen(
     onView3dClick: (pameranId: String?) -> Unit,
     onBannerClick: (eventId: String) -> Unit,
     modifier: Modifier = Modifier,
+    listState: LazyListState = rememberLazyListState(),
+    onTabReselected: ((BottomNavTab) -> Unit)? = null,
+    onRefresh: () -> Unit = {},
     onLoadMore: () -> Unit = {},
     onUserClick: (userId: String) -> Unit = {},
 ) {
     val colors = VexTheme.colors
-    val listState = rememberLazyListState()
 
     // Deteksi scroll chunk: memicu pemuatan data berikutnya secara halus
     val shouldLoadMore by remember {
@@ -79,6 +85,7 @@ fun HomeScreen(
     AppScaffold(
         currentTab = BottomNavTab.Home,
         onTabSelected = onTabSelected,
+        onTabReselected = onTabReselected,
         modifier = modifier,
         topBar = {
             VexTopBar.Home(
@@ -86,13 +93,18 @@ fun HomeScreen(
             )
         },
     ) { innerPadding ->
-        LazyColumn(
-            state = listState,
+        PullToRefreshBox(
+            isRefreshing = uiState.isRefreshing,
+            onRefresh = onRefresh,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding),
-            contentPadding = PaddingValues(bottom = VexSpace.s6),
         ) {
+            LazyColumn(
+                state = listState,
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(bottom = VexSpace.s6),
+            ) {
             // ---------------------------------------------------------
             // Seksi 1: Coming Soon Carousel
             // ---------------------------------------------------------
@@ -177,6 +189,7 @@ fun HomeScreen(
             }
         }
     }
+}
 }
 
 // ---------------------------------------------------------

@@ -2,14 +2,12 @@ package com.ven.app.ui.components.feature
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import com.ven.app.ui.components.ui.rememberAsyncImageBitmap
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -17,7 +15,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
@@ -27,19 +24,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.ven.app.ui.components.ui.rememberAsyncImageBitmap
 import com.ven.app.ui.theme.ThemeMode
 import com.ven.app.ui.theme.VexRadius
 import com.ven.app.ui.theme.VexSpace
 import com.ven.app.ui.theme.VexTheme
 
 /**
- * Event Banner / Poster Pameran untuk carousel "Coming Soon".
- *
- * Sesuai spesifikasi DESIGN.md §6.3 & §8.6:
- * - Kartu banner horizontal rasio ~16:9.
- * - Width: ~240dp.
- * - Sudut membulat: [VexRadius.md] (8–12dp).
- * - Menampilkan karya/poster promosi kompetisi & expo yang akan datang.
+ * Event Banner / Poster Pameran untuk carousel "Coming Soon" di beranda.
  */
 @Composable
 fun EventBanner(
@@ -50,8 +42,6 @@ fun EventBanner(
     imageUrl: String? = null,
     backgroundColor: Color = VexTheme.colors.surfaceInput,
 ) {
-    val colors = VexTheme.colors
-
     val bitmap = rememberAsyncImageBitmap(imageUrl)
 
     Box(
@@ -70,7 +60,6 @@ fun EventBanner(
                 contentScale = ContentScale.Crop,
             )
         }
-        // Overlay gradient hitam transparan di bagian bawah agar teks judul & tanggal kontras terbaca
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -114,10 +103,6 @@ fun EventBanner(
         }
     }
 }
-
-// ---------------------------------------------------------
-// Previews
-// ---------------------------------------------------------
 
 @Preview(name = "EventBanner - Dark Mode", showBackground = true, backgroundColor = 0xFF1F1F1F)
 @Composable

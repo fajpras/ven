@@ -23,14 +23,20 @@ class HomeViewModel(
         muatDataBeranda()
     }
 
-    fun muatUlang() {
+    fun muatUlang(filterSeen: Boolean = false) {
         _uiState.update { it.copy(isRefreshing = true, errorMessage = null) }
-        muatDataBeranda(isRefresh = true)
+        muatDataBeranda(isRefresh = true, filterSeen = filterSeen)
     }
 
-    private fun muatDataBeranda(isRefresh: Boolean = false) {
+    private fun muatDataBeranda(isRefresh: Boolean = false, filterSeen: Boolean = false) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
+                val currentSeen = if (filterSeen) {
+                    _uiState.value.seenPostIds + _uiState.value.posts.map { it.id }.toSet()
+                } else {
+                    _uiState.value.seenPostIds
+                }
+
                 val pameranDeferred = async { apiHome.getRekomendasiPameran(page = 1) }
                 val karyaDeferred = async { apiHome.getRekomendasiKarya(page = 1) }
 
@@ -44,13 +50,46 @@ class HomeViewModel(
                 }
 
                 val paginatedKarya = karyaRes.body()?.data
-                val posts = if (karyaRes.isSuccessful) {
+                var rawPosts = if (karyaRes.isSuccessful) {
                     paginatedKarya?.data?.map { it.toPostItem() } ?: emptyList()
                 } else {
                     emptyList()
                 }
 
-                val canMore = paginatedKarya != null && paginatedKarya.currentPage < paginatedKarya.lastPage && posts.isNotEmpty()
+                var currentPage = 1
+                var lastPage = paginatedKarya?.lastPage ?: 1
+                var filteredPosts = if (filterSeen && currentSeen.isNotEmpty()) {
+                    rawPosts.filterNot { it.id in currentSeen }
+                } else {
+                    rawPosts
+                }
+
+                while (filteredPosts.isEmpty() && currentPage < lastPage) {
+                    currentPage++
+                    val nextPageRes = apiHome.getRekomendasiKarya(page = currentPage)
+                    if (nextPageRes.isSuccessful) {
+                        val nextData = nextPageRes.body()?.data
+                        val nextBatch = nextData?.data?.map { it.toPostItem() } ?: emptyList()
+                        lastPage = nextData?.lastPage ?: lastPage
+                        val fresh = if (filterSeen && currentSeen.isNotEmpty()) {
+                            nextBatch.filterNot { it.id in currentSeen }
+                        } else {
+                            nextBatch
+                        }
+                        filteredPosts = fresh
+                    } else {
+                        break
+                    }
+                }
+
+                val finalPosts = if (filteredPosts.isEmpty()) {
+                    rawPosts
+                } else {
+                    filteredPosts
+                }
+
+                val updatedSeen = currentSeen + finalPosts.map { it.id }.toSet()
+                val canMore = currentPage < lastPage && finalPosts.isNotEmpty()
 
                 _uiState.update {
                     it.copy(
@@ -58,9 +97,10 @@ class HomeViewModel(
                         isRefreshing = false,
                         isLoadingMore = false,
                         canLoadMore = canMore,
-                        currentPage = 1,
+                        currentPage = currentPage,
                         comingSoonEvents = events,
-                        posts = posts,
+                        posts = finalPosts,
+                        seenPostIds = updatedSeen,
                         errorMessage = null,
                     )
                 }
@@ -77,9 +117,6 @@ class HomeViewModel(
         }
     }
 
-    /**
-     * Memuat chunk halaman berikutnya (infinite scroll) secara ringan dan efisien.
-     */
     fun loadNextChunk() {
         val currentState = _uiState.value
         if (currentState.isLoading || currentState.isLoadingMore || !currentState.canLoadMore) {
@@ -98,11 +135,13 @@ class HomeViewModel(
 
                     _uiState.update {
                         val merged = (it.posts + newPosts).distinctBy { item -> item.id }
+                        val updatedSeen = it.seenPostIds + newPosts.map { post -> post.id }.toSet()
                         it.copy(
                             isLoadingMore = false,
                             canLoadMore = hasMore,
                             currentPage = nextPage,
                             posts = merged,
+                            seenPostIds = updatedSeen,
                         )
                     }
                 } else {

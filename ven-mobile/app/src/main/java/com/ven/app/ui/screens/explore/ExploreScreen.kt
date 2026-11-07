@@ -16,11 +16,15 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.grid.LazyGridState
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -62,11 +66,15 @@ import com.ven.app.ui.theme.VexTheme
  * - Mengelola 4 state tampilan secara lokal (MVI): Discovery, Search History,
  *   Search Results (4 tab), dan Filter Sheet.
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ExploreScreen(
     onTabSelected: (BottomNavTab) -> Unit,
     onMediaClick: (MediaGridItem) -> Unit,
     modifier: Modifier = Modifier,
+    gridState: LazyGridState = rememberLazyGridState(),
+    onTabReselected: ((BottomNavTab) -> Unit)? = null,
+    onRefresh: () -> Unit = {},
     onExhibitClick: (ExhibitItem) -> Unit = {},
     onAccountClick: (userId: String) -> Unit = {},
     initialUiState: ExploreUiState = dummyExploreUiState,
@@ -77,7 +85,7 @@ fun ExploreScreen(
     val uiState = vmState ?: localUiState
 
     // Intercept back button saat pencarian aktif atau filter sheet terbuka
-    androidx.activity.compose.BackHandler(enabled = uiState.isSearchActive || uiState.isFilterSheetOpen) {
+    BackHandler(enabled = uiState.isSearchActive || uiState.isFilterSheetOpen) {
         if (uiState.isFilterSheetOpen) {
             if (viewModel != null) viewModel.setFilterSheetOpen(false) else localUiState = localUiState.copy(isFilterSheetOpen = false)
         } else {
@@ -88,10 +96,13 @@ fun ExploreScreen(
     AppScaffold(
         currentTab = BottomNavTab.Explore,
         onTabSelected = onTabSelected,
+        onTabReselected = onTabReselected,
         modifier = modifier,
     ) { innerPadding ->
         ExploreContent(
             uiState = uiState,
+            gridState = gridState,
+            onRefresh = onRefresh,
             onSearchActiveChange = { active ->
                 if (viewModel != null) {
                     viewModel.setSearchActive(active)
@@ -200,6 +211,8 @@ fun ExploreContent(
     onRemoveHistoryItem: (RecentSearchItem) -> Unit,
     onMediaClick: (MediaGridItem) -> Unit,
     modifier: Modifier = Modifier,
+    gridState: LazyGridState = rememberLazyGridState(),
+    onRefresh: () -> Unit = {},
     onExhibitClick: (ExhibitItem) -> Unit = {},
     onAccountClick: (ExploreAccountItem) -> Unit = {},
     onLoadMore: () -> Unit = {},
@@ -221,36 +234,45 @@ fun ExploreContent(
             onFilterClick = onOpenFilterSheet,
         )
 
-        when {
-            uiState.isShowingResults -> {
-                ExploreResults(
-                    uiState = uiState,
-                    onTabChange = onTabChange,
-                    onAccountClick = onAccountClick,
-                    onMediaClick = onMediaClick,
-                    onExhibitClick = onExhibitClick,
-                    onLoadMore = onLoadMore,
-                    modifier = Modifier.weight(1f),
-                )
-            }
+        PullToRefreshBox(
+            isRefreshing = uiState.isRefreshing,
+            onRefresh = onRefresh,
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f),
+        ) {
+            when {
+                uiState.isShowingResults -> {
+                    ExploreResults(
+                        uiState = uiState,
+                        onTabChange = onTabChange,
+                        onAccountClick = onAccountClick,
+                        onMediaClick = onMediaClick,
+                        onExhibitClick = onExhibitClick,
+                        onLoadMore = onLoadMore,
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                }
 
-            uiState.isShowingHistory -> {
-                ExploreSearchHistory(
-                    items = uiState.recentSearches,
-                    onItemClick = onHistoryItemClick,
-                    onRemoveClick = onRemoveHistoryItem,
-                    modifier = Modifier.weight(1f),
-                )
-            }
+                uiState.isShowingHistory -> {
+                    ExploreSearchHistory(
+                        items = uiState.recentSearches,
+                        onItemClick = onHistoryItemClick,
+                        onRemoveClick = onRemoveHistoryItem,
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                }
 
-            else -> {
-                ExploreDiscovery(
-                    items = uiState.discoveryMedia,
-                    onMediaClick = onMediaClick,
-                    onLoadMore = onLoadMore,
-                    isLoadingMore = uiState.isLoadingMorePosts,
-                    modifier = Modifier.weight(1f),
-                )
+                else -> {
+                    ExploreDiscovery(
+                        items = uiState.discoveryMedia,
+                        onMediaClick = onMediaClick,
+                        onLoadMore = onLoadMore,
+                        isLoadingMore = uiState.isLoadingMorePosts,
+                        gridState = gridState,
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                }
             }
         }
     }
@@ -352,6 +374,7 @@ private fun ExploreDiscovery(
     modifier: Modifier = Modifier,
     onLoadMore: () -> Unit = {},
     isLoadingMore: Boolean = false,
+    gridState: LazyGridState = rememberLazyGridState(),
 ) {
     if (items.isEmpty()) {
         EmptyExploreView(
@@ -369,6 +392,7 @@ private fun ExploreDiscovery(
         modifier = modifier,
         onLoadMore = onLoadMore,
         isLoadingMore = isLoadingMore,
+        gridState = gridState,
     )
 }
 
@@ -485,6 +509,7 @@ private fun ExploreResults(
                                         title = exhibit.title,
                                         bannerUrl = exhibit.bannerUrl,
                                         imageRes = exhibit.bannerRes,
+                                        category = exhibit.category,
                                         onClick = { onExhibitClick(exhibit) },
                                         modifier = Modifier.padding(horizontal = VexSpace.s6, vertical = VexSpace.s2),
                                     )
@@ -563,6 +588,7 @@ private fun ExploreResults(
                                 title = exhibit.title,
                                 imageRes = exhibit.bannerRes,
                                 bannerUrl = exhibit.bannerUrl,
+                                category = exhibit.category,
                                 onClick = { onExhibitClick(exhibit) },
                             )
                         }

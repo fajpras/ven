@@ -38,26 +38,22 @@ class PameranController extends Controller
         $page = $request->integer('page', 1);
         $perPage = min($request->integer('per_page', 8), 16);
 
-        $cacheKey = 'rekomendasi_pameran_'.($user ? $user->id_pengguna : 'guest').'_p_'.$page.'_'.$perPage;
+        $query = Pameran::query()
+            ->with(['model3d', self::PENGGUNA_PUBLIK, 'karya.kategori']);
 
-        $pameran = Cache::remember($cacheKey, 60, function () use ($user, $perPage) {
-            $query = Pameran::query()
-                ->with(['model3d', self::PENGGUNA_PUBLIK, 'karya.kategori']);
+        if ($user && $user->kategori()->exists()) {
+            $subqueryBobot = DB::table('karya')
+                ->join('pengguna_kategori', function ($join) use ($user) {
+                    $join->on('karya.id_kategori', '=', 'pengguna_kategori.id_kategori')
+                        ->where('pengguna_kategori.id_pengguna', '=', $user->id_pengguna);
+                })
+                ->whereColumn('karya.id_pameran', 'pameran.id_pameran')
+                ->selectRaw('COALESCE(SUM(pengguna_kategori.bobot), 0)');
 
-            if ($user && $user->kategori()->exists()) {
-                $subqueryBobot = DB::table('karya')
-                    ->join('pengguna_kategori', function ($join) use ($user) {
-                        $join->on('karya.id_kategori', '=', 'pengguna_kategori.id_kategori')
-                            ->where('pengguna_kategori.id_pengguna', '=', $user->id_pengguna);
-                    })
-                    ->whereColumn('karya.id_pameran', 'pameran.id_pameran')
-                    ->selectRaw('COALESCE(SUM(pengguna_kategori.bobot), 0)');
+            $query->orderByDesc($subqueryBobot);
+        }
 
-                $query->orderByDesc($subqueryBobot);
-            }
-
-            return $query->latest('pameran.id_pameran')->paginate($perPage);
-        });
+        $pameran = $query->latest('pameran.id_pameran')->paginate($perPage);
 
         return $this->ok($pameran);
     }

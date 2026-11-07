@@ -64,6 +64,7 @@ data class ExhibitItem(
     val title: String,
     @param:DrawableRes val bannerRes: Int? = null,
     val bannerUrl: String? = null,
+    val category: String? = null,
 )
 
 /**
@@ -86,6 +87,8 @@ data class ExploreUiState(
     val resultExhibits: List<ExhibitItem> = emptyList(),
     val feedPosts: List<PostsFeedItem> = emptyList(),
     val isLoading: Boolean = false,
+    val isRefreshing: Boolean = false,
+    val seenMediaIds: Set<String> = emptySet(),
     val currentPostsPage: Int = 1,
     val canLoadMorePosts: Boolean = true,
     val isLoadingMorePosts: Boolean = false,
