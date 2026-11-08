@@ -23,7 +23,7 @@ android {
 
     defaultConfig {
         applicationId = "com.ven.app"
-        minSdk = 24
+        minSdk = 25
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"
@@ -63,7 +63,17 @@ android {
         buildConfig = true
     }
 
+    // Dibutuhkan Unity supaya aset game tidak dikompres
+    androidResources {
+        noCompress += listOf(
+            ".unity3d", ".ress", ".resource", ".obb", ".bundle", ".unityexp"
+        )
+    }
+
     packaging {
+        jniLibs {
+            useLegacyPackaging = true   // dibutuhkan library native Unity
+        }
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
@@ -71,6 +81,17 @@ android {
 }
 
 dependencies {
+    // Unity
+    implementation(project(":unityLibrary"))
+    implementation(
+        fileTree(
+            mapOf(
+                "dir" to "../unityLibrary/libs",
+                "include" to listOf("*.jar")
+            )
+        )
+    )
+
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.material3)
@@ -106,7 +127,8 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.tooling)
 }
 
-// Lock versi dependensi yang di-resolve oleh Gradle.
-dependencyLocking {
-    lockAllConfigurations()
-}
+// Dimatikan sementara: lockfile lama akan bikin Sync gagal karena
+// ada dependensi baru dari unityLibrary. Aktifkan lagi nanti.
+// dependencyLocking {
+//     lockAllConfigurations()
+// }
