@@ -120,11 +120,19 @@ class KaryaController extends Controller
 
             $karya = $lainQuery->paginate($perPage);
 
-            // Fase C (Fallback): Jika seluruh karya di database sudah pernah dilihat, acak ulang
+            // Fase C (Fallback): Jika seluruh karya kategori lain sudah pernah dilihat, acak ulang karya kategori lain agar konten tidak pernah habis
             if ($karya->isEmpty() && !empty($excludeIds)) {
                 $karya = Karya::query()->select('karya.*')->with(['kategori', self::PENGGUNA_PUBLIK])
+                    ->whereNotIn('karya.id_kategori', $minatIds)
                     ->inRandomOrder()
                     ->paginate($perPage);
+
+                // Jika di database tidak ada karya kategori lain, fallback acak seluruh karya
+                if ($karya->isEmpty()) {
+                    $karya = Karya::query()->select('karya.*')->with(['kategori', self::PENGGUNA_PUBLIK])
+                        ->inRandomOrder()
+                        ->paginate($perPage);
+                }
             }
         }
 

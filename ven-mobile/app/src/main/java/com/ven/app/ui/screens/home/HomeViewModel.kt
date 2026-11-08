@@ -134,7 +134,8 @@ class HomeViewModel(
                 } else {
                     safePosts.map { it.id }.toSet()
                 }
-                val canMore = currentPage < lastPage && safePosts.isNotEmpty()
+                // Pastikan feed terus dapat memuat chunk berikutnya (konten tidak pernah habis)
+                val canMore = safePosts.isNotEmpty()
 
                 _uiState.update {
                     it.copy(
@@ -171,26 +172,53 @@ class HomeViewModel(
         viewModelScope.launch(Dispatchers.IO) {
             _uiState.update { it.copy(isLoadingMore = true) }
             val nextPage = currentState.currentPage + 1
-            try {
-                val res = apiHome.getRekomendasiKarya(page = nextPage)
-                if (res.isSuccessful) {
-                    val paginated = res.body()?.data
-                    val newPosts = paginated?.data?.map { it.toPostItem() } ?: emptyList()
-                    val hasMore = paginated != null && paginated.currentPage < paginated.lastPage && newPosts.isNotEmpty()
+            val currentSeen = currentState.seenPostIds + currentState.posts.map { it.id }.toSet()
+            val excludeParam = if (currentSeen.isNotEmpty()) currentSeen.take(50).joinToString(",") else null
 
+            try {
+                val res = apiHome.getRekomendasiKarya(page = nextPage, exclude = excludeParam)
+                var paginated = res.body()?.data
+                var newPosts = if (res.isSuccessful) paginated?.data?.map { it.toPostItem() } ?: emptyList() else emptyList()
+
+                // Jika dengan nextPage kosong (karena karya kategori minat sudah habis), panggil page 1 dengan exclude agar server menyajikan karya kategori lain
+                if (newPosts.isEmpty()) {
+                    val fallbackRes = apiHome.getRekomendasiKarya(page = 1, exclude = excludeParam)
+                    if (fallbackRes.isSuccessful) {
+                        val fbData = fallbackRes.body()?.data
+                        val fbBatch = fbData?.data?.map { it.toPostItem() } ?: emptyList()
+                        if (fbBatch.isNotEmpty()) {
+                            newPosts = fbBatch
+                        }
+                    }
+                }
+
+                // Jangan sampai konten habis: jika seluruh karya sudah pernah dilihat, ambil batch acak segar
+                if (newPosts.isEmpty()) {
+                    val freshRes = apiHome.getRekomendasiKarya(page = 1, refresh = true)
+                    if (freshRes.isSuccessful) {
+                        val freshBatch = freshRes.body()?.data?.data?.map { it.toPostItem() } ?: emptyList()
+                        if (freshBatch.isNotEmpty()) {
+                            newPosts = freshBatch.shuffled()
+                        }
+                    }
+                }
+
+                if (newPosts.isNotEmpty()) {
+                    val filteredFresh = newPosts.filterNot { it.id in currentSeen }
+                    val toAppend = if (filteredFresh.isNotEmpty()) filteredFresh else newPosts
                     _uiState.update {
-                        val merged = (it.posts + newPosts).distinctBy { item -> item.id }
-                        val updatedSeen = it.seenPostIds + newPosts.map { post -> post.id }.toSet()
+                        val merged = (it.posts + toAppend).distinctBy { item -> item.id }
+                        val updatedSeen = it.seenPostIds + toAppend.map { post -> post.id }.toSet()
                         it.copy(
                             isLoadingMore = false,
-                            canLoadMore = hasMore,
+                            canLoadMore = true,
                             currentPage = nextPage,
                             posts = merged,
                             seenPostIds = updatedSeen,
                         )
                     }
                 } else {
-                    _uiState.update { it.copy(isLoadingMore = false, canLoadMore = false) }
+                    _uiState.update { it.copy(isLoadingMore = false, canLoadMore = true) }
                 }
             } catch (_: Exception) {
                 _uiState.update { it.copy(isLoadingMore = false) }

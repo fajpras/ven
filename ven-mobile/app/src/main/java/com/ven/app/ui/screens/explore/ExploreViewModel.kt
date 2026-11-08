@@ -380,7 +380,7 @@ class ExploreViewModel(
     }
 
     /**
-     * Memuat chunk halaman karya berikutnya pada Explore.
+     * Memuat chunk halaman karya berikutnya pada Explore (infinite discovery).
      */
     fun loadMorePostsChunk() {
         val currentState = _uiState.value
@@ -392,11 +392,38 @@ class ExploreViewModel(
             _uiState.update { it.copy(isLoadingMorePosts = true) }
             val nextPage = currentState.currentPostsPage + 1
             val qParam = currentState.searchQuery.trim().ifBlank { null }
+            val currentSeen = currentState.seenMediaIds + currentState.discoveryMedia.map { it.id }.toSet()
+            val excludeParam = if (qParam == null && currentSeen.isNotEmpty()) currentSeen.take(50).joinToString(",") else null
+
             try {
-                val res = apiPencarian.searchKarya(query = qParam, tipe = "karya", page = nextPage)
-                if (res.isSuccessful) {
-                    val paginated = res.body()?.data
-                    val rawKarya = paginated?.data ?: emptyList()
+                var res = apiPencarian.searchKarya(query = qParam, tipe = "karya", page = nextPage, exclude = excludeParam)
+                var paginated = res.body()?.data
+                var rawKarya = if (res.isSuccessful) paginated?.data ?: emptyList() else emptyList()
+
+                // Jika halaman paginasi biasa kosong saat discovery, minta batch dengan exclude (kategori lain)
+                if (rawKarya.isEmpty() && qParam == null) {
+                    val fallbackRes = apiPencarian.searchKarya(query = null, tipe = "karya", page = 1, exclude = excludeParam)
+                    if (fallbackRes.isSuccessful) {
+                        val fbData = fallbackRes.body()?.data
+                        val fbList = fbData?.data ?: emptyList()
+                        if (fbList.isNotEmpty()) {
+                            rawKarya = fbList
+                        }
+                    }
+                }
+
+                // Jangan sampai konten habis: jika seluruh karya sudah pernah dilihat, ambil rotasi acak
+                if (rawKarya.isEmpty() && qParam == null) {
+                    val freshRes = apiPencarian.searchKarya(query = null, tipe = "karya", page = 1, refresh = true)
+                    if (freshRes.isSuccessful) {
+                        val freshList = freshRes.body()?.data?.data ?: emptyList()
+                        if (freshList.isNotEmpty()) {
+                            rawKarya = freshList.shuffled()
+                        }
+                    }
+                }
+
+                if (rawKarya.isNotEmpty()) {
                     val newMedia = rawKarya.map { k ->
                         MediaGridItem(
                             id = k.idKarya,
@@ -405,20 +432,21 @@ class ExploreViewModel(
                         )
                     }
                     val newFeed = rawKarya.map { it.toFeedItem() }
-                    val hasMore = paginated != null && paginated.currentPage < paginated.lastPage && rawKarya.isNotEmpty()
+                    val updatedSeen = currentState.seenMediaIds + newMedia.map { it.id }.toSet()
 
                     _uiState.update {
                         it.copy(
                             isLoadingMorePosts = false,
-                            canLoadMorePosts = hasMore,
+                            canLoadMorePosts = true,
                             currentPostsPage = nextPage,
+                            seenMediaIds = updatedSeen,
                             resultPosts = (it.resultPosts + newMedia).distinctBy { item -> item.id },
                             discoveryMedia = (it.discoveryMedia + newMedia).distinctBy { item -> item.id },
                             feedPosts = (it.feedPosts + newFeed).distinctBy { item -> item.id },
                         )
                     }
                 } else {
-                    _uiState.update { it.copy(isLoadingMorePosts = false, canLoadMorePosts = false) }
+                    _uiState.update { it.copy(isLoadingMorePosts = false, canLoadMorePosts = qParam != null) }
                 }
             } catch (_: Exception) {
                 _uiState.update { it.copy(isLoadingMorePosts = false) }
