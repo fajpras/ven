@@ -150,17 +150,51 @@ class RekomendasiBerandaTest extends TestCase
 
         $ids = array_column($items, 'id_karya');
 
-        // Pastikan urutan: karya berbobot 1.0 muncul sebelum 0.4, dan karya 0.4 muncul sebelum karya tak berpilih
-        $posisiTinggi = array_search($this->karyaTinggi->id_karya, $ids, true);
-        $posisiRendah = array_search($this->karyaRendah->id_karya, $ids, true);
-        $posisiNol = array_search($this->karyaNol->id_karya, $ids, true);
+        // Pastikan hanya karya dari kategori minat yang muncul selama karya minat belum habis
+        $this->assertContains($this->karyaTinggi->id_karya, $ids, 'Karya tinggi harus ditemukan');
+        $this->assertContains($this->karyaRendah->id_karya, $ids, 'Karya rendah harus ditemukan');
+        $this->assertNotContains($this->karyaNol->id_karya, $ids, 'Karya kategori lain tidak boleh muncul sebelum karya minat habis');
+    }
 
-        $this->assertNotFalse($posisiTinggi, 'Karya tinggi harus ditemukan');
-        $this->assertNotFalse($posisiRendah, 'Karya rendah harus ditemukan');
-        $this->assertNotFalse($posisiNol, 'Karya tanpa bobot harus tetap muncul');
+    public function test_rekomendasi_karya_menampilkan_kategori_lain_setelah_karya_minat_habis(): void
+    {
+        // Exclude semua karya minat sehingga karya minat dianggap habis
+        $excludeIds = implode(',', [$this->karyaTinggi->id_karya, $this->karyaRendah->id_karya]);
 
-        $this->assertLessThan($posisiRendah, $posisiTinggi, 'Karya bobot 1.0 harus muncul sebelum bobot 0.4');
-        $this->assertLessThan($posisiNol, $posisiRendah, 'Karya bobot 0.4 harus muncul sebelum bobot 0');
+        $response = $this->actingAs($this->pengguna)
+            ->getJson('/api/karya/rekomendasi?exclude='.$excludeIds);
+
+        $response->assertOk();
+        $items = $response->json('data.data');
+        $ids = array_column($items, 'id_karya');
+
+        // Sekarang karya dari kategori lain baru boleh tampil
+        $this->assertContains($this->karyaNol->id_karya, $ids, 'Karya kategori lain harus muncul setelah karya minat habis');
+    }
+
+    public function test_rekomendasi_karya_pengguna_dengan_minat_others_menampilkan_seluruh_kategori(): void
+    {
+        $kategoriOthers = Kategori::firstOrCreate(['kategori' => 'Others']);
+        $userOthers = Pengguna::factory()->create([
+            'email' => 'others-user-'.uniqid().'@ven.test',
+        ]);
+        $userOthers->kategori()->attach($kategoriOthers->id_kategori, ['bobot' => 1.0]);
+
+        $response = $this->actingAs($userOthers)
+            ->getJson('/api/karya/rekomendasi');
+
+        $response->assertOk();
+        $items = $response->json('data.data');
+        $ids = array_column($items, 'id_karya');
+
+        // Pengguna yang memilih "Others" akan disajikan seluruh kategori
+        $this->assertContains($this->karyaTinggi->id_karya, $ids);
+        $this->assertContains($this->karyaRendah->id_karya, $ids);
+        $this->assertContains($this->karyaNol->id_karya, $ids);
+
+        $userOthers->tokens()->delete();
+        $userOthers->kategori()->detach();
+        $userOthers->forceDelete();
     }
 
     public function test_rekomendasi_karya_pengguna_tanpa_minat_menampilkan_semua(): void

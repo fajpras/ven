@@ -39,10 +39,13 @@ class PameranController extends Controller
         $page = $request->integer('page', 1);
         $perPage = min($request->integer('per_page', 8), 16);
 
+        $userCategories = $user ? $user->kategori()->get() : collect();
+        $hasOthers = $userCategories->contains(fn ($k) => strcasecmp($k->kategori, 'others') === 0);
+
         $query = Pameran::query()
             ->with(['model3d', self::PENGGUNA_PUBLIK, 'karya.kategori']);
 
-        if ($user && $user->kategori()->exists()) {
+        if ($user && $user->kategori()->exists() && ! $hasOthers) {
             $subqueryBobot = DB::table('karya')
                 ->join('pengguna_kategori', function ($join) use ($user) {
                     $join->on('karya.id_kategori', '=', 'pengguna_kategori.id_kategori')
