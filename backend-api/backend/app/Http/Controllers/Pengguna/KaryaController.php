@@ -44,8 +44,14 @@ class KaryaController extends Controller
         $user = $request->user();
         $page = $request->integer('page', 1);
         $perPage = min($request->integer('per_page', 12), 24);
+        $excludeIds = array_filter(array_map('trim', explode(',', (string) $request->query('exclude', ''))));
+        $refresh = $request->boolean('refresh', false);
 
         $query = Karya::query()->select('karya.*')->with(['kategori', self::PENGGUNA_PUBLIK]);
+
+        if (!empty($excludeIds)) {
+            $query->whereNotIn('karya.id_karya', $excludeIds);
+        }
 
         if ($user && $user->kategori()->exists()) {
             $query->leftJoin('pengguna_kategori', fn ($join) => $join
@@ -54,7 +60,26 @@ class KaryaController extends Controller
                 ->orderByRaw('COALESCE(pengguna_kategori.bobot, 0) DESC');
         }
 
-        $karya = $query->latest('karya.created_at')->paginate($perPage);
+        if ($refresh) {
+            $query->inRandomOrder();
+        } else {
+            $query->latest('karya.created_at');
+        }
+
+        $karya = $query->paginate($perPage);
+
+        // Fallback: Jika diexclude menghasilkan list kosong (seluruh karya di database sudah pernah dilihat),
+        // kembalikan karya yang diacak ulang agar user tetap melihat hal baru yang segar
+        if ($karya->isEmpty() && !empty($excludeIds)) {
+            $fallbackQuery = Karya::query()->select('karya.*')->with(['kategori', self::PENGGUNA_PUBLIK]);
+            if ($user && $user->kategori()->exists()) {
+                $fallbackQuery->leftJoin('pengguna_kategori', fn ($join) => $join
+                    ->on('karya.id_kategori', '=', 'pengguna_kategori.id_kategori')
+                    ->where('pengguna_kategori.id_pengguna', '=', $user->id_pengguna))
+                    ->orderByRaw('COALESCE(pengguna_kategori.bobot, 0) DESC');
+            }
+            $karya = $fallbackQuery->inRandomOrder()->paginate($perPage);
+        }
 
         return $this->ok($karya);
     }

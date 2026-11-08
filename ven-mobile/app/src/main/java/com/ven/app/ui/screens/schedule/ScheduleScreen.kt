@@ -12,9 +12,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -50,6 +52,7 @@ import com.ven.app.ui.theme.VexTheme
  * - Tab Request: Menampilkan [RequestListItem]. Klik membuka [RequestDetailSheet].
  * - Aksi Approve & Reject: Memperbarui state secara lokal di memori.
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ScheduleScreen(
     onTabSelected: (BottomNavTab) -> Unit,
@@ -58,6 +61,7 @@ fun ScheduleScreen(
 ) {
     val context = LocalContext.current
     var uiState by remember { mutableStateOf(initialUiState) }
+    var isRefreshing by remember { mutableStateOf(false) }
 
     AppScaffold(
         currentTab = BottomNavTab.Schedule,
@@ -66,6 +70,13 @@ fun ScheduleScreen(
     ) { innerPadding ->
         ScheduleContent(
             uiState = uiState,
+            isRefreshing = isRefreshing,
+            onRefresh = {
+                isRefreshing = true
+                // Simulasi pembaruan jadwal
+                uiState = dummyScheduleUiState
+                isRefreshing = false
+            },
             onTabSelected = { tab ->
                 uiState = uiState.copy(selectedTab = tab)
             },
@@ -141,6 +152,7 @@ fun ScheduleScreen(
 /**
  * Komponen konten murni (stateless) untuk [ScheduleScreen].
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ScheduleContent(
     uiState: ScheduleUiState,
@@ -153,6 +165,8 @@ fun ScheduleContent(
     onApproveRequest: (ScheduleRequestItem) -> Unit,
     onRejectRequest: (ScheduleRequestItem) -> Unit,
     modifier: Modifier = Modifier,
+    isRefreshing: Boolean = false,
+    onRefresh: () -> Unit = {},
 ) {
     val colors = VexTheme.colors
 
@@ -194,64 +208,71 @@ fun ScheduleContent(
             color = colors.border,
         )
 
-        // Konten Daftar Sesuai Tab
-        LazyColumn(
+        // Konten Daftar Sesuai Tab dengan PullToRefreshBox
+        PullToRefreshBox(
+            isRefreshing = isRefreshing,
+            onRefresh = onRefresh,
             modifier = Modifier
                 .fillMaxWidth()
-                .weight(1f)
-                .padding(top = VexSpace.s2),
+                .weight(1f),
         ) {
-            when (uiState.selectedTab) {
-                ScheduleTab.Approved -> {
-                    val items = uiState.filteredApprovedItems
-                    if (items.isEmpty()) {
-                        item {
-                            EmptyScheduleView(
-                                message = stringResource(R.string.schedule_empty_approved),
-                            )
-                        }
-                    } else {
-                        items(items, key = { it.id }) { item ->
-                            EventListItem(
-                                entry = item,
-                                onClick = { onEventClick(item) },
-                            )
-                        }
-                    }
-                }
-
-                ScheduleTab.Waiting -> {
-                    val items = uiState.filteredWaitingItems
-                    if (items.isEmpty()) {
-                        item {
-                            EmptyScheduleView(
-                                message = stringResource(R.string.schedule_empty_waiting),
-                            )
-                        }
-                    } else {
-                        items(items, key = { it.id }) { item ->
-                            EventListItem(
-                                entry = item,
-                                onClick = { onEventClick(item) },
-                            )
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(top = VexSpace.s2),
+            ) {
+                when (uiState.selectedTab) {
+                    ScheduleTab.Approved -> {
+                        val items = uiState.filteredApprovedItems
+                        if (items.isEmpty()) {
+                            item {
+                                EmptyScheduleView(
+                                    message = stringResource(R.string.schedule_empty_approved),
+                                )
+                            }
+                        } else {
+                            items(items, key = { it.id }) { item ->
+                                EventListItem(
+                                    entry = item,
+                                    onClick = { onEventClick(item) },
+                                )
+                            }
                         }
                     }
-                }
 
-                ScheduleTab.Request -> {
-                    val items = uiState.filteredRequestItems
-                    if (items.isEmpty()) {
-                        item {
-                            EmptyScheduleView(
-                                message = stringResource(R.string.schedule_empty_request),
-                            )
+                    ScheduleTab.Waiting -> {
+                        val items = uiState.filteredWaitingItems
+                        if (items.isEmpty()) {
+                            item {
+                                EmptyScheduleView(
+                                    message = stringResource(R.string.schedule_empty_waiting),
+                                )
+                            }
+                        } else {
+                            items(items, key = { it.id }) { item ->
+                                EventListItem(
+                                    entry = item,
+                                    onClick = { onEventClick(item) },
+                                )
+                            }
                         }
-                    } else {
-                        items(items, key = { it.id }) { item ->
-                            RequestListItem(
-                                entry = item,
-                                onClick = { onRequestClick(item) },
-                            )
+                    }
+
+                    ScheduleTab.Request -> {
+                        val items = uiState.filteredRequestItems
+                        if (items.isEmpty()) {
+                            item {
+                                EmptyScheduleView(
+                                    message = stringResource(R.string.schedule_empty_request),
+                                )
+                            }
+                        } else {
+                            items(items, key = { it.id }) { item ->
+                                RequestListItem(
+                                    entry = item,
+                                    onClick = { onRequestClick(item) },
+                                )
+                            }
                         }
                     }
                 }

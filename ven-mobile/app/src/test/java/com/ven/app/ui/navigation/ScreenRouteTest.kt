@@ -23,6 +23,7 @@ class ScreenRouteTest {
 
     @Test
     fun screenRoutes_postsFeed_withPostId_isCorrect() {
-        assertEquals("posts_feed?postId=p1", Screen.PostsFeed.createRoute("p1"))
+        assertEquals("posts_feed?postId=p1&userId=", Screen.PostsFeed.createRoute("p1"))
+        assertEquals("posts_feed?postId=p1&userId=u123", Screen.PostsFeed.createRoute("p1", "u123"))
     }
 }

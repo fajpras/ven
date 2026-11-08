@@ -32,7 +32,7 @@ class ExploreViewModel(
     /**
      * Memuat ulang data Explore secara reaktif (pull-to-refresh & double tap).
      */
-    fun muatUlang(filterSeen: Boolean = false) {
+    fun muatUlang(filterSeen: Boolean = true) {
         _uiState.update { it.copy(isRefreshing = true) }
         if (_uiState.value.isShowingResults) {
             val q = _uiState.value.searchQuery
@@ -60,8 +60,18 @@ class ExploreViewModel(
                     _uiState.value.seenMediaIds
                 }
 
-                // Muat daftar karya
-                val res = apiPencarian.searchKarya(query = null, tipe = "karya", page = 1)
+                val excludeParam = if (filterSeen && currentSeen.isNotEmpty()) {
+                    currentSeen.take(30).joinToString(",")
+                } else null
+
+                // Muat daftar karya dengan exclude param dan refresh flag
+                val res = apiPencarian.searchKarya(
+                    query = null,
+                    tipe = "karya",
+                    page = 1,
+                    exclude = excludeParam,
+                    refresh = if (isRefresh) true else null,
+                )
                 if (res.isSuccessful) {
                     val paginated = res.body()?.data
                     val rawKarya = paginated?.data ?: emptyList()
@@ -77,7 +87,13 @@ class ExploreViewModel(
                     // Jika difilter dan halaman pertama sudah pernah dilihat semua, cari halaman berikutnya
                     while (filteredKarya.isEmpty() && currentPage < lastPage) {
                         currentPage++
-                        val nextRes = apiPencarian.searchKarya(query = null, tipe = "karya", page = currentPage)
+                        val nextRes = apiPencarian.searchKarya(
+                            query = null,
+                            tipe = "karya",
+                            page = currentPage,
+                            exclude = excludeParam,
+                            refresh = if (isRefresh) true else null,
+                        )
                         if (nextRes.isSuccessful) {
                             val nextPaginated = nextRes.body()?.data
                             val nextData = nextPaginated?.data ?: emptyList()
@@ -93,10 +109,19 @@ class ExploreViewModel(
                         }
                     }
 
-                    val finalKarya = if (filteredKarya.isEmpty()) {
-                        rawKarya
-                    } else {
-                        filteredKarya
+                    // Jika seluruh karya sudah pernah dilihat, acak karya yang ada agar selalu tampil segar
+                    val finalKarya = when {
+                        filteredKarya.isNotEmpty() -> filteredKarya
+                        rawKarya.isNotEmpty() -> {
+                            val currentFirstId = _uiState.value.discoveryMedia.firstOrNull()?.id
+                            val shuffled = rawKarya.shuffled()
+                            if (shuffled.firstOrNull()?.idKarya == currentFirstId && shuffled.size > 1) {
+                                shuffled.drop(1) + shuffled.take(1)
+                            } else {
+                                shuffled
+                            }
+                        }
+                        else -> emptyList()
                     }
 
                     val items = finalKarya.map { k ->
@@ -108,7 +133,11 @@ class ExploreViewModel(
                     }
                     val feedList = finalKarya.map { it.toFeedItem() }
                     val hasMore = currentPage < lastPage && items.isNotEmpty()
-                    val updatedSeen = currentSeen + items.map { it.id }.toSet()
+                    val updatedSeen = if (filteredKarya.isNotEmpty()) {
+                        currentSeen + items.map { it.id }.toSet()
+                    } else {
+                        items.map { it.id }.toSet()
+                    }
 
                     if (items.isNotEmpty()) {
                         _uiState.update {

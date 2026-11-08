@@ -25,6 +25,7 @@ class PameranController extends Controller
         $pameran = Pameran::with(['model3d', self::PENGGUNA_PUBLIK])
             ->when($request->filled('judul'), fn ($q) => $q->where('judul', 'like', '%'.$this->escapeLike($request->query('judul')).'%'))
             ->when($request->filled('tipe'), fn ($q) => $q->where('tipe', $request->query('tipe')))
+            ->when($request->filled('pengguna'), fn ($q) => $q->where('id_pengguna', $request->query('pengguna')))
             ->when($request->boolean('milikku'), fn ($q) => $q->where('id_pengguna', $request->user()->id_pengguna))
             ->latest('id_pameran')
             ->paginate(24);

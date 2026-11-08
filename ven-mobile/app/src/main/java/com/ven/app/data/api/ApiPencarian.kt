@@ -25,6 +25,8 @@ interface ApiPencarian {
         @Query("q") query: String? = null,
         @Query("tipe") tipe: String = "karya",
         @Query("page") page: Int = 1,
+        @Query("exclude") exclude: String? = null,
+        @Query("refresh") refresh: Boolean? = null,
     ): Response<ApiResponse<PaginatedData<KaryaItemModel>>>
 
     @GET("pencarian")

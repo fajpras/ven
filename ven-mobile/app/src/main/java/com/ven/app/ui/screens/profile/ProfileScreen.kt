@@ -24,6 +24,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -141,15 +142,20 @@ fun ProfileScreen(
                     ProfileTab.Exhibits -> uiState.exhibits
                 }
 
-                LazyVerticalGrid(
-                    columns = GridCells.Fixed(3),
+                PullToRefreshBox(
+                    isRefreshing = uiState.isLoading,
+                    onRefresh = onRetryClick,
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(innerPadding),
-                    horizontalArrangement = Arrangement.spacedBy(2.dp),
-                    verticalArrangement = Arrangement.spacedBy(2.dp),
-                    contentPadding = PaddingValues(bottom = VexSpace.s6),
                 ) {
+                    LazyVerticalGrid(
+                        columns = GridCells.Fixed(3),
+                        modifier = Modifier.fillMaxSize(),
+                        horizontalArrangement = Arrangement.spacedBy(2.dp),
+                        verticalArrangement = Arrangement.spacedBy(2.dp),
+                        contentPadding = PaddingValues(bottom = VexSpace.s6),
+                    ) {
                     // -----------------------------------------------------
                     // Item Span Penuh: Header Profil, Bio, Kontak & Tabs
                     // -----------------------------------------------------
@@ -353,6 +359,7 @@ fun ProfileScreen(
                 }
             }
         }
+    }
 
         // ---------------------------------------------------------
         // Bottom Sheet: Daftar Lengkap Keahlian / Skills

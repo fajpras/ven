@@ -23,7 +23,7 @@ class HomeViewModel(
         muatDataBeranda()
     }
 
-    fun muatUlang(filterSeen: Boolean = false) {
+    fun muatUlang(filterSeen: Boolean = true) {
         _uiState.update { it.copy(isRefreshing = true, errorMessage = null) }
         muatDataBeranda(isRefresh = true, filterSeen = filterSeen)
     }
@@ -37,8 +37,18 @@ class HomeViewModel(
                     _uiState.value.seenPostIds
                 }
 
+                val excludeParam = if (filterSeen && currentSeen.isNotEmpty()) {
+                    currentSeen.take(30).joinToString(",")
+                } else null
+
                 val pameranDeferred = async { apiHome.getRekomendasiPameran(page = 1) }
-                val karyaDeferred = async { apiHome.getRekomendasiKarya(page = 1) }
+                val karyaDeferred = async {
+                    apiHome.getRekomendasiKarya(
+                        page = 1,
+                        exclude = excludeParam,
+                        refresh = if (isRefresh) true else null,
+                    )
+                }
 
                 val pameranRes = pameranDeferred.await()
                 val karyaRes = karyaDeferred.await()
@@ -66,7 +76,11 @@ class HomeViewModel(
 
                 while (filteredPosts.isEmpty() && currentPage < lastPage) {
                     currentPage++
-                    val nextPageRes = apiHome.getRekomendasiKarya(page = currentPage)
+                    val nextPageRes = apiHome.getRekomendasiKarya(
+                        page = currentPage,
+                        exclude = excludeParam,
+                        refresh = if (isRefresh) true else null,
+                    )
                     if (nextPageRes.isSuccessful) {
                         val nextData = nextPageRes.body()?.data
                         val nextBatch = nextData?.data?.map { it.toPostItem() } ?: emptyList()
@@ -82,14 +96,45 @@ class HomeViewModel(
                     }
                 }
 
-                val finalPosts = if (filteredPosts.isEmpty()) {
-                    rawPosts
-                } else {
-                    filteredPosts
+                // Jika filteredPosts kosong (seluruh karya sudah pernah dilihat):
+                // Acak urutan karya yang ada agar pengguna disajikan hal baru yang segar
+                var finalPosts = when {
+                    filteredPosts.isNotEmpty() -> filteredPosts
+                    rawPosts.isNotEmpty() -> {
+                        val currentFirstId = _uiState.value.posts.firstOrNull()?.id
+                        val shuffled = rawPosts.shuffled()
+                        if (shuffled.firstOrNull()?.id == currentFirstId && shuffled.size > 1) {
+                            shuffled.drop(1) + shuffled.take(1)
+                        } else {
+                            shuffled
+                        }
+                    }
+                    else -> emptyList()
                 }
 
-                val updatedSeen = currentSeen + finalPosts.map { it.id }.toSet()
-                val canMore = currentPage < lastPage && finalPosts.isNotEmpty()
+                // Fallback: Jika finalPosts kosong karena filterSeen atau seluruh karya di DB sudah pernah dilihat,
+                // ambil ulang rekomendasi segar tanpa exclude agar beranda selalu menyajikan karya dan tidak pernah kosong
+                if (finalPosts.isEmpty() && filterSeen) {
+                    val fallbackRes = apiHome.getRekomendasiKarya(page = 1, refresh = true)
+                    if (fallbackRes.isSuccessful) {
+                        val fallbackBatch = fallbackRes.body()?.data?.data?.map { it.toPostItem() } ?: emptyList()
+                        if (fallbackBatch.isNotEmpty()) {
+                            finalPosts = fallbackBatch.shuffled()
+                        }
+                    }
+                }
+
+                // Pertahankan postingan dan event sebelumnya jika respons server baru kosong/gagal
+                val safePosts = if (finalPosts.isNotEmpty()) finalPosts else _uiState.value.posts
+                val safeEvents = if (events.isNotEmpty()) events else _uiState.value.comingSoonEvents
+
+                // Jika kita merotasi ulang karena semua sudah dilihat, reset cache seen ke batch baru ini
+                val updatedSeen = if (filteredPosts.isNotEmpty()) {
+                    currentSeen + safePosts.map { it.id }.toSet()
+                } else {
+                    safePosts.map { it.id }.toSet()
+                }
+                val canMore = currentPage < lastPage && safePosts.isNotEmpty()
 
                 _uiState.update {
                     it.copy(
@@ -98,8 +143,8 @@ class HomeViewModel(
                         isLoadingMore = false,
                         canLoadMore = canMore,
                         currentPage = currentPage,
-                        comingSoonEvents = events,
-                        posts = finalPosts,
+                        comingSoonEvents = safeEvents,
+                        posts = safePosts,
                         seenPostIds = updatedSeen,
                         errorMessage = null,
                     )

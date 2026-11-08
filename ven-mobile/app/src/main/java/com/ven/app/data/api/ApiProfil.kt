@@ -2,8 +2,11 @@ package com.ven.app.data.api
 
 import com.google.gson.annotations.SerializedName
 import com.ven.app.data.api.models.ApiResponse
+import com.ven.app.data.api.models.KaryaItemModel
 import com.ven.app.data.api.models.KategoriModel
+import com.ven.app.data.api.models.PaginatedData
 import com.ven.app.data.api.models.PaginatorTotal
+import com.ven.app.data.api.models.PameranItemModel
 import com.ven.app.data.api.models.UserModel
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
@@ -97,10 +100,20 @@ interface ApiProfilService {
         @Query("milikku") milikku: Int = 1,
     ): Response<ApiResponse<PaginatorTotal>>
 
+    @GET("karya")
+    suspend fun listKaryaMilikku(
+        @Query("milikku") milikku: Int = 1,
+    ): Response<ApiResponse<PaginatedData<KaryaItemModel>>>
+
     @GET("pameran")
     suspend fun pameranMilikku(
         @Query("milikku") milikku: Int = 1,
     ): Response<ApiResponse<PaginatorTotal>>
+
+    @GET("pameran")
+    suspend fun listPameranMilikku(
+        @Query("milikku") milikku: Int = 1,
+    ): Response<ApiResponse<PaginatedData<PameranItemModel>>>
 
     @PUT("profil/minat")
     suspend fun simpanMinat(
@@ -161,9 +174,17 @@ object ApiProfil {
         service.karyaMilikku()
     }.map { it.total }
 
+    suspend fun listKaryaMilikku(): Result<List<KaryaItemModel>> = hasil {
+        service.listKaryaMilikku()
+    }.map { it.data }
+
     suspend fun jumlahPameran(): Result<Int> = hasil {
         service.pameranMilikku()
     }.map { it.total }
+
+    suspend fun listPameranMilikku(): Result<List<PameranItemModel>> = hasil {
+        service.listPameranMilikku()
+    }.map { it.data }
 
     suspend fun simpanMinat(idKategori: Set<Int>): Result<List<KategoriModel>> = hasil {
         service.simpanMinat(

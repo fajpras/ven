@@ -6,7 +6,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
@@ -44,6 +46,7 @@ data class PostsFeedItem(
  * - Body: `LazyColumn` vertikal penuh berisi kartu [PostCard] yang dapat di-scroll.
  * - Bila [initialPostId] diberikan, feed otomatis scroll ke item tersebut.
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PostsFeedScreen(
     posts: List<PostsFeedItem>,
@@ -52,6 +55,8 @@ fun PostsFeedScreen(
     onView3dClick: (postId: String) -> Unit,
     modifier: Modifier = Modifier,
     initialPostId: String? = null,
+    isRefreshing: Boolean = false,
+    onRefresh: () -> Unit = {},
     onUserClick: ((userId: String) -> Unit)? = null,
 ) {
     val listState = rememberLazyListState()
@@ -76,32 +81,38 @@ fun PostsFeedScreen(
             )
         },
     ) { innerPadding ->
-        LazyColumn(
-            state = listState,
+        PullToRefreshBox(
+            isRefreshing = isRefreshing,
+            onRefresh = onRefresh,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding),
-            contentPadding = PaddingValues(bottom = VexSpace.s6),
         ) {
-            itemsIndexed(
-                items = posts,
-                key = { _, post -> post.id },
-            ) { _, post ->
-                PostCard(
-                    username = post.username,
-                    userAvatarUrl = post.userAvatarUrl,
-                    title = post.title,
-                    category = post.category,
-                    timestampText = post.timestampText,
-                    description = post.description,
-                    imageUrl = post.imageUrl,
-                    aspectRatio = post.aspectRatio,
-                    onRequestMeetingClick = { onRequestMeetingClick(post.id) },
-                    onView3dClick = { onView3dClick(post.pameranId ?: post.id) },
-                    onUsernameClick = {
-                        post.userId?.let { onUserClick?.invoke(it) }
-                    },
-                )
+            LazyColumn(
+                state = listState,
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(bottom = VexSpace.s6),
+            ) {
+                itemsIndexed(
+                    items = posts,
+                    key = { _, post -> post.id },
+                ) { _, post ->
+                    PostCard(
+                        username = post.username,
+                        userAvatarUrl = post.userAvatarUrl,
+                        title = post.title,
+                        category = post.category,
+                        timestampText = post.timestampText,
+                        description = post.description,
+                        imageUrl = post.imageUrl,
+                        aspectRatio = post.aspectRatio,
+                        onRequestMeetingClick = { onRequestMeetingClick(post.id) },
+                        onView3dClick = { onView3dClick(post.pameranId ?: post.id) },
+                        onUsernameClick = {
+                            post.userId?.let { onUserClick?.invoke(it) }
+                        },
+                    )
+                }
             }
         }
     }

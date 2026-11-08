@@ -26,9 +26,15 @@ class PencarianController extends Controller
 
         $keyword = $this->escapeLike(trim($validated['q'] ?? ''));
         $tipe = $validated['tipe'] ?? 'semua';
+        $excludeIds = array_filter(array_map('trim', explode(',', (string) $request->query('exclude', ''))));
+        $refresh = $request->boolean('refresh', false);
 
         if ($tipe === 'karya') {
-            return $this->ok($this->queryKarya($keyword)->paginate(24));
+            $paginator = $this->queryKarya($keyword, $excludeIds, $refresh)->paginate(24);
+            if ($paginator->isEmpty() && !empty($excludeIds)) {
+                $paginator = $this->queryKarya($keyword, [], true)->paginate(24);
+            }
+            return $this->ok($paginator);
         }
 
         if ($tipe === 'pameran') {
@@ -41,13 +47,13 @@ class PencarianController extends Controller
 
         // Tipe 'semua': ringkasan 8 item teratas per kategori
         return $this->ok([
-            'karya' => $this->queryKarya($keyword)->take(8)->get(),
+            'karya' => $this->queryKarya($keyword, $excludeIds, $refresh)->take(8)->get(),
             'pameran' => $this->queryPameran($keyword)->take(8)->get(),
             'pengguna' => $this->queryPengguna($keyword)->take(8)->get(),
         ]);
     }
 
-    private function queryKarya(string $keyword)
+    private function queryKarya(string $keyword, array $excludeIds = [], bool $refresh = false)
     {
         return Karya::with(['kategori', self::PENGGUNA_PUBLIK])
             ->when($keyword !== '', function ($q) use ($keyword) {
@@ -57,7 +63,8 @@ class PencarianController extends Controller
                         ->orWhereHas('kategori', fn ($k) => $k->where('kategori', 'like', "%{$keyword}%"));
                 });
             })
-            ->latest('created_at');
+            ->when(!empty($excludeIds), fn ($q) => $q->whereNotIn('id_karya', $excludeIds))
+            ->when($refresh, fn ($q) => $q->inRandomOrder(), fn ($q) => $q->latest('created_at'));
     }
 
     private function queryPameran(string $keyword)
