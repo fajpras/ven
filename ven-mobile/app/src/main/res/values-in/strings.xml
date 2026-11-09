@@ -119,6 +119,7 @@
     <string name="settings_current_password_label">Kata sandi saat ini</string>
     <string name="settings_new_password_label">Kata sandi baru</string>
     <string name="settings_change_email_helper">Anda perlu memverifikasi email baru Anda agar perubahan diterapkan</string>
+    <string name="settings_change_password_helper">Gunakan minimal 8 karakter dengan huruf dan angka</string>
     <string name="settings_send_otp">Kirim OTP</string>
     <string name="settings_verify_email_title">Verifikasi email</string>
     <string name="settings_didnt_get_mail">tidak menerima email?</string>

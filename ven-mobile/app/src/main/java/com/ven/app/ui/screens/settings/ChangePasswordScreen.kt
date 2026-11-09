@@ -26,6 +26,7 @@ import com.ven.app.ui.components.layout.VexTopBar
 import com.ven.app.ui.components.ui.VexButton
 import com.ven.app.ui.components.ui.VexButtonVariant
 import com.ven.app.ui.components.ui.VexPasswordField
+import com.ven.app.ui.components.ui.VexTextFieldVariant
 import com.ven.app.ui.theme.ThemeMode
 import com.ven.app.ui.theme.VexSpace
 import com.ven.app.ui.theme.VexTheme
@@ -81,6 +82,8 @@ fun ChangePasswordScreen(
             VexPasswordField(
                 value = state.kataSandiSaatIni,
                 onValueChange = onCurrentPasswordChange,
+                variant = VexTextFieldVariant.Boxed,
+                placeholder = "",
                 label = stringResource(R.string.settings_current_password_label),
             )
 
@@ -89,6 +92,8 @@ fun ChangePasswordScreen(
             VexPasswordField(
                 value = state.kataSandi,
                 onValueChange = onNewPasswordChange,
+                variant = VexTextFieldVariant.Boxed,
+                placeholder = "",
                 label = stringResource(R.string.settings_new_password_label),
             )
 
@@ -97,7 +102,17 @@ fun ChangePasswordScreen(
             VexPasswordField(
                 value = state.konfirmasiKataSandi,
                 onValueChange = onConfirmPasswordChange,
+                variant = VexTextFieldVariant.Boxed,
+                placeholder = "",
                 label = stringResource(R.string.settings_confirm_password_label),
+            )
+
+            Spacer(modifier = Modifier.height(VexSpace.s4))
+
+            Text(
+                text = stringResource(R.string.settings_change_password_helper),
+                style = MaterialTheme.typography.bodySmall,
+                color = colors.textMuted,
             )
 
             state.errorMessage?.let {

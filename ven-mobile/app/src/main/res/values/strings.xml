@@ -128,6 +128,7 @@
     <string name="settings_current_password_label">Current password</string>
     <string name="settings_new_password_label">New password</string>
     <string name="settings_change_email_helper">You need to verify your new email for the change to be applied</string>
+    <string name="settings_change_password_helper">Use at least 8 characters with letters and numbers</string>
     <string name="settings_send_otp">Send OTP</string>
     <string name="settings_verify_email_title">Verify email</string>
     <string name="settings_didnt_get_mail">didn’t get your mail?</string>
