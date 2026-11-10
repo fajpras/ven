@@ -26,9 +26,15 @@ class PencarianController extends Controller
 
         $keyword = $this->escapeLike(trim($validated['q'] ?? ''));
         $tipe = $validated['tipe'] ?? 'semua';
+        $excludeIds = array_filter(array_map('trim', explode(',', (string) $request->query('exclude', ''))));
+        $refresh = $request->boolean('refresh', false);
 
         if ($tipe === 'karya') {
-            return $this->ok($this->queryKarya($keyword)->paginate(24));
+            $paginator = $this->queryKarya($request, $keyword, $excludeIds, $refresh)->paginate(24);
+            if ($paginator->isEmpty() && !empty($excludeIds)) {
+                $paginator = $this->queryKarya($request, $keyword, [], true)->paginate(24);
+            }
+            return $this->ok($paginator);
         }
 
         if ($tipe === 'pameran') {
@@ -41,23 +47,57 @@ class PencarianController extends Controller
 
         // Tipe 'semua': ringkasan 8 item teratas per kategori
         return $this->ok([
-            'karya' => $this->queryKarya($keyword)->take(8)->get(),
+            'karya' => $this->queryKarya($request, $keyword, $excludeIds, $refresh)->take(8)->get(),
             'pameran' => $this->queryPameran($keyword)->take(8)->get(),
             'pengguna' => $this->queryPengguna($keyword)->take(8)->get(),
         ]);
     }
 
-    private function queryKarya(string $keyword)
+    private function queryKarya(Request $request, string $keyword, array $excludeIds = [], bool $refresh = false)
     {
-        return Karya::with(['kategori', self::PENGGUNA_PUBLIK])
-            ->when($keyword !== '', function ($q) use ($keyword) {
-                $q->where(function ($sub) use ($keyword) {
+        $user = $request->user();
+        $userCategories = $user ? $user->kategori()->get() : collect();
+        $hasOthers = $userCategories->contains(fn ($k) => strcasecmp($k->kategori, 'others') === 0);
+        $minatIds = $userCategories->pluck('id_kategori')->toArray();
+
+        // Jika ada keyword pencarian, utamakan pencarian berbasis teks
+        if ($keyword !== '') {
+            return Karya::with(['kategori', self::PENGGUNA_PUBLIK])
+                ->where(function ($sub) use ($keyword) {
                     $sub->where('judul', 'like', "%{$keyword}%")
                         ->orWhere('deskripsi', 'like', "%{$keyword}%")
                         ->orWhereHas('kategori', fn ($k) => $k->where('kategori', 'like', "%{$keyword}%"));
-                });
-            })
-            ->latest('created_at');
+                })
+                ->when(!empty($excludeIds), fn ($q) => $q->whereNotIn('id_karya', $excludeIds))
+                ->when($refresh, fn ($q) => $q->inRandomOrder(), fn ($q) => $q->latest('created_at'));
+        }
+
+        // Jika tidak mencari keyword (Discovery Feed):
+        // KASUS 1: Pengguna memilih "Others" atau tanpa preferensi -> Tampilkan seluruh kategori
+        if ($hasOthers || empty($minatIds)) {
+            return Karya::with(['kategori', self::PENGGUNA_PUBLIK])
+                ->when(!empty($excludeIds), fn ($q) => $q->whereNotIn('id_karya', $excludeIds))
+                ->when($refresh, fn ($q) => $q->inRandomOrder(), fn ($q) => $q->latest('created_at'));
+        }
+
+        // KASUS 2: Pengguna memilih kategori minat spesifik (misal: 3D) TANPA "Others"
+        $totalMinatTersedia = Karya::whereIn('id_kategori', $minatIds)
+            ->when(!empty($excludeIds), fn ($q) => $q->whereNotIn('id_karya', $excludeIds))
+            ->count();
+
+        if ($totalMinatTersedia > 0) {
+            // Tampilkan HANYA karya yang sesuai minat pengguna
+            return Karya::with(['kategori', self::PENGGUNA_PUBLIK])
+                ->whereIn('id_kategori', $minatIds)
+                ->when(!empty($excludeIds), fn ($q) => $q->whereNotIn('id_karya', $excludeIds))
+                ->when($refresh, fn ($q) => $q->inRandomOrder(), fn ($q) => $q->latest('created_at'));
+        }
+
+        // Jika karya minat sudah habis -> Baru tampilkan kategori lain
+        return Karya::with(['kategori', self::PENGGUNA_PUBLIK])
+            ->whereNotIn('id_kategori', $minatIds)
+            ->when(!empty($excludeIds), fn ($q) => $q->whereNotIn('id_karya', $excludeIds))
+            ->when($refresh, fn ($q) => $q->inRandomOrder(), fn ($q) => $q->latest('created_at'));
     }
 
     private function queryPameran(string $keyword)

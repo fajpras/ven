@@ -48,6 +48,7 @@ data class HomeUiState(
     val currentPage: Int = 1,
     val comingSoonEvents: List<ComingSoonEvent> = emptyList(),
     val posts: List<PostItem> = emptyList(),
+    val seenPostIds: Set<String> = emptySet(),
     val errorMessage: String? = null,
 )
 

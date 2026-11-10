@@ -44,21 +44,97 @@ class KaryaController extends Controller
         $user = $request->user();
         $page = $request->integer('page', 1);
         $perPage = min($request->integer('per_page', 12), 24);
+        $excludeIds = array_filter(array_map('trim', explode(',', (string) $request->query('exclude', ''))));
+        $refresh = $request->boolean('refresh', false);
 
-        $cacheKey = 'rekomendasi_karya_'.($user ? $user->id_pengguna : 'guest').'_p_'.$page.'_'.$perPage;
+        // Ambil kategori minat pengguna
+        $userCategories = $user ? $user->kategori()->get() : collect();
+        $hasOthers = $userCategories->contains(fn ($k) => strcasecmp($k->kategori, 'others') === 0);
+        $minatIds = $userCategories->pluck('id_kategori')->toArray();
 
-        $karya = Cache::remember($cacheKey, 60, function () use ($user, $perPage) {
+        // KASUS 1: Pengguna memilih "Others" ATAU belum memiliki minat (guest/skip)
+        // -> Tampilkan karya dari SELURUH kategori yang ada semuanya
+        if ($hasOthers || empty($minatIds)) {
             $query = Karya::query()->select('karya.*')->with(['kategori', self::PENGGUNA_PUBLIK]);
 
-            if ($user && $user->kategori()->exists()) {
-                $query->leftJoin('pengguna_kategori', fn ($join) => $join
-                    ->on('karya.id_kategori', '=', 'pengguna_kategori.id_kategori')
-                    ->where('pengguna_kategori.id_pengguna', '=', $user->id_pengguna))
-                    ->orderByRaw('COALESCE(pengguna_kategori.bobot, 0) DESC');
+            if (!empty($excludeIds)) {
+                $query->whereNotIn('karya.id_karya', $excludeIds);
             }
 
-            return $query->latest('karya.created_at')->paginate($perPage);
-        });
+            if ($refresh) {
+                $query->inRandomOrder();
+            } else {
+                $query->latest('karya.created_at');
+            }
+
+            $karya = $query->paginate($perPage);
+
+            // Fallback: Jika seluruh karya sudah pernah dilihat, acak ulang seluruh karya
+            if ($karya->isEmpty() && !empty($excludeIds)) {
+                $karya = Karya::query()->select('karya.*')->with(['kategori', self::PENGGUNA_PUBLIK])
+                    ->inRandomOrder()
+                    ->paginate($perPage);
+            }
+
+            return $this->ok($karya);
+        }
+
+        // KASUS 2: Pengguna memilih kategori spesifik (misal: 3D, UI/UX) TANPA "Others"
+        // Hitung apakah masih ada karya dari kategori yang dipilih yang belum pernah dilihat
+        $totalMinatTersedia = Karya::whereIn('id_kategori', $minatIds)
+            ->when(!empty($excludeIds), fn ($q) => $q->whereNotIn('id_karya', $excludeIds))
+            ->count();
+
+        if ($totalMinatTersedia > 0) {
+            // Fase A: Tampilkan HANYA karya yang sesuai dengan kategori yang dipilih pengguna
+            $minatQuery = Karya::query()->select('karya.*')
+                ->with(['kategori', self::PENGGUNA_PUBLIK])
+                ->whereIn('karya.id_kategori', $minatIds);
+
+            if (!empty($excludeIds)) {
+                $minatQuery->whereNotIn('karya.id_karya', $excludeIds);
+            }
+
+            if ($refresh) {
+                $minatQuery->inRandomOrder();
+            } else {
+                $minatQuery->latest('karya.created_at');
+            }
+
+            $karya = $minatQuery->paginate($perPage);
+        } else {
+            // Fase B: Karya dari kategori pilihan sudah habis -> Baru menampilkan karya dari kategori lain
+            $lainQuery = Karya::query()->select('karya.*')
+                ->with(['kategori', self::PENGGUNA_PUBLIK])
+                ->whereNotIn('karya.id_kategori', $minatIds);
+
+            if (!empty($excludeIds)) {
+                $lainQuery->whereNotIn('karya.id_karya', $excludeIds);
+            }
+
+            if ($refresh) {
+                $lainQuery->inRandomOrder();
+            } else {
+                $lainQuery->latest('karya.created_at');
+            }
+
+            $karya = $lainQuery->paginate($perPage);
+
+            // Fase C (Fallback): Jika seluruh karya kategori lain sudah pernah dilihat, acak ulang karya kategori lain agar konten tidak pernah habis
+            if ($karya->isEmpty() && !empty($excludeIds)) {
+                $karya = Karya::query()->select('karya.*')->with(['kategori', self::PENGGUNA_PUBLIK])
+                    ->whereNotIn('karya.id_kategori', $minatIds)
+                    ->inRandomOrder()
+                    ->paginate($perPage);
+
+                // Jika di database tidak ada karya kategori lain, fallback acak seluruh karya
+                if ($karya->isEmpty()) {
+                    $karya = Karya::query()->select('karya.*')->with(['kategori', self::PENGGUNA_PUBLIK])
+                        ->inRandomOrder()
+                        ->paginate($perPage);
+                }
+            }
+        }
 
         return $this->ok($karya);
     }

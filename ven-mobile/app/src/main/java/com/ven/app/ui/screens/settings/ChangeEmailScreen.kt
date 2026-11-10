@@ -93,6 +93,7 @@ fun ChangeEmailScreen(
                 value = state.kataSandi,
                 onValueChange = onPasswordChange,
                 variant = VexTextFieldVariant.Boxed,
+                placeholder = "",
                 label = stringResource(R.string.settings_password_label),
             )
 
@@ -102,6 +103,7 @@ fun ChangeEmailScreen(
                 value = state.konfirmasiKataSandi,
                 onValueChange = onConfirmPasswordChange,
                 variant = VexTextFieldVariant.Boxed,
+                placeholder = "",
                 label = stringResource(R.string.settings_confirm_password_label),
             )
 

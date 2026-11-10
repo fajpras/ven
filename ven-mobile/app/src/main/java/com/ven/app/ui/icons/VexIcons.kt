@@ -47,6 +47,7 @@ object VexIcons {
     @DrawableRes val Filter = R.drawable.ic_action_filter
     @DrawableRes val ScheduleAction = R.drawable.ic_nav_schedule_outline
     @DrawableRes val Play = R.drawable.ic_action_play
+    @DrawableRes val Star = R.drawable.ic_category_star
     @DrawableRes val NewChat = R.drawable.ic_action_new_chat
     @DrawableRes val Send = R.drawable.ic_action_send
     @DrawableRes val Visibility = R.drawable.eyes_on

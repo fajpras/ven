@@ -13,6 +13,8 @@ interface ApiHome {
     @GET("karya/rekomendasi")
     suspend fun getRekomendasiKarya(
         @Query("page") page: Int = 1,
+        @Query("exclude") exclude: String? = null,
+        @Query("refresh") refresh: Boolean? = null,
     ): Response<ApiResponse<PaginatedData<KaryaItemModel>>>
 
     @GET("pameran/rekomendasi")

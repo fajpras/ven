@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
@@ -150,9 +151,9 @@ fun MediaGrid(
     header: (@Composable () -> Unit)? = null,
     onLoadMore: (() -> Unit)? = null,
     isLoadingMore: Boolean = false,
+    gridState: LazyGridState = rememberLazyGridState(),
 ) {
     val spacing = 2.dp
-    val gridState = rememberLazyGridState()
 
     if (onLoadMore != null) {
         val shouldLoadMore by remember {

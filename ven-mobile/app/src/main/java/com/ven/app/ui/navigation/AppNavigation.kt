@@ -1,8 +1,14 @@
 package com.ven.app.ui.navigation
 
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -24,9 +30,14 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.ven.app.data.api.ApiClient
 import com.ven.app.data.api.ApiLogin
+import com.ven.app.data.api.ApiPencarian
 import com.ven.app.data.api.SessionManager
+import com.ven.app.util.DateFormatter
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import com.ven.app.data.preference.ThemePreferences
 import com.ven.app.ui.components.feature.CreateOptionsBottomSheet
 import com.ven.app.ui.components.layout.AppScaffold
@@ -43,6 +54,7 @@ import com.ven.app.ui.screens.create.exhibit.editor.CreateExhibitEditorScreen
 import com.ven.app.ui.screens.create.post.CreatePostScreen
 import com.ven.app.ui.screens.explore.ExploreScreen
 import com.ven.app.ui.screens.explore.ExploreViewModel
+import com.ven.app.ui.screens.explore.PostsFeedItem
 import com.ven.app.ui.screens.explore.PostsFeedScreen
 import com.ven.app.ui.screens.home.HomeScreen
 import com.ven.app.ui.screens.home.HomeUiState
@@ -118,6 +130,10 @@ fun AppNavHost(showExplore: Boolean = false) {
     NavHost(
         navController = navController,
         startDestination = startDestination,
+        enterTransition = { fadeIn(tween(220)) },
+        exitTransition = { fadeOut(tween(180)) },
+        popEnterTransition = { fadeIn(tween(180)) },
+        popExitTransition = { fadeOut(tween(220)) },
     ) {
         // -------------------------------------------------------------
         // 1. Alur Login
@@ -125,6 +141,8 @@ fun AppNavHost(showExplore: Boolean = false) {
         composable(Screen.Login.route) {
             LoginRoute(
                 onNavigateToHome = {
+                    homeViewModel.muatUlang(filterSeen = false)
+                    exploreViewModel.muatUlang(filterSeen = false)
                     navController.navigate(Screen.Home.route) {
                         popUpTo(Screen.Login.route) { inclusive = true }
                     }
@@ -154,6 +172,8 @@ fun AppNavHost(showExplore: Boolean = false) {
                     }
                 },
                 onNavigateToHome = {
+                    homeViewModel.muatUlang(filterSeen = false)
+                    exploreViewModel.muatUlang(filterSeen = false)
                     navController.navigate(Screen.Home.route) {
                         popUpTo(0) { inclusive = true }
                     }
@@ -177,6 +197,8 @@ fun AppNavHost(showExplore: Boolean = false) {
                     sessionManager.getUser()?.let { pengguna ->
                         sessionManager.updateUser(pengguna.copy(onboardingSelesai = true))
                     }
+                    homeViewModel.muatUlang(filterSeen = false)
+                    exploreViewModel.muatUlang(filterSeen = false)
                     navController.navigate(Screen.Home.route) {
                         popUpTo(0) { inclusive = true }
                     }
@@ -238,8 +260,8 @@ fun AppNavHost(showExplore: Boolean = false) {
                 onNavigateToSettings = {
                     navController.navigate(Screen.Settings.route)
                 },
-                onNavigateToPostsFeed = { postId ->
-                    navController.navigate(Screen.PostsFeed.createRoute(postId))
+                onNavigateToPostsFeed = { postId, userId ->
+                    navController.navigate(Screen.PostsFeed.createRoute(postId = postId, userId = userId))
                 },
                 onNavigateToCreatePost = {
                     navController.navigate(Screen.CreatePost.route)
@@ -324,16 +346,86 @@ fun AppNavHost(showExplore: Boolean = false) {
                     type = NavType.StringType
                     defaultValue = ""
                 },
+                navArgument("userId") {
+                    type = NavType.StringType
+                    defaultValue = ""
+                },
             ),
         ) { backStackEntry ->
             val postId = backStackEntry.arguments?.getString("postId").orEmpty()
+            val userId = backStackEntry.arguments?.getString("userId").orEmpty()
             val exploreFeed by exploreViewModel.uiState.collectAsStateWithLifecycle()
             val homeFeed by homeViewModel.uiState.collectAsStateWithLifecycle()
+            val profileViewModel: ProfileViewModel = viewModel()
+            val profileState by profileViewModel.uiState.collectAsStateWithLifecycle()
 
-            val combinedPosts = (exploreFeed.feedPosts + homeFeed.posts.map { it.toFeedItem() }).distinctBy { it.id }
+            val apiPencarian = remember { ApiClient.createService(ApiPencarian::class.java) }
+            var userPosts by remember(userId) { mutableStateOf<List<PostsFeedItem>>(emptyList()) }
+            var isUserLoading by remember(userId) { mutableStateOf(false) }
+
+            val scope = rememberCoroutineScope()
+            val loadUserPosts: () -> Unit = {
+                if (userId.isNotBlank() && userId != "me") {
+                    scope.launch {
+                        isUserLoading = true
+                        try {
+                            val res = apiPencarian.getDetailPengguna(userId)
+                            if (res.isSuccessful) {
+                                val detail = res.body()?.data
+                                val mapped = detail?.karya?.map { k ->
+                                    val author = detail.pengguna?.namaPanggilan ?: detail.pengguna?.nama ?: "Kreator"
+                                    PostsFeedItem(
+                                        id = k.idKarya,
+                                        username = "@$author",
+                                        title = k.judul,
+                                        category = k.kategori?.nama ?: "Karya",
+                                        timestampText = DateFormatter.formatRelativeTime(k.createdAt),
+                                        description = k.deskripsi.orEmpty(),
+                                        imageUrl = k.fileUrl ?: k.file,
+                                        userId = detail.pengguna?.idPengguna,
+                                        userAvatarUrl = detail.pengguna?.fotoProfil,
+                                        pameranId = k.idPameran?.toString(),
+                                    )
+                                } ?: emptyList()
+                                userPosts = mapped
+                            }
+                        } catch (_: Exception) { }
+                        isUserLoading = false
+                    }
+                }
+            }
+
+            LaunchedEffect(userId) {
+                if (userId == "me") {
+                    profileViewModel.muat()
+                } else if (userId.isNotBlank()) {
+                    loadUserPosts()
+                }
+            }
+
+            val finalPosts = when {
+                userId == "me" -> profileState.feedPosts
+                userId.isNotBlank() -> userPosts
+                else -> (exploreFeed.feedPosts + homeFeed.posts.map { it.toFeedItem() }).distinctBy { it.id }
+            }
 
             PostsFeedScreen(
-                posts = combinedPosts,
+                posts = finalPosts,
+                isRefreshing = when {
+                    userId == "me" -> profileState.isLoading
+                    userId.isNotBlank() -> isUserLoading
+                    else -> exploreFeed.isRefreshing || homeFeed.isRefreshing
+                },
+                onRefresh = {
+                    when {
+                        userId == "me" -> profileViewModel.muat()
+                        userId.isNotBlank() -> loadUserPosts()
+                        else -> {
+                            exploreViewModel.muatUlang(filterSeen = true)
+                            homeViewModel.muatUlang(filterSeen = true)
+                        }
+                    }
+                },
                 onBackClick = { navController.popBackStack() },
                 onRequestMeetingClick = { id ->
                     navController.navigate(Screen.RequestMeeting.createRoute(id))
@@ -342,8 +434,8 @@ fun AppNavHost(showExplore: Boolean = false) {
                     navController.navigate(Screen.CreateExhibitEditor.createRoute(id.ifBlank { "tpl_small" }))
                 },
                 initialPostId = postId.ifBlank { null },
-                onUserClick = { userId ->
-                    navController.navigate(Screen.UserProfile.createRoute(userId))
+                onUserClick = { clickedUserId ->
+                    navController.navigate(Screen.UserProfile.createRoute(clickedUserId))
                 },
             )
         }
@@ -365,7 +457,7 @@ fun AppNavHost(showExplore: Boolean = false) {
                 userId = userId,
                 onBackClick = { navController.popBackStack() },
                 onMediaClick = { media ->
-                    navController.navigate(Screen.PostsFeed.createRoute(media.id))
+                    navController.navigate(Screen.PostsFeed.createRoute(postId = media.id, userId = userId))
                 },
                 onExhibitClick = { exhibitId ->
                     navController.navigate(Screen.CreateExhibitEditor.createRoute(exhibitId))
@@ -556,24 +648,36 @@ fun MainHomeScreen(
     initialTab: BottomNavTab = BottomNavTab.Home,
     onRequestMeetingClick: (postId: String) -> Unit = {},
     onNavigateToSettings: () -> Unit = {},
-    onNavigateToPostsFeed: (postId: String) -> Unit = {},
+    onNavigateToPostsFeed: (postId: String, userId: String) -> Unit = { _, _ -> },
     onNavigateToCreatePost: () -> Unit = {},
     onNavigateToCreateExhibit: () -> Unit = {},
     onNavigateToExhibitEditor: (templateIdOrExhibitId: String) -> Unit = {},
     onNavigateToUserProfile: (userId: String) -> Unit = {},
 ) {
     var currentTab by rememberSaveable { mutableStateOf(initialTab) }
+    val homeListState = rememberLazyListState()
+    val exploreGridState = rememberLazyGridState()
+    val scope = rememberCoroutineScope()
+    var lastHomeTapTime by remember { mutableStateOf(0L) }
+    var lastExploreTapTime by remember { mutableStateOf(0L) }
     val profileViewModel: ProfileViewModel = viewModel()
     val profileState by profileViewModel.uiState.collectAsStateWithLifecycle()
+    val liveHomeState by homeViewModel.uiState.collectAsStateWithLifecycle()
     var isCreateSheetOpen by remember { mutableStateOf(false) }
 
     LaunchedEffect(currentTab) {
+        if (currentTab == BottomNavTab.Home && liveHomeState.posts.isEmpty() && !liveHomeState.isLoading) {
+            homeViewModel.muatUlang(filterSeen = false)
+        }
         if (currentTab == BottomNavTab.Profile) {
             profileViewModel.muat()
         }
     }
 
     LifecycleResumeEffect(Unit) {
+        if (currentTab == BottomNavTab.Home && liveHomeState.posts.isEmpty() && !liveHomeState.isLoading) {
+            homeViewModel.muatUlang(filterSeen = false)
+        }
         if (currentTab == BottomNavTab.Profile) {
             profileViewModel.muat()
         }
@@ -598,56 +702,99 @@ fun MainHomeScreen(
         )
     }
 
-    when (currentTab) {
-        BottomNavTab.Home -> {
-            val liveHomeState by homeViewModel.uiState.collectAsStateWithLifecycle()
-            HomeScreen(
-                uiState = liveHomeState,
-                onTabSelected = { currentTab = it },
-                onCreateClick = handleCreateClick,
-                onRequestMeetingClick = onRequestMeetingClick,
-                onView3dClick = { pameranId -> onNavigateToExhibitEditor(pameranId ?: "tpl_small") },
-                onBannerClick = { eventId -> onNavigateToExhibitEditor(eventId) },
-                onLoadMore = homeViewModel::loadNextChunk,
-                onUserClick = onNavigateToUserProfile,
-            )
-        }
-        BottomNavTab.Schedule -> {
-            ScheduleScreen(
-                onTabSelected = { currentTab = it },
-            )
-        }
-        BottomNavTab.Ai -> {
-            AiChatScreen(
-                onTabSelected = { currentTab = it },
-            )
-        }
-        BottomNavTab.Explore -> {
-            ExploreScreen(
-                onTabSelected = { currentTab = it },
-                onMediaClick = { media -> onNavigateToPostsFeed(media.id) },
-                onExhibitClick = { exhibit -> onNavigateToExhibitEditor(exhibit.id) },
-                onAccountClick = onNavigateToUserProfile,
-                viewModel = exploreViewModel,
-            )
-        }
-        BottomNavTab.Profile -> {
-            ProfileScreen(
-                uiState = profileState,
-                onTabSelected = { currentTab = it },
-                onCreateClick = handleCreateClick,
-                onMenuClick = onNavigateToSettings,
-                onProfileTabChange = profileViewModel::pilihTab,
-                onSkillSheetToggle = profileViewModel::aturSkillSheet,
-                onRetryClick = profileViewModel::muat,
-                onMediaClick = { media ->
-                    if (profileState.selectedTab == com.ven.app.ui.screens.profile.ProfileTab.Exhibits) {
-                        onNavigateToExhibitEditor(media.id)
-                    } else {
-                        onNavigateToPostsFeed(media.id)
-                    }
-                },
-            )
+    Crossfade(
+        targetState = currentTab,
+        animationSpec = tween(durationMillis = 200),
+        label = "MainHomeScreenTabCrossfade",
+    ) { tab ->
+        when (tab) {
+            BottomNavTab.Home -> {
+                HomeScreen(
+                    uiState = liveHomeState,
+                    listState = homeListState,
+                    onTabSelected = { currentTab = it },
+                    onTabReselected = { reselectedTab ->
+                        if (reselectedTab == BottomNavTab.Home) {
+                            val now = System.currentTimeMillis()
+                            if (now - lastHomeTapTime <= 450L) {
+                                scope.launch {
+                                    homeListState.animateScrollToItem(0)
+                                }
+                                homeViewModel.muatUlang(filterSeen = true)
+                                lastHomeTapTime = 0L
+                            } else {
+                                lastHomeTapTime = now
+                                scope.launch {
+                                    homeListState.animateScrollToItem(0)
+                                }
+                            }
+                        }
+                    },
+                    onRefresh = { homeViewModel.muatUlang(filterSeen = true) },
+                    onCreateClick = handleCreateClick,
+                    onRequestMeetingClick = onRequestMeetingClick,
+                    onView3dClick = { pameranId -> onNavigateToExhibitEditor(pameranId ?: "tpl_small") },
+                    onBannerClick = { eventId -> onNavigateToExhibitEditor(eventId) },
+                    onLoadMore = homeViewModel::loadNextChunk,
+                    onUserClick = onNavigateToUserProfile,
+                )
+            }
+            BottomNavTab.Schedule -> {
+                ScheduleScreen(
+                    onTabSelected = { currentTab = it },
+                )
+            }
+            BottomNavTab.Ai -> {
+                AiChatScreen(
+                    onTabSelected = { currentTab = it },
+                )
+            }
+            BottomNavTab.Explore -> {
+                ExploreScreen(
+                    onTabSelected = { currentTab = it },
+                    gridState = exploreGridState,
+                    onTabReselected = { reselectedTab ->
+                        if (reselectedTab == BottomNavTab.Explore) {
+                            val now = System.currentTimeMillis()
+                            if (now - lastExploreTapTime <= 450L) {
+                                scope.launch {
+                                    exploreGridState.animateScrollToItem(0)
+                                }
+                                exploreViewModel.muatUlang(filterSeen = true)
+                                lastExploreTapTime = 0L
+                            } else {
+                                lastExploreTapTime = now
+                                scope.launch {
+                                    exploreGridState.animateScrollToItem(0)
+                                }
+                            }
+                        }
+                    },
+                    onRefresh = { exploreViewModel.muatUlang(filterSeen = true) },
+                    onMediaClick = { media -> onNavigateToPostsFeed(media.id, "") },
+                    onExhibitClick = { exhibit -> onNavigateToExhibitEditor(exhibit.id) },
+                    onAccountClick = onNavigateToUserProfile,
+                    viewModel = exploreViewModel,
+                )
+            }
+            BottomNavTab.Profile -> {
+                ProfileScreen(
+                    uiState = profileState,
+                    onTabSelected = { currentTab = it },
+                    onCreateClick = handleCreateClick,
+                    onMenuClick = onNavigateToSettings,
+                    onProfileTabChange = profileViewModel::pilihTab,
+                    onSkillSheetToggle = profileViewModel::aturSkillSheet,
+                    onRetryClick = profileViewModel::muat,
+                    onMediaClick = { media ->
+                        if (profileState.selectedTab == com.ven.app.ui.screens.profile.ProfileTab.Exhibits) {
+                            onNavigateToExhibitEditor(media.id)
+                        } else {
+                            onNavigateToPostsFeed(media.id, "me")
+                        }
+                    },
+                )
+            }
         }
     }
 }

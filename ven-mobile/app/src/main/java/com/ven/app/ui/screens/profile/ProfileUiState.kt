@@ -10,6 +10,8 @@ import androidx.lifecycle.viewModelScope
 import com.ven.app.data.api.ApiClient
 import com.ven.app.data.api.ApiProfil
 import com.ven.app.ui.components.feature.MediaGridItem
+import com.ven.app.ui.screens.explore.PostsFeedItem
+import com.ven.app.util.DateFormatter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -64,6 +66,7 @@ data class ProfileUiState(
     val selectedTab: ProfileTab = ProfileTab.Posts,
     val posts: List<MediaGridItem> = emptyList(),
     val exhibits: List<MediaGridItem> = emptyList(),
+    val feedPosts: List<PostsFeedItem> = emptyList(),
     val isSkillSheetOpen: Boolean = false,
     val avatarBitmap: ImageBitmap? = null,
     val errorMessage: String? = null,
@@ -120,12 +123,46 @@ class ProfileViewModel : ViewModel() {
                 phone = pengguna.nomorHp.orEmpty(),
             )
 
+            val rawKarya = ApiProfil.listKaryaMilikku().getOrDefault(emptyList())
+            val rawPameran = ApiProfil.listPameranMilikku().getOrDefault(emptyList())
+
+            val posts = rawKarya.map { k ->
+                MediaGridItem(
+                    id = k.idKarya,
+                    title = k.judul,
+                    imageUrl = k.fileUrl ?: k.file,
+                )
+            }
+            val exhibits = rawPameran.map { p ->
+                MediaGridItem(
+                    id = p.idPameran.toString(),
+                    title = p.judul,
+                    imageUrl = p.banner,
+                )
+            }
+            val authorName = pengguna.namaPanggilan.orEmpty().ifBlank { pengguna.nama.orEmpty() }
+            val feedPosts = rawKarya.map { k ->
+                PostsFeedItem(
+                    id = k.idKarya,
+                    username = if (authorName.startsWith("@")) authorName else "@$authorName",
+                    userId = pengguna.idPengguna,
+                    userAvatarUrl = pengguna.fotoProfil,
+                    title = k.judul,
+                    category = k.kategori?.nama,
+                    timestampText = DateFormatter.formatRelativeTime(k.createdAt),
+                    description = k.deskripsi ?: "",
+                    imageUrl = k.fileUrl ?: k.file,
+                    pameranId = k.idPameran?.toString(),
+                )
+            }
+
             _uiState.update {
                 it.copy(
                     isLoading = false,
                     profile = profile,
-                    posts = emptyList(),
-                    exhibits = emptyList(),
+                    posts = posts,
+                    exhibits = exhibits,
+                    feedPosts = feedPosts,
                     errorMessage = null,
                 )
             }

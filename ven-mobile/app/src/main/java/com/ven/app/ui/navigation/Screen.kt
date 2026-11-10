@@ -23,8 +23,8 @@ sealed class Screen(val route: String) {
     data object Profile : Screen("profile")
 
     // Explore Sub-Page: Scrollable Post Feed
-    data object PostsFeed : Screen("posts_feed?postId={postId}") {
-        fun createRoute(postId: String = "") = "posts_feed?postId=$postId"
+    data object PostsFeed : Screen("posts_feed?postId={postId}&userId={userId}") {
+        fun createRoute(postId: String = "", userId: String = "") = "posts_feed?postId=$postId&userId=$userId"
     }
 
     // Detail Profil Pengguna Publik (Instagram Style)

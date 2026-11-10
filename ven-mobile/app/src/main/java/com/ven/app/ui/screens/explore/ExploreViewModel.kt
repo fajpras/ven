@@ -30,37 +30,132 @@ class ExploreViewModel(
     }
 
     /**
-     * Memuat karya awal dari database untuk ditampilkan pada grid Discovery dan Feed detail.
+     * Memuat ulang data Explore secara reaktif (pull-to-refresh & double tap).
      */
-    fun muatDiscoveryMedia() {
+    fun muatUlang(filterSeen: Boolean = true) {
+        _uiState.update { it.copy(isRefreshing = true) }
+        if (_uiState.value.isShowingResults) {
+            val q = _uiState.value.searchQuery
+            val tab = _uiState.value.selectedTab
+            searchJob?.cancel()
+            searchJob = viewModelScope.launch(Dispatchers.IO) {
+                lakukanPencarian(q, tab)
+                _uiState.update { it.copy(isRefreshing = false) }
+            }
+        } else {
+            muatDiscoveryMedia(isRefresh = true, filterSeen = filterSeen)
+        }
+    }
+
+    /**
+     * Memuat karya awal dari database untuk ditampilkan pada grid Discovery dan Feed detail.
+     * Mendukung filterSeen untuk menampilkan hal baru yang belum pernah dilihat saat refresh.
+     */
+    fun muatDiscoveryMedia(isRefresh: Boolean = false, filterSeen: Boolean = false) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                // Muat daftar karya
-                val res = apiPencarian.searchKarya(query = null, tipe = "karya", page = 1)
+                val currentSeen = if (filterSeen) {
+                    _uiState.value.seenMediaIds + _uiState.value.discoveryMedia.map { it.id }.toSet()
+                } else {
+                    _uiState.value.seenMediaIds
+                }
+
+                val excludeParam = if (filterSeen && currentSeen.isNotEmpty()) {
+                    currentSeen.take(30).joinToString(",")
+                } else null
+
+                // Muat daftar karya dengan exclude param dan refresh flag
+                val res = apiPencarian.searchKarya(
+                    query = null,
+                    tipe = "karya",
+                    page = 1,
+                    exclude = excludeParam,
+                    refresh = if (isRefresh) true else null,
+                )
                 if (res.isSuccessful) {
                     val paginated = res.body()?.data
                     val rawKarya = paginated?.data ?: emptyList()
-                    val items = rawKarya.map { k ->
+                    var currentPage = 1
+                    var lastPage = paginated?.lastPage ?: 1
+
+                    var filteredKarya = if (filterSeen && currentSeen.isNotEmpty()) {
+                        rawKarya.filterNot { it.idKarya in currentSeen }
+                    } else {
+                        rawKarya
+                    }
+
+                    // Jika difilter dan halaman pertama sudah pernah dilihat semua, cari halaman berikutnya
+                    while (filteredKarya.isEmpty() && currentPage < lastPage) {
+                        currentPage++
+                        val nextRes = apiPencarian.searchKarya(
+                            query = null,
+                            tipe = "karya",
+                            page = currentPage,
+                            exclude = excludeParam,
+                            refresh = if (isRefresh) true else null,
+                        )
+                        if (nextRes.isSuccessful) {
+                            val nextPaginated = nextRes.body()?.data
+                            val nextData = nextPaginated?.data ?: emptyList()
+                            lastPage = nextPaginated?.lastPage ?: lastPage
+                            val fresh = if (filterSeen && currentSeen.isNotEmpty()) {
+                                nextData.filterNot { it.idKarya in currentSeen }
+                            } else {
+                                nextData
+                            }
+                            filteredKarya = fresh
+                        } else {
+                            break
+                        }
+                    }
+
+                    // Jika seluruh karya sudah pernah dilihat, acak karya yang ada agar selalu tampil segar
+                    val finalKarya = when {
+                        filteredKarya.isNotEmpty() -> filteredKarya
+                        rawKarya.isNotEmpty() -> {
+                            val currentFirstId = _uiState.value.discoveryMedia.firstOrNull()?.id
+                            val shuffled = rawKarya.shuffled()
+                            if (shuffled.firstOrNull()?.idKarya == currentFirstId && shuffled.size > 1) {
+                                shuffled.drop(1) + shuffled.take(1)
+                            } else {
+                                shuffled
+                            }
+                        }
+                        else -> emptyList()
+                    }
+
+                    val items = finalKarya.map { k ->
                         MediaGridItem(
                             id = k.idKarya,
                             title = k.judul,
                             imageUrl = k.fileUrl ?: k.file,
                         )
                     }
-                    val feedList = rawKarya.map { it.toFeedItem() }
-                    val hasMore = paginated != null && paginated.currentPage < paginated.lastPage
+                    val feedList = finalKarya.map { it.toFeedItem() }
+                    val hasMore = currentPage < lastPage && items.isNotEmpty()
+                    val updatedSeen = if (filteredKarya.isNotEmpty()) {
+                        currentSeen + items.map { it.id }.toSet()
+                    } else {
+                        items.map { it.id }.toSet()
+                    }
 
                     if (items.isNotEmpty()) {
                         _uiState.update {
                             it.copy(
+                                isRefreshing = false,
                                 discoveryMedia = items,
                                 resultPosts = items,
                                 feedPosts = feedList,
-                                currentPostsPage = 1,
+                                currentPostsPage = currentPage,
                                 canLoadMorePosts = hasMore,
+                                seenMediaIds = updatedSeen,
                             )
                         }
+                    } else {
+                        _uiState.update { it.copy(isRefreshing = false) }
                     }
+                } else {
+                    _uiState.update { it.copy(isRefreshing = false) }
                 }
 
                 // Muat data pengguna nyata untuk riwayat pencarian awal (Recents)
@@ -80,6 +175,7 @@ class ExploreViewModel(
                     }
                 }
             } catch (_: Exception) {
+                _uiState.update { it.copy(isRefreshing = false) }
                 // Gunakan fallback data jika offline
             }
         }
@@ -191,6 +287,7 @@ class ExploreViewModel(
                                 id = p.idPameran.toString(),
                                 title = p.judul,
                                 bannerUrl = p.banner,
+                                category = p.tipe ?: "3D",
                             )
                         } ?: emptyList()
 
@@ -263,6 +360,7 @@ class ExploreViewModel(
                                 id = p.idPameran.toString(),
                                 title = p.judul,
                                 bannerUrl = p.banner,
+                                category = p.tipe ?: "3D",
                             )
                         } ?: emptyList()
 
@@ -282,7 +380,7 @@ class ExploreViewModel(
     }
 
     /**
-     * Memuat chunk halaman karya berikutnya pada Explore.
+     * Memuat chunk halaman karya berikutnya pada Explore (infinite discovery).
      */
     fun loadMorePostsChunk() {
         val currentState = _uiState.value
@@ -294,11 +392,38 @@ class ExploreViewModel(
             _uiState.update { it.copy(isLoadingMorePosts = true) }
             val nextPage = currentState.currentPostsPage + 1
             val qParam = currentState.searchQuery.trim().ifBlank { null }
+            val currentSeen = currentState.seenMediaIds + currentState.discoveryMedia.map { it.id }.toSet()
+            val excludeParam = if (qParam == null && currentSeen.isNotEmpty()) currentSeen.take(50).joinToString(",") else null
+
             try {
-                val res = apiPencarian.searchKarya(query = qParam, tipe = "karya", page = nextPage)
-                if (res.isSuccessful) {
-                    val paginated = res.body()?.data
-                    val rawKarya = paginated?.data ?: emptyList()
+                var res = apiPencarian.searchKarya(query = qParam, tipe = "karya", page = nextPage, exclude = excludeParam)
+                var paginated = res.body()?.data
+                var rawKarya = if (res.isSuccessful) paginated?.data ?: emptyList() else emptyList()
+
+                // Jika halaman paginasi biasa kosong saat discovery, minta batch dengan exclude (kategori lain)
+                if (rawKarya.isEmpty() && qParam == null) {
+                    val fallbackRes = apiPencarian.searchKarya(query = null, tipe = "karya", page = 1, exclude = excludeParam)
+                    if (fallbackRes.isSuccessful) {
+                        val fbData = fallbackRes.body()?.data
+                        val fbList = fbData?.data ?: emptyList()
+                        if (fbList.isNotEmpty()) {
+                            rawKarya = fbList
+                        }
+                    }
+                }
+
+                // Jangan sampai konten habis: jika seluruh karya sudah pernah dilihat, ambil rotasi acak
+                if (rawKarya.isEmpty() && qParam == null) {
+                    val freshRes = apiPencarian.searchKarya(query = null, tipe = "karya", page = 1, refresh = true)
+                    if (freshRes.isSuccessful) {
+                        val freshList = freshRes.body()?.data?.data ?: emptyList()
+                        if (freshList.isNotEmpty()) {
+                            rawKarya = freshList.shuffled()
+                        }
+                    }
+                }
+
+                if (rawKarya.isNotEmpty()) {
                     val newMedia = rawKarya.map { k ->
                         MediaGridItem(
                             id = k.idKarya,
@@ -307,20 +432,21 @@ class ExploreViewModel(
                         )
                     }
                     val newFeed = rawKarya.map { it.toFeedItem() }
-                    val hasMore = paginated != null && paginated.currentPage < paginated.lastPage && rawKarya.isNotEmpty()
+                    val updatedSeen = currentState.seenMediaIds + newMedia.map { it.id }.toSet()
 
                     _uiState.update {
                         it.copy(
                             isLoadingMorePosts = false,
-                            canLoadMorePosts = hasMore,
+                            canLoadMorePosts = true,
                             currentPostsPage = nextPage,
+                            seenMediaIds = updatedSeen,
                             resultPosts = (it.resultPosts + newMedia).distinctBy { item -> item.id },
                             discoveryMedia = (it.discoveryMedia + newMedia).distinctBy { item -> item.id },
                             feedPosts = (it.feedPosts + newFeed).distinctBy { item -> item.id },
                         )
                     }
                 } else {
-                    _uiState.update { it.copy(isLoadingMorePosts = false, canLoadMorePosts = false) }
+                    _uiState.update { it.copy(isLoadingMorePosts = false, canLoadMorePosts = qParam != null) }
                 }
             } catch (_: Exception) {
                 _uiState.update { it.copy(isLoadingMorePosts = false) }

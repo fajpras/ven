@@ -33,6 +33,7 @@ fun AppScaffold(
     currentTab: BottomNavTab,
     onTabSelected: (BottomNavTab) -> Unit,
     modifier: Modifier = Modifier,
+    onTabReselected: ((BottomNavTab) -> Unit)? = null,
     topBar: @Composable () -> Unit = {},
     showBottomNav: Boolean = true,
     profilePainter: Painter? = null,
@@ -50,6 +51,7 @@ fun AppScaffold(
                 BottomNav(
                     selectedTab = currentTab,
                     onTabSelected = onTabSelected,
+                    onTabReselected = onTabReselected,
                     profilePainter = profilePainter,
                     profileInitials = profileInitials,
                 )
