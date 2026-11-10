@@ -6,6 +6,7 @@ import com.ven.app.data.api.ApiClient
 import com.ven.app.data.api.ApiHome
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
+import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -41,17 +42,17 @@ class HomeViewModel(
                     currentSeen.take(30).joinToString(",")
                 } else null
 
-                val pameranDeferred = async { apiHome.getRekomendasiPameran(page = 1) }
-                val karyaDeferred = async {
-                    apiHome.getRekomendasiKarya(
-                        page = 1,
-                        exclude = excludeParam,
-                        refresh = if (isRefresh) true else null,
-                    )
+                val (pameranRes, karyaRes) = supervisorScope {
+                    val pameranDeferred = async { apiHome.getRekomendasiPameran(page = 1) }
+                    val karyaDeferred = async {
+                        apiHome.getRekomendasiKarya(
+                            page = 1,
+                            exclude = excludeParam,
+                            refresh = if (isRefresh) true else null,
+                        )
+                    }
+                    Pair(pameranDeferred.await(), karyaDeferred.await())
                 }
-
-                val pameranRes = pameranDeferred.await()
-                val karyaRes = karyaDeferred.await()
 
                 val events = if (pameranRes.isSuccessful) {
                     pameranRes.body()?.data?.data?.map { it.toComingSoonEvent() } ?: emptyList()

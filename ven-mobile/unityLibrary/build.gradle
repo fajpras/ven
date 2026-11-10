@@ -84,11 +84,19 @@ tasks.register('buildIl2Cpp') {
         outputs.file getIl2CppSymbolPath(workingDir, abi)
     }
     doLast {
+        def executableExtension = org.gradle.internal.os.OperatingSystem.current().isWindows() ? ".exe" : ""
+        def il2cppExe = file("${workingDir}/src/main/Il2CppOutputProject/IL2CPP/build/deploy/il2cpp${executableExtension}")
         // skipIl2CppBuild used for testing purposes
-        if (project.hasProperty("skipIl2CppBuild")) {
-            println("Skipping il2cpp build, creating dummy files.")
+        if (project.hasProperty("skipIl2CppBuild") || !il2cppExe.exists()) {
+            if (!il2cppExe.exists()) {
+                println("il2cpp executable not found at ${il2cppExe}, creating dummy files.")
+            } else {
+                println("Skipping il2cpp build, creating dummy files.")
+            }
             archs.each { arch, abi ->
                 {
+                    file(getIl2CppOutputPath(workingDir, abi)).parentFile.mkdirs()
+                    file(getIl2CppSymbolPath(workingDir, abi)).parentFile.mkdirs()
                     file(getIl2CppOutputPath(workingDir, abi)).write("DummyBinary")
                     file(getIl2CppSymbolPath(workingDir, abi)).write("DummySymbols")
                 }
