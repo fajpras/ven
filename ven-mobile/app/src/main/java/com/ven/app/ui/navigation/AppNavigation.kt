@@ -143,36 +143,12 @@ fun AppNavHost(showExplore: Boolean = false) {
         popExitTransition = { fadeOut(tween(220)) },
     ) {
         // -------------------------------------------------------------
-        // 0. Alur Splash / Welcome
+        // 0. Alur Splash
         // -------------------------------------------------------------
         composable(Screen.Splash.route) {
             SplashScreen(
-                user = sessionManager.getUser(),
-                isLoggedIn = !sessionManager.getToken().isNullOrBlank(),
-                onNavigateToLogin = {
-                    navController.navigate(Screen.Login.route)
-                },
-                onNavigateToRegister = {
-                    navController.navigate(Screen.Register.route)
-                },
-                onNavigateToHome = {
-                    val user = sessionManager.getUser()
-                    if (user?.needsOnboarding == true) {
-                        navController.navigate(Screen.OnboardingInterest.route) {
-                            popUpTo(Screen.Splash.route) { inclusive = true }
-                        }
-                    } else {
-                        homeViewModel.muatUlang(filterSeen = false)
-                        exploreViewModel.muatUlang(filterSeen = false)
-                        navController.navigate(Screen.Home.route) {
-                            popUpTo(Screen.Splash.route) { inclusive = true }
-                        }
-                    }
-                },
-                onNavigateToExplore = {
-                    homeViewModel.muatUlang(filterSeen = false)
-                    exploreViewModel.muatUlang(filterSeen = false)
-                    navController.navigate(Screen.Home.route) {
+                onSplashFinished = {
+                    navController.navigate(Screen.Login.route) {
                         popUpTo(Screen.Splash.route) { inclusive = true }
                     }
                 },
