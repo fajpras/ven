@@ -95,10 +95,16 @@ tasks.register('buildIl2Cpp') {
             }
             archs.each { arch, abi ->
                 {
-                    file(getIl2CppOutputPath(workingDir, abi)).parentFile.mkdirs()
-                    file(getIl2CppSymbolPath(workingDir, abi)).parentFile.mkdirs()
-                    file(getIl2CppOutputPath(workingDir, abi)).write("DummyBinary")
-                    file(getIl2CppSymbolPath(workingDir, abi)).write("DummySymbols")
+                    def outPath = file(getIl2CppOutputPath(workingDir, abi))
+                    def symPath = file(getIl2CppSymbolPath(workingDir, abi))
+                    if (!outPath.exists()) {
+                        outPath.parentFile.mkdirs()
+                        outPath.write("DummyBinary")
+                    }
+                    if (!symPath.exists()) {
+                        symPath.parentFile.mkdirs()
+                        symPath.write("DummySymbols")
+                    }
                 }
             }
         } else {

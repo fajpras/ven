@@ -35,6 +35,7 @@ import com.ven.app.data.api.ApiLogin
 import com.ven.app.data.api.ApiPencarian
 import com.ven.app.data.api.SessionManager
 import com.ven.app.util.DateFormatter
+import com.ven.app.util.UnityLauncher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -50,8 +51,8 @@ import com.ven.app.ui.screens.auth.RegisterRoute
 import com.ven.app.ui.screens.auth.ResetPasswordScreen
 import com.ven.app.ui.screens.auth.VerifyOtpScreen
 import com.ven.app.ui.screens.create.exhibit.CreateExhibitTemplateScreen
-import com.ven.app.ui.screens.create.exhibit.editor.CreateExhibitEditorScreen
-import com.ven.app.unity.UnityLauncher
+import com.ven.app.ui.screens.unity.UnityLoadingScreen
+import com.ven.app.util.UnityLauncher
 import com.ven.app.ui.screens.create.post.CreatePostScreen
 import com.ven.app.ui.screens.explore.ExploreScreen
 import com.ven.app.ui.screens.explore.ExploreViewModel
@@ -271,7 +272,7 @@ fun AppNavHost(showExplore: Boolean = false) {
                     navController.navigate(Screen.CreateExhibit.route)
                 },
                 onNavigateToExhibitEditor = { id ->
-                    navController.navigate(Screen.CreateExhibitEditor.createRoute(id))
+                    navController.navigate(Screen.CreateExhibitEditor.createRoute(id.ifBlank { "template01" }))
                 },
                 onNavigateToUserProfile = { userId ->
                     navController.navigate(Screen.UserProfile.createRoute(userId))
@@ -322,20 +323,22 @@ fun AppNavHost(showExplore: Boolean = false) {
         }
 
         // -------------------------------------------------------------
-        // 5a-3. Create Content Flow: Create Exhibit (3D Canvas Editor & 4 Tool Sheets)
+        // 5a-3. Create Content Flow: Create Exhibit (Unity 3D Engine Editor)
         // -------------------------------------------------------------
         composable(
             route = Screen.CreateExhibitEditor.route,
             arguments = listOf(
                 navArgument("templateId") {
                     type = NavType.StringType
-                    defaultValue = "tpl_small"
+                    defaultValue = "template01"
                 },
             ),
-        ) {
-            CreateExhibitEditorScreen(
-                onBackClick = { navController.popBackStack() },
-                onPublishSuccess = {
+        ) { backStackEntry ->
+            val templateId = backStackEntry.arguments?.getString("templateId") ?: "template01"
+            UnityLoadingScreen(
+                targetId = templateId,
+                isEditor = true,
+                onBackClick = {
                     if (!navController.popBackStack(Screen.CreateExhibit.route, inclusive = true)) {
                         navController.popBackStack()
                     }
@@ -438,7 +441,7 @@ fun AppNavHost(showExplore: Boolean = false) {
                     navController.navigate(Screen.RequestMeeting.createRoute(id))
                 },
                 onView3dClick = { id ->
-                    navController.navigate(Screen.CreateExhibitEditor.createRoute(id.ifBlank { "tpl_small" }))
+                    navController.navigate(Screen.CreateExhibitEditor.createRoute(id.ifBlank { "template01" }))
                 },
                 initialPostId = postId.ifBlank { null },
                 onUserClick = { clickedUserId ->
@@ -467,7 +470,7 @@ fun AppNavHost(showExplore: Boolean = false) {
                     navController.navigate(Screen.PostsFeed.createRoute(postId = media.id, userId = userId))
                 },
                 onExhibitClick = { exhibitId ->
-                    navController.navigate(Screen.CreateExhibitEditor.createRoute(exhibitId))
+                    navController.navigate(Screen.CreateExhibitEditor.createRoute(exhibitId.ifBlank { "template01" }))
                 },
             )
         }

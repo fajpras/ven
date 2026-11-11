@@ -38,12 +38,12 @@ android {
         testInstrumentationRunner =
             "androidx.test.runner.AndroidJUnitRunner"
 
-        vectorDrawables {
-            useSupportLibrary = true
+        ndk {
+            abiFilters.add("arm64-v8a")
         }
 
-        ndk {
-            abiFilters += listOf("arm64-v8a")
+        vectorDrawables {
+            useSupportLibrary = true
         }
     }
 
@@ -114,6 +114,10 @@ dependencies {
     implementation("com.squareup.retrofit2:converter-gson:2.11.0")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
+
+    // Unity dependencies
+    implementation("androidx.appcompat:appcompat:1.6.1")
+    implementation("androidx.games:games-activity:4.4.0")
 
     // Google Sign-In
     implementation("androidx.credentials:credentials:1.3.0")
