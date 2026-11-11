@@ -43,10 +43,14 @@ Route::middleware(CatatKeamanan::class)->group(function () {
         Route::controller(Pengguna\PameranController::class)->group(function () {
             Route::get('model-3d', 'templates');
             Route::get('model-3d/{model3d}', 'templateShow');
+            Route::get('exhibition_templates', 'templates');
             Route::get('pameran', 'index');
             Route::get('pameran/rekomendasi', 'rekomendasi');
             Route::post('pameran', 'store');
+            Route::post('exhibitions', 'storeFromUnity');
+            Route::get('exhibitions/{pameran}/room-dto', 'roomDto')->whereNumber('pameran');
             Route::get('pameran/{pameran}', 'show')->whereNumber('pameran');
+            Route::get('pameran/{pameran}/room-dto', 'roomDto')->whereNumber('pameran');
             Route::put('pameran/{pameran}', 'update')->whereNumber('pameran');
             Route::delete('pameran/{pameran}', 'destroy')->whereNumber('pameran');
             Route::post('pameran/{pameran}/ruangan', 'storeRuangan')->whereNumber('pameran');
