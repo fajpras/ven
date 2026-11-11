@@ -292,6 +292,9 @@ fun AppNavHost(showExplore: Boolean = false) {
                 onNavigateToExhibitEditor = { id ->
                     navController.navigate(Screen.CreateExhibitEditor.createRoute(id.ifBlank { "template01" }))
                 },
+                onNavigateToExhibitViewer = { id ->
+                    navController.navigate(Screen.ViewExhibit.createRoute(id))
+                },
                 onNavigateToUserProfile = { userId ->
                     navController.navigate(Screen.UserProfile.createRoute(userId))
                 },
@@ -440,6 +443,28 @@ fun AppNavHost(showExplore: Boolean = false) {
         }
 
         // -------------------------------------------------------------
+        // 5a-4. View Existing Exhibition (Unity 3D Engine Viewer / PlayScene)
+        // -------------------------------------------------------------
+        composable(
+            route = Screen.ViewExhibit.route,
+            arguments = listOf(
+                navArgument("exhibitId") {
+                    type = NavType.StringType
+                    defaultValue = ""
+                },
+            ),
+        ) { backStackEntry ->
+            val exhibitId = backStackEntry.arguments?.getString("exhibitId") ?: ""
+            UnityLoadingScreen(
+                targetId = exhibitId,
+                isEditor = false,
+                onBackClick = {
+                    navController.popBackStack()
+                },
+            )
+        }
+
+        // -------------------------------------------------------------
         // 5b. SubPage: Explore Post Feed (scrollable)
         // -------------------------------------------------------------
         composable(
@@ -534,7 +559,7 @@ fun AppNavHost(showExplore: Boolean = false) {
                     navController.navigate(Screen.RequestMeeting.createRoute(id))
                 },
                 onView3dClick = { id ->
-                    navController.navigate(Screen.CreateExhibitEditor.createRoute(id.ifBlank { "template01" }))
+                    navController.navigate(Screen.ViewExhibit.createRoute(id))
                 },
                 initialPostId = postId.ifBlank { null },
                 onUserClick = { clickedUserId ->
@@ -755,6 +780,7 @@ fun MainHomeScreen(
     onNavigateToCreatePost: () -> Unit = {},
     onNavigateToCreateExhibit: () -> Unit = {},
     onNavigateToExhibitEditor: (templateIdOrExhibitId: String) -> Unit = {},
+    onNavigateToExhibitViewer: (exhibitId: String) -> Unit = {},
     onNavigateToUserProfile: (userId: String) -> Unit = {},
 ) {
     var currentTab by rememberSaveable { mutableStateOf(initialTab) }
@@ -836,8 +862,8 @@ fun MainHomeScreen(
                     onRefresh = { homeViewModel.muatUlang(filterSeen = true) },
                     onCreateClick = handleCreateClick,
                     onRequestMeetingClick = onRequestMeetingClick,
-                    onView3dClick = { pameranId -> onNavigateToExhibitEditor(pameranId ?: "tpl_small") },
-                    onBannerClick = { eventId -> onNavigateToExhibitEditor(eventId) },
+                    onView3dClick = { pameranId -> pameranId?.let { onNavigateToExhibitViewer(it) } ?: onNavigateToExhibitViewer("tpl_small") },
+                    onBannerClick = { eventId -> onNavigateToExhibitViewer(eventId) },
                     onLoadMore = homeViewModel::loadNextChunk,
                     onUserClick = onNavigateToUserProfile,
                 )
@@ -875,7 +901,7 @@ fun MainHomeScreen(
                     },
                     onRefresh = { exploreViewModel.muatUlang(filterSeen = true) },
                     onMediaClick = { media -> onNavigateToPostsFeed(media.id, "") },
-                    onExhibitClick = { exhibit -> onNavigateToExhibitEditor(exhibit.id) },
+                    onExhibitClick = { exhibit -> onNavigateToExhibitViewer(exhibit.id) },
                     onAccountClick = onNavigateToUserProfile,
                     viewModel = exploreViewModel,
                 )
@@ -891,7 +917,7 @@ fun MainHomeScreen(
                     onRetryClick = profileViewModel::muat,
                     onMediaClick = { media ->
                         if (profileState.selectedTab == com.ven.app.ui.screens.profile.ProfileTab.Exhibits) {
-                            onNavigateToExhibitEditor(media.id)
+                            onNavigateToExhibitViewer(media.id)
                         } else {
                             onNavigateToPostsFeed(media.id, "me")
                         }

@@ -39,8 +39,11 @@ object UnityLauncher {
         val finalTemplateId = mapTemplateId(templateId)
 
         return Intent(context, UnityPlayerGameActivity::class.java).apply {
+            putExtra("mode", "editor")
             putExtra("templateId", finalTemplateId)
             putExtra("template_id", finalTemplateId)
+            putExtra("roomId", "")
+            putExtra("room_id", "")
             putExtra("tipe", tipe)
             putExtra("tipe_pameran", tipe)
             putExtra("title", title)
@@ -70,6 +73,7 @@ object UnityLauncher {
         }
 
         return Intent(context, UnityPlayerGameActivity::class.java).apply {
+            putExtra("mode", "viewer")
             putExtra("templateId", finalTemplateId)
             putExtra("template_id", finalTemplateId)
             putExtra("roomId", roomIdOrExhibitId)

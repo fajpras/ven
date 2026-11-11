@@ -56,6 +56,9 @@ sealed class Screen(val route: String) {
     }
 
     // SubPage Flow
+    data object ViewExhibit : Screen("view_exhibit/{exhibitId}") {
+        fun createRoute(exhibitId: String) = "view_exhibit/$exhibitId"
+    }
     data object RequestMeeting : Screen("request_meeting/{postId}") {
         fun createRoute(postId: String) = "request_meeting/$postId"
     }
