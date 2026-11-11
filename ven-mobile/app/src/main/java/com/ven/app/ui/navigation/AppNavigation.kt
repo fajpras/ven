@@ -97,7 +97,8 @@ fun AppNavHost(showExplore: Boolean = false) {
     var selectedLanguage by remember { mutableStateOf("English") }
     var isAccountDisabled by remember { mutableStateOf(false) }
 
-    val startDestination = if (showExplore) Screen.Home.route else Screen.Login.route
+    val isLoggedIn = remember { !sessionManager.getToken().isNullOrBlank() }
+    val startDestination = if (showExplore || isLoggedIn) Screen.Home.route else Screen.Login.route
     val navController = rememberNavController()
     val forgotViewModel: ForgotPasswordViewModel = viewModel()
     val homeViewModel: HomeViewModel = viewModel()

@@ -23,6 +23,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -63,6 +64,9 @@ fun CreateExhibitTemplateScreen(
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     var selectedTemplateForDetails by remember { mutableStateOf<ExhibitTemplateItem?>(null) }
+    var savedTitle by rememberSaveable { mutableStateOf("") }
+    var savedDescription by rememberSaveable { mutableStateOf("") }
+    var savedBannerUri by rememberSaveable { mutableStateOf<String?>(null) }
 
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
@@ -90,10 +94,13 @@ fun CreateExhibitTemplateScreen(
 
     selectedTemplateForDetails?.let { template ->
         ExhibitDetailsBottomSheet(
-            initialTitle = "",
-            initialDescription = "",
-            coverBannerUri = null,
-            onSave = { title, description, _ ->
+            initialTitle = savedTitle,
+            initialDescription = savedDescription,
+            coverBannerUri = savedBannerUri,
+            onSave = { title, description, bannerUri ->
+                savedTitle = title
+                savedDescription = description
+                savedBannerUri = bannerUri
                 selectedTemplateForDetails = null
                 onTemplateSelected(template, title, description)
             },
