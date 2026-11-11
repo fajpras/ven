@@ -14,13 +14,21 @@ extern void ArtworkDialog_Start_m6384C8CF7DBA88AB5D4A90BED15843F31AE9E1F6 (void)
 extern void ArtworkDialog_Open_mCBB3AC2A60F6F7C93F93AABB2204EDA6B7EB4E10 (void);
 extern void ArtworkDialog_Close_m1BFA970AD5BCCBA6A01DA60C47461F859AAE4FDD (void);
 extern void ArtworkDialog_Save_m5F32AE549F2102DDEA2DCCE3DE95F5CDCFC4ED87 (void);
-extern void ArtworkDialog_PickFile_mEBE155827AA031D18612ECE9B9F26A47054E39B3 (void);
+extern void ArtworkDialog_UpdateCategoryDisplay_m60867EAF951B43574D625F3DC97FEAB907127076 (void);
+extern void ArtworkDialog_OpenCategoryPicker_m256EE199FE31F5CFDA9AA31A78280C9372CF35DA (void);
+extern void ArtworkDialog_CloseCategoryPicker_mBE6B29A5117D57E590BA680908CDB4236D9610D4 (void);
+extern void ArtworkDialog_SelectCategory_mF2DCD7A4BEC0E21E84C1EC69A06F60B94AF309AB (void);
+extern void ArtworkDialog_PopulateCategoryList_mD21A1FD30FDBC724287FAD23058A40A80147306C (void);
 extern void ArtworkDialog_BuildRuntimeUI_mCB60145D18A6A62915CD067645ED801BA52CF33B (void);
-extern void ArtworkDialog_CreateInputField_m6E8C682A3134D1B671F7DC31CC5EA81DA5711054 (void);
-extern void ArtworkDialog_CreateCategoryDropdown_m2EC8BD7E96FF295BFB47CB4CC2337B393778D50D (void);
+extern void ArtworkDialog_CreateLabel_mBD13652D8B9198A32A904EA835B751B84562D9DB (void);
+extern void ArtworkDialog_CreateInputField_m08D18A8DE93D21EA01D0DFA7DC5A56044BD08EFB (void);
+extern void ArtworkDialog_CreateCategoryDropdownButton_mA0C7F40A8470A810D9F699460301370FA18E5486 (void);
+extern void ArtworkDialog_BuildCategoryPickerModal_m1A43AC1BB575EACAA27F2EF379A3F5D4DE41656F (void);
 extern void ArtworkDialog_CreateButton_mF5AA084BA30F77F3EFA6546AB942AA7B1A390472 (void);
 extern void ArtworkDialog__ctor_m40DE88F2A49A3430B46E98E8BAB101F3CA5A2EA2 (void);
 extern void ArtworkDialog__cctor_m0A560EC6EFF59A6D499649C0F6C4E55ACD30BCDA (void);
+extern void U3CU3Ec__DisplayClass29_0__ctor_m8439B7886B07490923FE31EFEFFA6E514D177224 (void);
+extern void U3CU3Ec__DisplayClass29_0_U3CPopulateCategoryListU3Eb__0_m3763E39D39DB0C7B147177ED1BBBA21D5108198F (void);
 extern void BlocksWorldInput__ctor_mC3C23120D14A8C981C88271439D130110868146C (void);
 extern void CameraController_get_ActiveRoom_mEC4A73CC23E76B1942FDFDC3D1626EE95EE4C85F (void);
 extern void CameraController_Start_m8EAAC188934ECCBD009EC00751280DCFF4D96C71 (void);
@@ -386,7 +394,7 @@ extern void VirtualJoystick__ctor_mEB8B457563271145B80FF3714513F1C163261590 (voi
 extern void VoiceService__ctor_m66B6F5E67AB781AD5318BCAA791BBC7DBB569C94 (void);
 extern void Readme__ctor_m69C325C4C171DCB0312B646A9034AA91EA8C39C6 (void);
 extern void Section__ctor_m5F732533E4DFC0167D965E5F5DB332E46055399B (void);
-static Il2CppMethodPointer s_methodPointers[382] = 
+static Il2CppMethodPointer s_methodPointers[390] = 
 {
 	ArtworkDialog_get_Instance_m756678F8601806CCAA20F00277C0011C1B966709,
 	ArtworkDialog_set_Instance_m9171CDCD5EA85339DAC4E68F883688DA1522516B,
@@ -395,13 +403,21 @@ static Il2CppMethodPointer s_methodPointers[382] =
 	ArtworkDialog_Open_mCBB3AC2A60F6F7C93F93AABB2204EDA6B7EB4E10,
 	ArtworkDialog_Close_m1BFA970AD5BCCBA6A01DA60C47461F859AAE4FDD,
 	ArtworkDialog_Save_m5F32AE549F2102DDEA2DCCE3DE95F5CDCFC4ED87,
-	ArtworkDialog_PickFile_mEBE155827AA031D18612ECE9B9F26A47054E39B3,
+	ArtworkDialog_UpdateCategoryDisplay_m60867EAF951B43574D625F3DC97FEAB907127076,
+	ArtworkDialog_OpenCategoryPicker_m256EE199FE31F5CFDA9AA31A78280C9372CF35DA,
+	ArtworkDialog_CloseCategoryPicker_mBE6B29A5117D57E590BA680908CDB4236D9610D4,
+	ArtworkDialog_SelectCategory_mF2DCD7A4BEC0E21E84C1EC69A06F60B94AF309AB,
+	ArtworkDialog_PopulateCategoryList_mD21A1FD30FDBC724287FAD23058A40A80147306C,
 	ArtworkDialog_BuildRuntimeUI_mCB60145D18A6A62915CD067645ED801BA52CF33B,
-	ArtworkDialog_CreateInputField_m6E8C682A3134D1B671F7DC31CC5EA81DA5711054,
-	ArtworkDialog_CreateCategoryDropdown_m2EC8BD7E96FF295BFB47CB4CC2337B393778D50D,
+	ArtworkDialog_CreateLabel_mBD13652D8B9198A32A904EA835B751B84562D9DB,
+	ArtworkDialog_CreateInputField_m08D18A8DE93D21EA01D0DFA7DC5A56044BD08EFB,
+	ArtworkDialog_CreateCategoryDropdownButton_mA0C7F40A8470A810D9F699460301370FA18E5486,
+	ArtworkDialog_BuildCategoryPickerModal_m1A43AC1BB575EACAA27F2EF379A3F5D4DE41656F,
 	ArtworkDialog_CreateButton_mF5AA084BA30F77F3EFA6546AB942AA7B1A390472,
 	ArtworkDialog__ctor_m40DE88F2A49A3430B46E98E8BAB101F3CA5A2EA2,
 	ArtworkDialog__cctor_m0A560EC6EFF59A6D499649C0F6C4E55ACD30BCDA,
+	U3CU3Ec__DisplayClass29_0__ctor_m8439B7886B07490923FE31EFEFFA6E514D177224,
+	U3CU3Ec__DisplayClass29_0_U3CPopulateCategoryListU3Eb__0_m3763E39D39DB0C7B147177ED1BBBA21D5108198F,
 	BlocksWorldInput__ctor_mC3C23120D14A8C981C88271439D130110868146C,
 	CameraController_get_ActiveRoom_mEC4A73CC23E76B1942FDFDC3D1626EE95EE4C85F,
 	CameraController_Start_m8EAAC188934ECCBD009EC00751280DCFF4D96C71,
@@ -771,7 +787,7 @@ static Il2CppMethodPointer s_methodPointers[382] =
 	Readme__ctor_m69C325C4C171DCB0312B646A9034AA91EA8C39C6,
 	Section__ctor_m5F732533E4DFC0167D965E5F5DB332E46055399B,
 };
-static const int32_t s_InvokerIndices[382] = 
+static const int32_t s_InvokerIndices[390] = 
 {
 	24304,
 	23153,
@@ -782,11 +798,19 @@ static const int32_t s_InvokerIndices[382] =
 	13976,
 	13976,
 	13976,
-	1976,
-	3944,
+	13976,
+	10517,
+	13976,
+	13976,
+	5278,
+	1410,
+	10580,
+	13976,
 	1404,
 	13976,
 	24404,
+	13976,
+	13976,
 	13976,
 	13769,
 	13976,
@@ -798,14 +822,14 @@ static const int32_t s_InvokerIndices[382] =
 	13976,
 	10760,
 	13976,
-	2334,
+	2335,
 	5294,
 	13874,
 	13874,
 	13976,
 	13976,
 	10672,
-	1852,
+	1853,
 	22389,
 	13976,
 	13976,
@@ -829,7 +853,7 @@ static const int32_t s_InvokerIndices[382] =
 	10580,
 	13976,
 	7409,
-	3561,
+	3562,
 	10580,
 	10580,
 	13976,
@@ -845,10 +869,10 @@ static const int32_t s_InvokerIndices[382] =
 	13976,
 	13769,
 	5251,
-	2179,
+	2180,
 	13976,
 	17530,
-	2296,
+	2297,
 	13976,
 	10517,
 	10387,
@@ -894,7 +918,7 @@ static const int32_t s_InvokerIndices[382] =
 	13769,
 	13976,
 	13976,
-	2397,
+	2398,
 	4001,
 	13976,
 	24249,
@@ -938,14 +962,14 @@ static const int32_t s_InvokerIndices[382] =
 	13769,
 	7588,
 	13976,
-	1695,
+	1696,
 	10760,
 	10760,
 	9044,
 	5249,
 	22392,
 	10580,
-	2252,
+	2253,
 	13976,
 	13976,
 	7588,
@@ -962,8 +986,8 @@ static const int32_t s_InvokerIndices[382] =
 	20444,
 	22574,
 	13976,
-	1437,
-	1889,
+	1438,
+	1890,
 	837,
 	13976,
 	10517,
@@ -1037,7 +1061,7 @@ static const int32_t s_InvokerIndices[382] =
 	10580,
 	10580,
 	13976,
-	3652,
+	3653,
 	13976,
 	13976,
 	10517,
@@ -1160,7 +1184,7 @@ IL2CPP_EXTERN_C const Il2CppCodeGenModule g_AssemblyU2DCSharp_CodeGenModule;
 const Il2CppCodeGenModule g_AssemblyU2DCSharp_CodeGenModule = 
 {
 	"Assembly-CSharp.dll",
-	382,
+	390,
 	s_methodPointers,
 	0,
 	NULL,
