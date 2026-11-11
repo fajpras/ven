@@ -2,6 +2,8 @@ package com.ven.app.ui.screens.explore
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.ven.app.R
+import com.ven.app.core.localization.AppStrings
 import com.ven.app.data.api.ApiClient
 import com.ven.app.data.api.ApiPencarian
 import com.ven.app.data.api.models.KaryaItemModel
@@ -165,7 +167,7 @@ class ExploreViewModel(
                     val realRecents = users.take(6).map { u ->
                         RecentSearchItem.Account(
                             id = u.idPengguna ?: "",
-                            username = "@" + (u.namaPanggilan ?: "user"),
+                            username = "@" + (u.namaPanggilan ?: AppStrings.get(R.string.common_user)),
                             fullName = u.nama ?: "",
                             avatarUrl = u.fotoProfil,
                         )
@@ -474,7 +476,7 @@ class ExploreViewModel(
     }
 
     private fun KaryaItemModel.toFeedItem(): PostsFeedItem {
-        val author = pengguna?.namaPanggilan ?: pengguna?.nama ?: "kreator"
+        val author = pengguna?.namaPanggilan ?: pengguna?.nama ?: AppStrings.get(R.string.common_creator)
         val relativeTime = DateFormatter.formatRelativeTime(createdAt)
         return PostsFeedItem(
             id = idKarya,

@@ -6,14 +6,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import com.ven.app.R
+import com.ven.app.data.preference.AppLanguage
 import com.ven.app.ui.components.layout.VexTopBar
 import com.ven.app.ui.components.ui.VexCheckRow
 import com.ven.app.ui.theme.ThemeMode
@@ -26,13 +23,12 @@ import com.ven.app.ui.theme.VexTheme
  */
 @Composable
 fun LanguageScreen(
-    currentLanguage: String,
-    onLanguageSelected: (String) -> Unit,
+    currentLanguage: AppLanguage,
+    onLanguageSelected: (AppLanguage) -> Unit,
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val colors = VexTheme.colors
-    var selectedLang by remember { mutableStateOf(currentLanguage) }
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -52,19 +48,17 @@ fun LanguageScreen(
         ) {
             VexCheckRow(
                 label = stringResource(R.string.settings_language_english),
-                selected = selectedLang == "English",
+                selected = currentLanguage == AppLanguage.English,
                 onClick = {
-                    selectedLang = "English"
-                    onLanguageSelected("English")
+                    onLanguageSelected(AppLanguage.English)
                 },
             )
 
             VexCheckRow(
                 label = stringResource(R.string.settings_language_indonesia),
-                selected = selectedLang == "Bahasa Indonesia",
+                selected = currentLanguage == AppLanguage.Indonesian,
                 onClick = {
-                    selectedLang = "Bahasa Indonesia"
-                    onLanguageSelected("Bahasa Indonesia")
+                    onLanguageSelected(AppLanguage.Indonesian)
                 },
             )
         }
@@ -80,7 +74,7 @@ fun LanguageScreen(
 private fun LanguageScreenDarkPreview() {
     VexTheme(mode = ThemeMode.Dark) {
         LanguageScreen(
-            currentLanguage = "English",
+            currentLanguage = AppLanguage.English,
             onLanguageSelected = {},
             onBackClick = {},
         )
@@ -92,7 +86,7 @@ private fun LanguageScreenDarkPreview() {
 private fun LanguageScreenLightPreview() {
     VexTheme(mode = ThemeMode.Light) {
         LanguageScreen(
-            currentLanguage = "English",
+            currentLanguage = AppLanguage.English,
             onLanguageSelected = {},
             onBackClick = {},
         )

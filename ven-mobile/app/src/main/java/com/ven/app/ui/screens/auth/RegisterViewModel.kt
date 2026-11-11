@@ -9,6 +9,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.ven.app.R
+import com.ven.app.core.localization.AppStrings
 import com.ven.app.data.api.ApiLogin
 import com.ven.app.data.api.ApiRegister
 import com.ven.app.data.api.SessionManager
@@ -28,11 +30,11 @@ object PasswordValidator {
     private const val MIN_LENGTH = 8
 
     fun rules(password: String): List<PasswordRule> = listOf(
-        PasswordRule("Minimal $MIN_LENGTH karakter", password.length >= MIN_LENGTH),
-        PasswordRule("Ada huruf besar (A-Z)", password.any { it.isUpperCase() }),
-        PasswordRule("Ada huruf kecil (a-z)", password.any { it.isLowerCase() }),
-        PasswordRule("Ada angka (0-9)", password.any { it.isDigit() }),
-        PasswordRule("Ada simbol (contoh: ! @ # \$ %)", password.any { !it.isLetterOrDigit() }),
+        PasswordRule(AppStrings.get(R.string.auth_password_rule_min_length, MIN_LENGTH), password.length >= MIN_LENGTH),
+        PasswordRule(AppStrings.get(R.string.auth_password_rule_uppercase), password.any { it.isUpperCase() }),
+        PasswordRule(AppStrings.get(R.string.auth_password_rule_lowercase), password.any { it.isLowerCase() }),
+        PasswordRule(AppStrings.get(R.string.auth_password_rule_digit), password.any { it.isDigit() }),
+        PasswordRule(AppStrings.get(R.string.auth_password_rule_symbol), password.any { !it.isLetterOrDigit() }),
     )
 
     fun isStrong(password: String): Boolean = rules(password).all { it.isMet }

@@ -87,7 +87,7 @@ fun UserProfileDetailScreen(
     val userInfo = userDetail?.pengguna
     val usernameDisplay = userInfo?.namaPanggilan?.let { if (it.startsWith("@")) it else "@$it" }
         ?: userInfo?.nama
-        ?: "Profil Pengguna"
+        ?: stringResource(R.string.profile_unknown_user)
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -116,7 +116,7 @@ fun UserProfileDetailScreen(
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
-                    text = "Profil pengguna tidak ditemukan.",
+                    text = stringResource(R.string.profile_user_not_found),
                     style = MaterialTheme.typography.bodyMedium,
                     color = colors.textMuted,
                 )
@@ -269,8 +269,8 @@ fun UserProfileDetailScreen(
                             },
                             contentDescriptionFor = { tab ->
                                 when (tab) {
-                                    ProfileTab.Posts -> "Karya"
-                                    ProfileTab.Exhibits -> "Pameran"
+                                    ProfileTab.Posts -> stringResource(R.string.profile_tab_posts)
+                                    ProfileTab.Exhibits -> stringResource(R.string.profile_tab_exhibits)
                                 }
                             },
                             modifier = Modifier.fillMaxWidth(),
@@ -304,7 +304,11 @@ fun UserProfileDetailScreen(
                             contentAlignment = Alignment.Center,
                         ) {
                             Text(
-                                text = if (selectedTab == ProfileTab.Posts) "Belum ada karya yang diunggah." else "Belum ada pameran virtual.",
+                                text = if (selectedTab == ProfileTab.Posts) {
+                                    stringResource(R.string.profile_empty_posts)
+                                } else {
+                                    stringResource(R.string.profile_empty_exhibits)
+                                },
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = colors.textMuted,
                                 textAlign = TextAlign.Center,

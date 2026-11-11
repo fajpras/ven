@@ -445,7 +445,9 @@ fun PostCard(
                 if (targetBitmap != null) {
                     Image(
                         bitmap = targetBitmap,
-                        contentDescription = description.ifBlank { "Karya $username" },
+                        contentDescription = description.ifBlank {
+                            stringResource(R.string.post_media_desc, username)
+                        },
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Crop,
                     )
@@ -465,7 +467,11 @@ fun PostCard(
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = if (!imageUrl.isNullOrBlank()) "Memuat karya..." else "Karya Seni Virtual",
+                            text = if (!imageUrl.isNullOrBlank()) {
+                                stringResource(R.string.post_media_loading)
+                            } else {
+                                stringResource(R.string.post_media_fallback)
+                            },
                             style = MaterialTheme.typography.bodyMedium,
                             color = colors.textMuted,
                         )

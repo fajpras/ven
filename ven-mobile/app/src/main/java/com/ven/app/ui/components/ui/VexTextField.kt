@@ -28,10 +28,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.ven.app.R
 import com.ven.app.ui.icons.VexIcon
 import com.ven.app.ui.icons.VexIcons
 import com.ven.app.ui.theme.ThemeMode
@@ -155,7 +157,7 @@ fun VexPasswordField(
     onValueChange: (String) -> Unit,
     modifier: Modifier = Modifier,
     variant: VexTextFieldVariant = VexTextFieldVariant.Pill,
-    placeholder: String = "Password",
+    placeholder: String = stringResource(R.string.auth_placeholder_password),
     label: String = "",
     enabled: Boolean = true,
     isError: Boolean = false,
@@ -181,7 +183,11 @@ fun VexPasswordField(
         trailingIcon = {
             VexIcon(
                 id = if (passwordVisible) VexIcons.EyesOn else VexIcons.EyesOff,
-                contentDescription = if (passwordVisible) "Hide password" else "Show password",
+                contentDescription = if (passwordVisible) {
+                    stringResource(R.string.common_password_hide)
+                } else {
+                    stringResource(R.string.common_password_show)
+                },
                 tint = VexTheme.colors.textMuted,
                 modifier = Modifier
                     .clip(CircleShape)

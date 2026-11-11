@@ -25,11 +25,14 @@ import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.ven.app.R
+import com.ven.app.core.localization.AppStrings
 import com.ven.app.data.api.ApiClient
 import com.ven.app.data.api.ApiLogin
 import com.ven.app.data.api.ApiPencarian
@@ -38,6 +41,7 @@ import com.ven.app.util.DateFormatter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import com.ven.app.data.preference.AppLanguage
 import com.ven.app.data.preference.ThemePreferences
 import com.ven.app.ui.components.feature.CreateOptionsBottomSheet
 import com.ven.app.ui.components.layout.AppScaffold
@@ -93,7 +97,7 @@ fun AppNavHost(showExplore: Boolean = false) {
     val sessionManager = remember { SessionManager.getInstance(context) }
     val coroutineScope = rememberCoroutineScope()
     val currentTheme by themePreferences.themeMode.collectAsStateWithLifecycle()
-    var selectedLanguage by remember { mutableStateOf("English") }
+    var currentLanguage by remember { mutableStateOf(AppLanguage.current()) }
     var isAccountDisabled by remember { mutableStateOf(false) }
 
     val startDestination = if (showExplore) Screen.Home.route else Screen.Login.route
@@ -373,12 +377,14 @@ fun AppNavHost(showExplore: Boolean = false) {
                             if (res.isSuccessful) {
                                 val detail = res.body()?.data
                                 val mapped = detail?.karya?.map { k ->
-                                    val author = detail.pengguna?.namaPanggilan ?: detail.pengguna?.nama ?: "Kreator"
+                                    val author = detail.pengguna?.namaPanggilan ?: detail.pengguna?.nama
+                                        ?: AppStrings.get(R.string.common_creator)
                                     PostsFeedItem(
                                         id = k.idKarya,
                                         username = "@$author",
                                         title = k.judul,
-                                        category = k.kategori?.nama ?: "Karya",
+                                        category = k.kategori?.nama
+                                            ?: AppStrings.get(R.string.common_artwork),
                                         timestampText = DateFormatter.formatRelativeTime(k.createdAt),
                                         description = k.deskripsi.orEmpty(),
                                         imageUrl = k.fileUrl ?: k.file,
@@ -599,8 +605,11 @@ fun AppNavHost(showExplore: Boolean = false) {
 
         composable(Screen.SettingsLanguage.route) {
             LanguageScreen(
-                currentLanguage = selectedLanguage,
-                onLanguageSelected = { selectedLanguage = it },
+                currentLanguage = currentLanguage,
+                onLanguageSelected = { language ->
+                    currentLanguage = language
+                    AppLanguage.select(language)
+                },
                 onBackClick = { navController.popBackStack() },
             )
         }
@@ -626,14 +635,14 @@ fun AppNavHost(showExplore: Boolean = false) {
 
         composable(Screen.SettingsPrivacy.route) {
             SettingsPlaceholderScreen(
-                title = "Privacy Policy",
+                title = stringResource(R.string.settings_item_privacy_policy),
                 onBackClick = { navController.popBackStack() },
             )
         }
 
         composable(Screen.SettingsHelp.route) {
             SettingsPlaceholderScreen(
-                title = "Help",
+                title = stringResource(R.string.settings_item_help),
                 onBackClick = { navController.popBackStack() },
             )
         }

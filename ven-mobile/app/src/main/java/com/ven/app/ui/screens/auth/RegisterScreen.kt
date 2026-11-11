@@ -155,7 +155,7 @@ fun RegisterScreen(
             },
             dismissButton = {
                 VexButton(
-                    text = "Batal",
+                    text = stringResource(R.string.common_cancel),
                     onClick = onDismissOtpDialog,
                     variant = VexButtonVariant.Outline,
                 )

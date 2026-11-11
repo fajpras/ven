@@ -35,6 +35,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
@@ -265,7 +266,7 @@ fun RequestMeetingScreen(
                     Spacer(modifier = Modifier.height(VexSpace.s4))
 
                     // Header Hari: Mon, Tue, Wed, Thu, Fri, Sat, Sun
-                    val dayHeaders = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
+                    val dayHeaders = stringArrayResource(R.array.request_meeting_day_headers).toList()
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,

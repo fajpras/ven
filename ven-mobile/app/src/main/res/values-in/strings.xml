@@ -1,6 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">VEN</string>
+    <string name="common_back">Kembali</string>
+    <string name="common_selected">Dipilih</string>
+    <string name="common_select_option">Pilih opsi</string>
+    <string name="common_dropdown_desc">Ikon dropdown</string>
+    <string name="common_password_show">Tampilkan kata sandi</string>
+    <string name="common_password_hide">Sembunyikan kata sandi</string>
+    <string name="common_anonymous">Anonim</string>
+    <string name="common_creator">Kreator</string>
+    <string name="common_artwork">Karya</string>
+    <string name="common_cancel">Batal</string>
+    <string name="common_user">pengguna</string>
+    <string name="bottom_nav_home">Beranda</string>
+    <string name="bottom_nav_schedule">Jadwal</string>
+    <string name="bottom_nav_ai">Asisten AI</string>
+    <string name="bottom_nav_explore">Jelajahi</string>
+    <string name="bottom_nav_profile">Profil</string>
+    <string name="time_just_now">Baru saja</string>
+    <string name="time_minute_ago">1 menit lalu</string>
+    <string name="time_minutes_ago">%1$d menit lalu</string>
+    <string name="time_hour_ago">1 jam lalu</string>
+    <string name="time_hours_ago">%1$d jam lalu</string>
+    <string name="time_day_ago">1 hari lalu</string>
+    <string name="time_days_ago">%1$d hari lalu</string>
+    <string name="time_week_ago">1 minggu lalu</string>
+    <string name="time_weeks_ago">%1$d minggu lalu</string>
+    <string name="time_month_ago">1 bulan lalu</string>
+    <string name="time_months_ago">%1$d bulan lalu</string>
+    <string name="time_year_ago">1 tahun lalu</string>
+    <string name="time_years_ago">%1$d tahun lalu</string>
     <string name="interest_title">Minat</string>
     <string name="interest_maybe_later">Nanti saja</string>
     <string name="interest_save">Simpan</string>
@@ -26,6 +55,23 @@
     <string name="register_error_confirm">Password tidak sama</string>
     <string name="auth_login_error_empty">Email/Nama pengguna dan kata sandi tidak boleh kosong</string>
     <string name="register_error_failed">Registrasi gagal, coba lagi</string>
+    <string name="auth_login_error_failed">Login gagal, silakan periksa data Anda</string>
+    <string name="auth_google_sign_in_failed">Gagal masuk menggunakan Google</string>
+    <string name="auth_google_cancelled">Autentikasi Google dibatalkan</string>
+    <string name="auth_google_register_failed">Gagal mendaftar dengan Google</string>
+    <string name="auth_google_error_not_configured">Google Client ID belum dikonfigurasi di file .env</string>
+    <string name="auth_google_error_credentials">Kredensial Google tidak dikenali</string>
+    <string name="auth_google_generic_error">Terjadi kesalahan pada Google Sign-In</string>
+    <string name="auth_error_send_otp">Gagal mengirim kode verifikasi</string>
+    <string name="auth_error_resend_otp">Gagal mengirim ulang kode</string>
+    <string name="auth_error_otp_code_length">Kode verifikasi harus 6 digit</string>
+    <string name="auth_error_reset_password">Gagal mengubah kata sandi</string>
+    <string name="auth_password_rule_min_length">Minimal %1$d karakter</string>
+    <string name="auth_password_rule_uppercase">Ada huruf besar (A-Z)</string>
+    <string name="auth_password_rule_lowercase">Ada huruf kecil (a-z)</string>
+    <string name="auth_password_rule_digit">Ada angka (0-9)</string>
+    <string name="auth_password_rule_symbol">Ada simbol (contoh: ! @ # $ %)</string>
+    <string name="forgot_password_error_email_format">Format email tidak valid</string>
 
     <!-- Forgot & Reset Password Strings -->
     <string name="forgot_password_title">Lupa Kata Sandi</string>
@@ -112,6 +158,15 @@
     <string name="settings_phone_label">Telepon</string>
     <string name="settings_description_label">Deskripsi</string>
     <string name="settings_interest_label">Minat</string>
+    <string name="settings_username_error">Username harus 3-30 karakter, hanya huruf, angka, titik, dan garis bawah</string>
+    <string name="settings_name_error">Nama wajib diisi, maksimal 30 karakter</string>
+    <string name="settings_phone_error">Nomor HP harus 8-15 digit dan boleh diawali +</string>
+    <string name="settings_description_error">Deskripsi maksimal 150 karakter</string>
+    <string name="settings_description_counter">%1$d/150</string>
+    <string name="settings_photo_invalid">Pilih foto JPG, PNG, atau WebP</string>
+    <string name="settings_photo_too_large">Ukuran foto maksimal 5 MB</string>
+    <string name="settings_photo_uploading">Mengunggah foto...</string>
+    <string name="settings_session_expired">Sesi Anda berakhir. Silakan masuk kembali.</string>
 
     <string name="settings_new_email_label">Email baru</string>
     <string name="settings_password_label">Kata sandi</string>
@@ -184,6 +239,19 @@
     <string name="explore_empty_discovery">Belum ada konten untuk dijelajahi</string>
     <string name="explore_posts_title">Postingan</string>
 
+    <!-- AI Chat Strings (§8.12) -->
+    <string name="ai_chat_title">Asisten AI</string>
+    <string name="ai_chat_placeholder">Tulis sesuatu</string>
+    <string name="ai_chat_new_chat">Obrolan baru</string>
+    <string name="ai_chat_recents">Terbaru</string>
+    <string name="ai_chat_send_desc">Kirim pesan</string>
+    <string name="ai_chat_menu_desc">Buka riwayat obrolan</string>
+    <string name="ai_chat_empty_history">Belum ada obrolan sebelumnya</string>
+    <string name="ai_chat_error_network">Tidak dapat menghubungi asisten AI. Silakan coba lagi.</string>
+    <string name="ai_chat_error_rate_limit">Anda telah mencapai batas permintaan. Mohon tunggu sebentar.</string>
+    <string name="ai_chat_retry">Coba lagi</string>
+    <string name="ai_chat_sparkle_desc">Percikan Asisten AI</string>
+
     <!-- Create Content Strings (§8.13 Create Post) -->
     <string name="create_post_title">Postingan Baru</string>
     <string name="create_post_next">Berikutnya</string>
@@ -251,4 +319,44 @@
     <string name="create_sheet_post_desc">Bagikan karya, foto, atau desain ke linimasa</string>
     <string name="create_sheet_exhibit_title">Pameran 3D Baru</string>
     <string name="create_sheet_exhibit_desc">Rancang ruang pameran virtual 3D interaktif</string>
+
+    <!-- Shared UI Labels -->
+    <string name="post_media_desc">Karya %1$s</string>
+    <string name="post_media_loading">Memuat karya...</string>
+    <string name="post_media_fallback">Karya Seni Virtual</string>
+    <string name="media_grid_untitled_artwork">Karya Seni</string>
+    <string name="profile_unknown_user">Profil Pengguna</string>
+    <string name="profile_user_not_found">Profil pengguna tidak ditemukan.</string>
+    <string name="settings_placeholder_coming_soon">%1$s (Segera Hadir)</string>
+
+    <!-- Local Error Messages -->
+    <string name="settings_error_password_mismatch">Konfirmasi kata sandi tidak sesuai</string>
+    <string name="settings_error_change_email_failed">Gagal mengganti email</string>
+    <string name="settings_error_change_password_failed">Gagal mengganti kata sandi</string>
+    <string name="settings_error_load_interests">Gagal memuat kategori minat</string>
+    <string name="settings_error_save_profile">Gagal menyimpan profil</string>
+    <string name="settings_error_save_interests">Profil tersimpan, tetapi kategori minat gagal disimpan</string>
+    <string name="settings_error_upload_photo">Gagal mengunggah foto</string>
+    <string name="settings_error_deactivate_failed">Gagal menonaktifkan akun</string>
+    <string name="interest_error_load">Gagal memuat kategori minat</string>
+    <string name="interest_error_save">Gagal menyimpan kategori minat</string>
+    <string name="request_meeting_error_time_required">Waktu pertemuan harus diisi</string>
+
+    <string-array name="request_meeting_day_headers">
+        <item>Sen</item>
+        <item>Sel</item>
+        <item>Rab</item>
+        <item>Kam</item>
+        <item>Jum</item>
+        <item>Sab</item>
+        <item>Min</item>
+    </string-array>
+
+    <!-- Account Deactivation (UC-04) -->
+    <string name="settings_deactivate_button">Nonaktifkan Akun</string>
+    <string name="settings_deactivate_terms">Saya memahami bahwa akun saya akan dinonaktifkan sementara dan dapat diaktifkan kembali dengan masuk kembali.</string>
+    <string name="settings_deactivate_confirm_title">Konfirmasi Nonaktifkan Akun</string>
+    <string name="settings_deactivate_confirm_msg">Apakah Anda yakin ingin menonaktifkan akun sementara? Anda dapat mengaktifkannya kembali dengan masuk kembali ke aplikasi.</string>
+    <string name="settings_deactivate_confirm_yes">Ya</string>
+    <string name="settings_deactivate_confirm_no">Batal</string>
 </resources>

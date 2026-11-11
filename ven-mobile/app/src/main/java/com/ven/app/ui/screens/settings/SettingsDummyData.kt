@@ -34,7 +34,6 @@ val dummyHistoryEntries = listOf(
 val dummySettingsUiState = SettingsUiState(
     profileData = dummySettingsProfile,
     themeMode = ThemeMode.Dark,
-    selectedLanguage = "English",
     isAccountDisabled = false,
     historyEntries = dummyHistoryEntries,
     selectedHistoryEntry = null,

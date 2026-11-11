@@ -13,10 +13,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.ven.app.R
 import com.ven.app.ui.icons.VexIcon
 import com.ven.app.ui.icons.VexIcons
 import com.ven.app.ui.theme.ThemeMode
@@ -62,7 +64,7 @@ fun VexCheckRow(
         if (selected) {
             VexIcon(
                 id = VexIcons.Check,
-                contentDescription = "Selected",
+                contentDescription = stringResource(R.string.common_selected),
                 size = 20.dp,
                 tint = colors.text,
             )

@@ -35,6 +35,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -122,7 +123,7 @@ fun MediaGridTile(
             contentAlignment = Alignment.BottomStart,
         ) {
             Text(
-                text = item.title.ifBlank { "Karya Seni" },
+                text = item.title.ifBlank { stringResource(R.string.media_grid_untitled_artwork) },
                 style = MaterialTheme.typography.labelSmall.copy(
                     fontWeight = FontWeight.SemiBold,
                 ),
