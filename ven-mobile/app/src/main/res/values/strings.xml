@@ -227,6 +227,12 @@
 
     <!-- Create Exhibit Strings (§8.14 Create Exhibit) -->
     <string name="create_exhibit_title">New Exhibit</string>
+    <string name="create_exhibit_info_title">Exhibit Information</string>
+    <string name="create_exhibit_next_step">Open 3D Editor</string>
+    <string name="create_exhibit_title_error_empty">Title cannot be empty</string>
+    <string name="create_exhibit_title_error_max">Title cannot exceed 100 characters</string>
+    <string name="create_exhibit_banner_required">Please select a cover banner</string>
+    <string name="create_exhibit_banner_uploading">Uploading banner…</string>
     <string name="create_exhibit_template_small">Small</string>
     <string name="create_exhibit_template_medium">Medium</string>
     <string name="create_exhibit_template_big">Big</string>

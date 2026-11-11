@@ -23,7 +23,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -40,7 +39,6 @@ import com.ven.app.ui.components.layout.VexTopBar
 import com.ven.app.ui.components.ui.CreateContentType
 import com.ven.app.ui.components.ui.SegmentedPill
 import com.ven.app.ui.screens.create.exhibit.components.IsometricRoomPreview
-import com.ven.app.ui.screens.create.exhibit.editor.sheets.ExhibitDetailsBottomSheet
 import com.ven.app.ui.theme.ThemeMode
 import com.ven.app.ui.theme.VexRadius
 import com.ven.app.ui.theme.VexSpace
@@ -58,15 +56,11 @@ import com.ven.app.ui.theme.VexTheme
 fun CreateExhibitTemplateScreen(
     onCloseClick: () -> Unit,
     onNavigateToPost: () -> Unit,
-    onTemplateSelected: (template: ExhibitTemplateItem, title: String, description: String) -> Unit,
+    onTemplateSelected: (template: ExhibitTemplateItem) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: CreateExhibitViewModel = viewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    var selectedTemplateForDetails by remember { mutableStateOf<ExhibitTemplateItem?>(null) }
-    var savedTitle by rememberSaveable { mutableStateOf("") }
-    var savedDescription by rememberSaveable { mutableStateOf("") }
-    var savedBannerUri by rememberSaveable { mutableStateOf<String?>(null) }
 
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
@@ -74,10 +68,11 @@ fun CreateExhibitTemplateScreen(
                 is CreateExhibitEvent.NavigateToEditor -> {
                     val template = state.templates.find { it.id == event.templateId }
                     if (template != null) {
-                        selectedTemplateForDetails = template
+                        onTemplateSelected(template)
                     }
                 }
                 CreateExhibitEvent.SwitchToPost -> onNavigateToPost()
+                else -> Unit
             }
         }
     }
@@ -86,29 +81,11 @@ fun CreateExhibitTemplateScreen(
         state = state,
         onCloseClick = onCloseClick,
         onTemplateClick = { template ->
-            selectedTemplateForDetails = template
+            viewModel.onTemplateSelected(template)
         },
         onContentTypeSelected = viewModel::onContentTypeSelected,
         modifier = modifier,
     )
-
-    selectedTemplateForDetails?.let { template ->
-        ExhibitDetailsBottomSheet(
-            initialTitle = savedTitle,
-            initialDescription = savedDescription,
-            coverBannerUri = savedBannerUri,
-            onSave = { title, description, bannerUri ->
-                savedTitle = title
-                savedDescription = description
-                savedBannerUri = bannerUri
-                selectedTemplateForDetails = null
-                onTemplateSelected(template, title, description)
-            },
-            onDismiss = {
-                selectedTemplateForDetails = null
-            },
-        )
-    }
 }
 
 @Composable

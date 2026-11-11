@@ -47,6 +47,7 @@ Route::middleware(CatatKeamanan::class)->group(function () {
             Route::get('pameran', 'index');
             Route::get('pameran/rekomendasi', 'rekomendasi');
             Route::post('pameran', 'store');
+            Route::post('pameran/banner', 'uploadBanner');
             Route::post('exhibitions', 'storeFromUnity');
             Route::get('exhibitions/{pameran}/room-dto', 'roomDto')->whereNumber('pameran');
             Route::get('pameran/{pameran}', 'show')->whereNumber('pameran');

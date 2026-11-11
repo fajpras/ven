@@ -51,6 +51,8 @@ import com.ven.app.ui.screens.auth.RegisterRoute
 import com.ven.app.ui.screens.auth.ResetPasswordScreen
 import com.ven.app.ui.screens.auth.VerifyOtpScreen
 import com.ven.app.ui.screens.create.exhibit.CreateExhibitTemplateScreen
+import com.ven.app.ui.screens.create.exhibit.CreateExhibitViewModel
+import com.ven.app.ui.screens.create.exhibit.info.CreateExhibitInfoScreen
 import com.ven.app.ui.screens.unity.UnityLoadingScreen
 import com.ven.app.ui.screens.create.post.CreatePostScreen
 import com.ven.app.ui.screens.explore.ExploreScreen
@@ -103,6 +105,8 @@ fun AppNavHost(showExplore: Boolean = false) {
     val forgotViewModel: ForgotPasswordViewModel = viewModel()
     val homeViewModel: HomeViewModel = viewModel()
     val exploreViewModel: ExploreViewModel = viewModel()
+    val createExhibitViewModel: CreateExhibitViewModel = viewModel()
+    val createExhibitState by createExhibitViewModel.uiState.collectAsStateWithLifecycle()
     val forgotState by forgotViewModel.uiState.collectAsStateWithLifecycle()
     val changeEmailViewModel: ChangeEmailViewModel = viewModel()
 
@@ -299,26 +303,59 @@ fun AppNavHost(showExplore: Boolean = false) {
         }
 
         // -------------------------------------------------------------
-        // 5a-2. Create Content Flow: Create Exhibit (Template Picker)
+        // 5a-1. Create Content Flow: Create Exhibit (Pilih Template - Langkah 1)
         // -------------------------------------------------------------
         composable(Screen.CreateExhibit.route) {
             CreateExhibitTemplateScreen(
-                onCloseClick = { navController.popBackStack() },
+                viewModel = createExhibitViewModel,
+                onCloseClick = {
+                    createExhibitViewModel.clearTemporaryData()
+                    navController.popBackStack()
+                },
                 onNavigateToPost = {
                     navController.navigate(Screen.CreatePost.route) {
                         popUpTo(Screen.CreateExhibit.route) { inclusive = true }
                         launchSingleTop = true
                     }
                 },
-                onTemplateSelected = { template, title, description ->
-                    val finalTemplateId = template.unityTemplateId.ifBlank { template.id }
-                    navController.navigate(
-                        Screen.CreateExhibitEditor.createRoute(
-                            templateId = finalTemplateId,
-                            title = title,
-                            description = description,
+                onTemplateSelected = { _ ->
+                    navController.navigate(Screen.CreateExhibitInfo.route)
+                },
+            )
+        }
+
+        // -------------------------------------------------------------
+        // 5a-2. Create Content Flow: Create Exhibit (Informasi Pameran - Langkah 2)
+        // -------------------------------------------------------------
+        composable(Screen.CreateExhibitInfo.route) {
+            val context = LocalContext.current
+            CreateExhibitInfoScreen(
+                state = createExhibitState,
+                onCloseClick = {
+                    navController.popBackStack()
+                },
+                onTitleChange = createExhibitViewModel::onTitleChange,
+                onDescriptionChange = createExhibitViewModel::onDescriptionChange,
+                onBannerSelected = createExhibitViewModel::onBannerSelected,
+                onNextClick = {
+                    createExhibitViewModel.validateAndProceedToEditor(context) {
+                        val template = createExhibitState.selectedTemplate ?: createExhibitState.templates.first()
+                        val finalTemplateId = template.unityTemplateId.ifBlank { template.id }
+                        navController.navigate(
+                            Screen.CreateExhibitEditor.createRoute(
+                                templateId = finalTemplateId,
+                                title = createExhibitState.title,
+                                description = createExhibitState.description,
+                                bannerUrl = createExhibitState.bannerUrl,
+                            )
                         )
-                    )
+                    }
+                },
+                onNavigateToPost = {
+                    navController.navigate(Screen.CreatePost.route) {
+                        popUpTo(Screen.CreateExhibit.route) { inclusive = true }
+                        launchSingleTop = true
+                    }
                 },
             )
         }
@@ -341,19 +378,28 @@ fun AppNavHost(showExplore: Boolean = false) {
                     type = NavType.StringType
                     defaultValue = ""
                 },
+                navArgument("bannerUrl") {
+                    type = NavType.StringType
+                    defaultValue = ""
+                },
             ),
         ) { backStackEntry ->
             val templateId = backStackEntry.arguments?.getString("templateId") ?: "template01"
             val title = backStackEntry.arguments?.getString("title") ?: ""
             val description = backStackEntry.arguments?.getString("description") ?: ""
+            val bannerUrl = backStackEntry.arguments?.getString("bannerUrl") ?: ""
             UnityLoadingScreen(
                 targetId = templateId,
                 title = title,
                 description = description,
+                bannerUrl = bannerUrl,
                 isEditor = true,
                 onBackClick = {
-                    if (!navController.popBackStack(Screen.CreateExhibit.route, inclusive = true)) {
-                        navController.popBackStack()
+                    createExhibitViewModel.clearTemporaryData()
+                    if (!navController.popBackStack(Screen.Home.route, inclusive = false)) {
+                        navController.navigate(Screen.Home.route) {
+                            popUpTo(0)
+                        }
                     }
                 },
             )

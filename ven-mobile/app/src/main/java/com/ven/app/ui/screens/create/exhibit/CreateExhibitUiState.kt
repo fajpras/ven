@@ -1,5 +1,6 @@
 package com.ven.app.ui.screens.create.exhibit
 
+import android.net.Uri
 import androidx.annotation.StringRes
 import androidx.compose.runtime.Immutable
 import com.ven.app.R
@@ -62,5 +63,12 @@ data class CreateExhibitUiState(
     val selectedContentType: CreateContentType = CreateContentType.Exhibit,
     val templates: List<ExhibitTemplateItem> = defaultExhibitTemplates,
     val selectedTemplate: ExhibitTemplateItem? = null,
+    val title: String = "",
+    val description: String = "",
+    val bannerUri: Uri? = null,
+    val bannerUrl: String = "",
+    val titleError: String? = null,
+    val bannerError: String? = null,
+    val isUploadingBanner: Boolean = false,
     val isLoading: Boolean = false,
 )

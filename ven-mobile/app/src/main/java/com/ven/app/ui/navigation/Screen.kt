@@ -34,12 +34,19 @@ sealed class Screen(val route: String) {
 
     // Create Content Flow
     data object CreatePost : Screen("create_post")
+    data object CreateExhibitInfo : Screen("create_exhibit_info")
     data object CreateExhibit : Screen("create_exhibit")
-    data object CreateExhibitEditor : Screen("create_exhibit_editor/{templateId}?title={title}&description={description}") {
-        fun createRoute(templateId: String, title: String = "", description: String = ""): String {
+    data object CreateExhibitEditor : Screen("create_exhibit_editor/{templateId}?title={title}&description={description}&bannerUrl={bannerUrl}") {
+        fun createRoute(
+            templateId: String,
+            title: String = "",
+            description: String = "",
+            bannerUrl: String = "",
+        ): String {
             val encodedTitle = java.net.URLEncoder.encode(title, "UTF-8")
             val encodedDesc = java.net.URLEncoder.encode(description, "UTF-8")
-            return "create_exhibit_editor/$templateId?title=$encodedTitle&description=$encodedDesc"
+            val encodedBanner = java.net.URLEncoder.encode(bannerUrl, "UTF-8")
+            return "create_exhibit_editor/$templateId?title=$encodedTitle&description=$encodedDesc&bannerUrl=$encodedBanner"
         }
     }
 

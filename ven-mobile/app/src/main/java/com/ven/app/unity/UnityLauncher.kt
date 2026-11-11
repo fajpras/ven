@@ -10,7 +10,8 @@ object UnityLauncher {
         authToken: String = "",
         title: String = "",
         description: String = "",
+        bannerUrl: String = "",
     ) {
-        UtilUnityLauncher.launchEditor(context, templateId, title, description)
+        UtilUnityLauncher.launchEditor(context, templateId, title, description, bannerUrl)
     }
 }
