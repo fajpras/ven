@@ -588,7 +588,7 @@ fun AppNavHost(showExplore: Boolean = false) {
                     navController.navigate(Screen.PostsFeed.createRoute(postId = media.id, userId = userId))
                 },
                 onExhibitClick = { exhibitId ->
-                    navController.navigate(Screen.CreateExhibitEditor.createRoute(exhibitId.ifBlank { "template01" }))
+                    navController.navigate(Screen.ViewExhibit.createRoute(exhibitId))
                 },
             )
         }
