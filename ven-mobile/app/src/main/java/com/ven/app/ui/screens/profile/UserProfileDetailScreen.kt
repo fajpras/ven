@@ -43,6 +43,7 @@ import com.ven.app.ui.components.ui.VexIconTabs
 import com.ven.app.ui.components.ui.VexSkillChip
 import com.ven.app.ui.icons.VexIcons
 import com.ven.app.ui.theme.CategoryColorMap
+import com.ven.app.ui.theme.VexAspect
 import com.ven.app.ui.theme.VexSpace
 import com.ven.app.ui.theme.VexTheme
 import kotlinx.coroutines.Dispatchers
@@ -278,11 +279,15 @@ fun UserProfileDetailScreen(
                     }
                 }
 
-                // Grid Karya atau Pameran
+                // Grid Karya atau Pameran (Poster Grid 3 Kolom untuk Posts, Full Banner 16:9 untuk Exhibits)
                 if (currentItems.isNotEmpty()) {
+                    val isExhibits = selectedTab == ProfileTab.Exhibits
                     items(
                         items = currentItems,
                         key = { it.id },
+                        span = {
+                            if (isExhibits) GridItemSpan(3) else GridItemSpan(1)
+                        },
                     ) { item ->
                         MediaGridTile(
                             item = item,
@@ -292,6 +297,14 @@ fun UserProfileDetailScreen(
                                 } else {
                                     onExhibitClick(item.id)
                                 }
+                            },
+                            aspectRatio = if (isExhibits) (16f / 9f) else VexAspect.poster,
+                            modifier = if (isExhibits) {
+                                Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 4.dp, vertical = 4.dp)
+                            } else {
+                                Modifier
                             },
                         )
                     }

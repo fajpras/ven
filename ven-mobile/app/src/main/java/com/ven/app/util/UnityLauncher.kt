@@ -48,6 +48,8 @@ object UnityLauncher {
             putExtra("bannerUrl", bannerUrl)
             putExtra("banner", bannerUrl)
             putExtra("banner_url", bannerUrl)
+            putExtra("bannerUri", bannerUrl)
+            putExtra("banner_uri", bannerUrl)
             putExtra("authToken", token)
             putExtra("token", token)
             putExtra("apiBaseUrl", baseUrl)

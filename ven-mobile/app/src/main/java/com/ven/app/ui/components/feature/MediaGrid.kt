@@ -29,6 +29,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -77,10 +80,14 @@ fun MediaGridTile(
         maxHeight = 480,
     )
 
+    val isLandscape = aspectRatio > 1.0f
+    val shape = if (isLandscape) RoundedCornerShape(8.dp) else RectangleShape
+
     Box(
         modifier = modifier
             .fillMaxWidth()
             .aspectRatio(aspectRatio)
+            .clip(shape)
             .background(colors.surfaceInput)
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },

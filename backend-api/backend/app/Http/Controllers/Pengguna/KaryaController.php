@@ -259,7 +259,7 @@ class KaryaController extends Controller
     public function uploadMedia(Request $request)
     {
         $request->validate([
-            'file' => ['required', 'file', 'max:51200', 'mimes:jpeg,jpg,png,webp,mp4,webm,mov'],
+            'file' => ['required', 'file', 'max:51200', 'mimes:jpeg,jpg,png,webp,mp4,webm,mov,mp3,wav,ogg'],
         ]);
 
         $path = $request->file('file')->store('karya', 'public');

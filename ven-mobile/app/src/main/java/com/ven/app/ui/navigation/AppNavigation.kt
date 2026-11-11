@@ -353,14 +353,27 @@ fun AppNavHost(showExplore: Boolean = false) {
                 onBannerSelected = createExhibitViewModel::onBannerSelected,
                 onNextClick = {
                     createExhibitViewModel.validateAndProceedToEditor(context) {
-                        val template = createExhibitState.selectedTemplate ?: createExhibitState.templates.first()
+                        val latest = createExhibitViewModel.uiState.value
+                        val template = latest.selectedTemplate ?: latest.templates.firstOrNull() ?: createExhibitState.selectedTemplate ?: createExhibitState.templates.first()
                         val finalTemplateId = template.unityTemplateId.ifBlank { template.id }
+
+                        var resolvedBanner = latest.bannerUrl
+                        if (resolvedBanner.isBlank() && latest.bannerUri != null) {
+                            try {
+                                val cacheBanner = java.io.File(context.cacheDir, "exhibit_banner_preview.jpg")
+                                context.contentResolver.openInputStream(latest.bannerUri!!)?.use { input ->
+                                    cacheBanner.outputStream().use { output -> input.copyTo(output) }
+                                }
+                                resolvedBanner = cacheBanner.absolutePath
+                            } catch (_: Exception) {}
+                        }
+
                         navController.navigate(
                             Screen.CreateExhibitEditor.createRoute(
                                 templateId = finalTemplateId,
-                                title = createExhibitState.title,
-                                description = createExhibitState.description,
-                                bannerUrl = createExhibitState.bannerUrl,
+                                title = latest.title,
+                                description = latest.description,
+                                bannerUrl = resolvedBanner,
                                 tipe = template.tipe,
                             )
                         )
