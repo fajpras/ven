@@ -63,6 +63,12 @@ object UnityLauncher {
         val baseUrl = AppConfig.baseUrl
         val finalTemplateId = mapTemplateId(roomIdOrExhibitId)
 
+        // Pre-populate UnityBridge with valid room DTO matching template & room id
+        if (com.yourapp.exhibition.UnityBridge.currentRoomJson.isNullOrBlank()) {
+            com.yourapp.exhibition.UnityBridge.currentRoomJson =
+                """{"roomId":"$roomIdOrExhibitId","templateId":"$finalTemplateId","title":"Pameran 3D","description":"","wallColor":"#FFFFFF","isPublic":true,"ownerId":"owner","viewerId":"visitor","items":[]}"""
+        }
+
         return Intent(context, UnityPlayerGameActivity::class.java).apply {
             putExtra("templateId", finalTemplateId)
             putExtra("template_id", finalTemplateId)

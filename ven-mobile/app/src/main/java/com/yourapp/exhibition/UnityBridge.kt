@@ -19,12 +19,13 @@ object UnityBridge {
     @JvmStatic
     fun requestRoom() {
         Log.d(TAG, "Unity requested room data")
-        val json = currentRoomJson
-        if (!json.isNullOrBlank()) {
-            UnityPlayer.UnitySendMessage("PlayBridge", "OnRoomData", json)
-        } else {
-            Log.w(TAG, "No room JSON available to deliver to Unity PlayBridge")
+        var json = currentRoomJson
+        if (json.isNullOrBlank()) {
+            // Fallback: provide valid RoomDto so Unity PlayScene is never stuck on black screen
+            json = """{"roomId":"viewer_room","templateId":"template01","title":"Pameran 3D","description":"","wallColor":"#FFFFFF","isPublic":true,"ownerId":"owner","viewerId":"visitor","items":[]}"""
+            Log.i(TAG, "Delivering fallback RoomDto to Unity PlayBridge")
         }
+        UnityPlayer.UnitySendMessage("PlayBridge", "OnRoomData", json)
     }
 
     @JvmStatic
