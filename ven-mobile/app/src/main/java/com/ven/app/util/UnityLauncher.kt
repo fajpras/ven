@@ -30,6 +30,7 @@ object UnityLauncher {
         templateId: String = "template01",
         title: String = "",
         description: String = "",
+        bannerUrl: String = "",
     ): Intent {
         val sessionManager = SessionManager.getInstance(context)
         val token = sessionManager.getToken().orEmpty()
@@ -41,6 +42,9 @@ object UnityLauncher {
             putExtra("template_id", finalTemplateId)
             putExtra("title", title)
             putExtra("description", description)
+            putExtra("bannerUrl", bannerUrl)
+            putExtra("banner", bannerUrl)
+            putExtra("banner_url", bannerUrl)
             putExtra("authToken", token)
             putExtra("token", token)
             putExtra("apiBaseUrl", baseUrl)
@@ -71,8 +75,9 @@ object UnityLauncher {
         templateId: String = "template01",
         title: String = "",
         description: String = "",
+        bannerUrl: String = "",
     ) {
-        val intent = createEditorIntent(context, templateId, title, description).apply {
+        val intent = createEditorIntent(context, templateId, title, description, bannerUrl).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK
         }
         context.startActivity(intent)

@@ -169,33 +169,104 @@ class PameranController extends Controller
         return $this->ok($model3d->load('objek'));
     }
 
+    public function uploadBanner(Request $request)
+    {
+        $request->validate([
+            'banner' => ['required', 'file', 'image', 'mimes:jpeg,jpg,png,webp', 'max:2048'],
+        ]);
+
+        $path = $request->file('banner')->store('pameran/banner', 'public');
+
+        return $this->ok([
+            'url' => Storage::url($path),
+            'path' => $path,
+        ], 'Banner berhasil diunggah.');
+    }
+
     public function storeFromUnity(Request $request)
     {
         $validated = $request->validate([
             'templateId' => ['nullable', 'string'],
-            'title' => ['required', 'string', 'max:255'],
+            'title' => ['required', 'string', 'max:100'],
             'description' => ['nullable', 'string'],
+            'banner' => ['nullable', 'string'],
             'wallColor' => ['nullable', 'string', 'max:10'],
             'items' => ['nullable', 'array'],
         ]);
 
-        return DB::transaction(function () use ($request, $validated) {
-            $user = $request->user();
+        // 1. Validasi kata kasar (profanity check)
+        if (\App\Services\ProfanityFilter::containsProfanity($validated['title'], $validated['description'] ?? '')) {
+            return response()->json([
+                'message' => 'mengandung kata kasar',
+            ], 422);
+        }
 
-            $templateId = $validated['templateId'] ?? 'tpl_small';
-            $tipe = match (strtolower($templateId)) {
-                'tpl_medium', 'template02', 'medium' => 'sedang',
-                'tpl_big', 'template03', 'big' => 'besar',
-                'tpl_event', 'template04', 'event' => 'acara',
-                default => 'kecil',
-            };
+        // 2. Normalisasi & validasi batas kapasitas template
+        $rawTemplateId = strtolower(trim($validated['templateId'] ?? 'template01'));
+        $templatesConfig = config('exhibition_templates.templates', []);
+
+        $matchedConfig = null;
+        $canonicalKey = 'template01';
+
+        foreach ($templatesConfig as $key => $cfg) {
+            $aliases = array_map('strtolower', $cfg['aliases'] ?? []);
+            if ($rawTemplateId === strtolower($key) || in_array($rawTemplateId, $aliases, true)) {
+                $matchedConfig = $cfg;
+                $canonicalKey = $key;
+                break;
+            }
+        }
+
+        if (!$matchedConfig) {
+            $matchedConfig = $templatesConfig['template01'] ?? [
+                'name' => 'Small',
+                'max_panels' => 9,
+                'max_objects' => 9,
+                'tipe' => 'kecil',
+            ];
+        }
+
+        $tipe = $matchedConfig['tipe'] ?? 'kecil';
+        $maxPanels = (int) ($matchedConfig['max_panels'] ?? 9);
+        $maxObjects = (int) ($matchedConfig['max_objects'] ?? 9);
+
+        $items = $validated['items'] ?? [];
+        $panelCount = 0;
+        $objectCount = 0;
+
+        foreach ($items as $item) {
+            $surface = strtolower($item['surface'] ?? '');
+            $prefabId = strtolower($item['prefabId'] ?? '');
+            $isPanel = ($surface === 'wall') || str_contains($prefabId, 'panel') || str_contains($prefabId, 'poster') || str_contains($prefabId, 'frame');
+
+            if ($isPanel) {
+                $panelCount++;
+            } else {
+                $objectCount++;
+            }
+        }
+
+        if ($panelCount > $maxPanels) {
+            return response()->json([
+                'message' => 'panel melebihi jumlah maksimal',
+            ], 422);
+        }
+
+        if ($objectCount > $maxObjects) {
+            return response()->json([
+                'message' => 'objek melebihi jumlah maksimal',
+            ], 422);
+        }
+
+        $pameran = DB::transaction(function () use ($request, $validated, $tipe, $canonicalKey, $items) {
+            $user = $request->user();
 
             $hallModel = Model3D::firstOrCreate(
                 ['nama' => 'Hall Template ' . ucfirst($tipe)],
                 [
                     'jenis' => 'hall',
-                    'file' => 'models/' . $templateId . '.glb',
-                    'kapasitas' => match ($tipe) {
+                    'file' => 'models/' . $canonicalKey . '.glb',
+                    'kapasitas' => (string) match ($tipe) {
                         'sedang' => '14',
                         'besar' => '21',
                         'acara' => '60',
@@ -205,10 +276,12 @@ class PameranController extends Controller
                 ]
             );
 
+            $banner = !empty($validated['banner']) ? $validated['banner'] : 'pameran/banner/virtual_art_banner.jpg';
+
             $pameran = $user->pameran()->create([
                 'id_model' => $hallModel->id_model,
                 'judul' => $validated['title'],
-                'banner' => 'pameran/banner/virtual_art_banner.jpg',
+                'banner' => $banner,
                 'warna' => substr($validated['wallColor'] ?? '#1565C0', 0, 7),
                 'tipe' => $tipe,
             ]);
@@ -219,8 +292,8 @@ class PameranController extends Controller
 
             $defaultCategory = \App\Models\Kategori::first();
 
-            if (!empty($validated['items'])) {
-                foreach ($validated['items'] as $item) {
+            if (!empty($items)) {
+                foreach ($items as $item) {
                     $posisi = \App\Models\PosisiObjek::create([
                         'posisi_x' => (float) ($item['x'] ?? 0.0),
                         'posisi_y' => (float) ($item['y'] ?? 0.0),
@@ -238,10 +311,14 @@ class PameranController extends Controller
                         ]
                     );
 
+                    $itemSurface = strtolower($item['surface'] ?? '');
+                    $itemPrefab = strtolower($item['prefabId'] ?? '');
+                    $isItemPanel = ($itemSurface === 'wall') || str_contains($itemPrefab, 'panel') || str_contains($itemPrefab, 'poster') || str_contains($itemPrefab, 'frame');
+
                     $objek = \App\Models\Objek::create([
                         'id_posisi' => $posisi->id_posisi,
                         'id_model' => $objekModel->id_model,
-                        'jenis' => !empty($item['isVideo']) ? 'video' : 'poster',
+                        'jenis' => $isItemPanel ? 'panel' : 'aset',
                     ]);
 
                     if (!empty($item['contentUrl'])) {
@@ -259,11 +336,21 @@ class PameranController extends Controller
                 }
             }
 
-            return $this->created([
-                'id_pameran' => $pameran->id_pameran,
-                'pameran' => $pameran->load(['ruangan', 'model3d']),
-            ], 'Exhibition published successfully');
+            return $pameran;
         });
+
+        // 3. Catat aktivitas ke LogKeamanan SETELAH commit selesai
+        \App\Services\LogSistem::keamanan(
+            event: 'pameran_dipublikasi',
+            pesan: 'Pameran berhasil dipublikasi',
+            statusKode: 200,
+            idPengguna: $request->user()->id_pengguna
+        );
+
+        return $this->ok([
+            'id_pameran' => $pameran->id_pameran,
+            'pameran' => $pameran->load(['ruangan', 'model3d']),
+        ], 'pameran berhasil dipublikasi');
     }
 
     public function roomDto(Pameran $pameran, Request $request)
