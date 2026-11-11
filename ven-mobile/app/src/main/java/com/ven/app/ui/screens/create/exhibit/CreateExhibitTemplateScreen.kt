@@ -21,7 +21,9 @@ import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -37,6 +39,7 @@ import com.ven.app.ui.components.layout.VexTopBar
 import com.ven.app.ui.components.ui.CreateContentType
 import com.ven.app.ui.components.ui.SegmentedPill
 import com.ven.app.ui.screens.create.exhibit.components.IsometricRoomPreview
+import com.ven.app.ui.screens.create.exhibit.editor.sheets.ExhibitDetailsBottomSheet
 import com.ven.app.ui.theme.ThemeMode
 import com.ven.app.ui.theme.VexRadius
 import com.ven.app.ui.theme.VexSpace
@@ -54,11 +57,12 @@ import com.ven.app.ui.theme.VexTheme
 fun CreateExhibitTemplateScreen(
     onCloseClick: () -> Unit,
     onNavigateToPost: () -> Unit,
-    onTemplateSelected: (ExhibitTemplateItem) -> Unit,
+    onTemplateSelected: (template: ExhibitTemplateItem, title: String, description: String) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: CreateExhibitViewModel = viewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    var selectedTemplateForDetails by remember { mutableStateOf<ExhibitTemplateItem?>(null) }
 
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
@@ -66,7 +70,7 @@ fun CreateExhibitTemplateScreen(
                 is CreateExhibitEvent.NavigateToEditor -> {
                     val template = state.templates.find { it.id == event.templateId }
                     if (template != null) {
-                        onTemplateSelected(template)
+                        selectedTemplateForDetails = template
                     }
                 }
                 CreateExhibitEvent.SwitchToPost -> onNavigateToPost()
@@ -77,10 +81,27 @@ fun CreateExhibitTemplateScreen(
     CreateExhibitTemplateContent(
         state = state,
         onCloseClick = onCloseClick,
-        onTemplateClick = viewModel::onTemplateSelected,
+        onTemplateClick = { template ->
+            selectedTemplateForDetails = template
+        },
         onContentTypeSelected = viewModel::onContentTypeSelected,
         modifier = modifier,
     )
+
+    selectedTemplateForDetails?.let { template ->
+        ExhibitDetailsBottomSheet(
+            initialTitle = "",
+            initialDescription = "",
+            coverBannerUri = null,
+            onSave = { title, description, _ ->
+                selectedTemplateForDetails = null
+                onTemplateSelected(template, title, description)
+            },
+            onDismiss = {
+                selectedTemplateForDetails = null
+            },
+        )
+    }
 }
 
 @Composable

@@ -25,7 +25,12 @@ object UnityLauncher {
         }
     }
 
-    fun createEditorIntent(context: Context, templateId: String = "template01"): Intent {
+    fun createEditorIntent(
+        context: Context,
+        templateId: String = "template01",
+        title: String = "",
+        description: String = "",
+    ): Intent {
         val sessionManager = SessionManager.getInstance(context)
         val token = sessionManager.getToken().orEmpty()
         val baseUrl = AppConfig.baseUrl
@@ -34,6 +39,8 @@ object UnityLauncher {
         return Intent(context, UnityPlayerGameActivity::class.java).apply {
             putExtra("templateId", finalTemplateId)
             putExtra("template_id", finalTemplateId)
+            putExtra("title", title)
+            putExtra("description", description)
             putExtra("authToken", token)
             putExtra("token", token)
             putExtra("apiBaseUrl", baseUrl)
@@ -59,8 +66,13 @@ object UnityLauncher {
         }
     }
 
-    fun launchEditor(context: Context, templateId: String = "template01") {
-        val intent = createEditorIntent(context, templateId).apply {
+    fun launchEditor(
+        context: Context,
+        templateId: String = "template01",
+        title: String = "",
+        description: String = "",
+    ) {
+        val intent = createEditorIntent(context, templateId, title, description).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK
         }
         context.startActivity(intent)

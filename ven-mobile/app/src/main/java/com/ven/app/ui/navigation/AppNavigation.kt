@@ -52,7 +52,6 @@ import com.ven.app.ui.screens.auth.ResetPasswordScreen
 import com.ven.app.ui.screens.auth.VerifyOtpScreen
 import com.ven.app.ui.screens.create.exhibit.CreateExhibitTemplateScreen
 import com.ven.app.ui.screens.unity.UnityLoadingScreen
-import com.ven.app.util.UnityLauncher
 import com.ven.app.ui.screens.create.post.CreatePostScreen
 import com.ven.app.ui.screens.explore.ExploreScreen
 import com.ven.app.ui.screens.explore.ExploreViewModel
@@ -302,7 +301,6 @@ fun AppNavHost(showExplore: Boolean = false) {
         // 5a-2. Create Content Flow: Create Exhibit (Template Picker)
         // -------------------------------------------------------------
         composable(Screen.CreateExhibit.route) {
-            val context = LocalContext.current
             CreateExhibitTemplateScreen(
                 onCloseClick = { navController.popBackStack() },
                 onNavigateToPost = {
@@ -311,12 +309,14 @@ fun AppNavHost(showExplore: Boolean = false) {
                         launchSingleTop = true
                     }
                 },
-                onTemplateSelected = { template ->
-                    val authToken = sessionManager.getToken().orEmpty()
-                    UnityLauncher.openEditor(
-                        context = context,
-                        templateId = template.unityTemplateId.ifBlank { template.id },
-                        authToken = authToken,
+                onTemplateSelected = { template, title, description ->
+                    val finalTemplateId = template.unityTemplateId.ifBlank { template.id }
+                    navController.navigate(
+                        Screen.CreateExhibitEditor.createRoute(
+                            templateId = finalTemplateId,
+                            title = title,
+                            description = description,
+                        )
                     )
                 },
             )
@@ -332,11 +332,23 @@ fun AppNavHost(showExplore: Boolean = false) {
                     type = NavType.StringType
                     defaultValue = "template01"
                 },
+                navArgument("title") {
+                    type = NavType.StringType
+                    defaultValue = ""
+                },
+                navArgument("description") {
+                    type = NavType.StringType
+                    defaultValue = ""
+                },
             ),
         ) { backStackEntry ->
             val templateId = backStackEntry.arguments?.getString("templateId") ?: "template01"
+            val title = backStackEntry.arguments?.getString("title") ?: ""
+            val description = backStackEntry.arguments?.getString("description") ?: ""
             UnityLoadingScreen(
                 targetId = templateId,
+                title = title,
+                description = description,
                 isEditor = true,
                 onBackClick = {
                     if (!navController.popBackStack(Screen.CreateExhibit.route, inclusive = true)) {

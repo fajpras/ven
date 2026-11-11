@@ -56,6 +56,8 @@ import kotlinx.coroutines.delay
 @Composable
 fun UnityLoadingScreen(
     targetId: String,
+    title: String = "",
+    description: String = "",
     isEditor: Boolean = true,
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -78,7 +80,12 @@ fun UnityLoadingScreen(
             // Berikan jeda sejenak (400ms) agar loading UI ter-render mulus sebelum transisi berat ke engine Unity
             delay(400)
             val intent = if (isEditor) {
-                UnityLauncher.createEditorIntent(context, targetId)
+                UnityLauncher.createEditorIntent(
+                    context = context,
+                    templateId = targetId,
+                    title = title,
+                    description = description,
+                )
             } else {
                 UnityLauncher.createViewerIntent(context, targetId)
             }

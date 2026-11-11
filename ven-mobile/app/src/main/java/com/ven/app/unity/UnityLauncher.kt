@@ -1,17 +1,16 @@
 package com.ven.app.unity
 
 import android.content.Context
-import android.content.Intent
-import com.unity3d.player.UnityPlayerGameActivity
-import com.ven.app.BuildConfig
+import com.ven.app.util.UnityLauncher as UtilUnityLauncher
 
 object UnityLauncher {
-    fun openEditor(context: Context, templateId: String, authToken: String) {
-        val intent = Intent(context, UnityPlayerGameActivity::class.java).apply {
-            putExtra("templateId", templateId)
-            putExtra("authToken", authToken)
-            putExtra("apiBaseUrl", BuildConfig.BASE_URL)
-        }
-        context.startActivity(intent)
+    fun openEditor(
+        context: Context,
+        templateId: String,
+        authToken: String = "",
+        title: String = "",
+        description: String = "",
+    ) {
+        UtilUnityLauncher.launchEditor(context, templateId, title, description)
     }
 }
