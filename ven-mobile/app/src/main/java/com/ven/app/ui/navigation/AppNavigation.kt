@@ -51,6 +51,7 @@ import com.ven.app.ui.screens.auth.ResetPasswordScreen
 import com.ven.app.ui.screens.auth.VerifyOtpScreen
 import com.ven.app.ui.screens.create.exhibit.CreateExhibitTemplateScreen
 import com.ven.app.ui.screens.create.exhibit.editor.CreateExhibitEditorScreen
+import com.ven.app.unity.UnityLauncher
 import com.ven.app.ui.screens.create.post.CreatePostScreen
 import com.ven.app.ui.screens.explore.ExploreScreen
 import com.ven.app.ui.screens.explore.ExploreViewModel
@@ -300,6 +301,7 @@ fun AppNavHost(showExplore: Boolean = false) {
         // 5a-2. Create Content Flow: Create Exhibit (Template Picker)
         // -------------------------------------------------------------
         composable(Screen.CreateExhibit.route) {
+            val context = LocalContext.current
             CreateExhibitTemplateScreen(
                 onCloseClick = { navController.popBackStack() },
                 onNavigateToPost = {
@@ -309,7 +311,12 @@ fun AppNavHost(showExplore: Boolean = false) {
                     }
                 },
                 onTemplateSelected = { template ->
-                    navController.navigate(Screen.CreateExhibitEditor.createRoute(template.id))
+                    val authToken = sessionManager.getToken().orEmpty()
+                    UnityLauncher.openEditor(
+                        context = context,
+                        templateId = template.unityTemplateId.ifBlank { template.id },
+                        authToken = authToken,
+                    )
                 },
             )
         }
