@@ -256,6 +256,20 @@ class KaryaController extends Controller
         return $this->ok($objek->fresh()->load('posisi'), 'Posisi objek diperbarui.');
     }
 
+    public function uploadMedia(Request $request)
+    {
+        $request->validate([
+            'file' => ['required', 'file', 'max:51200', 'mimes:jpeg,jpg,png,webp,mp4,webm,mov'],
+        ]);
+
+        $path = $request->file('file')->store('karya', 'public');
+
+        return $this->ok([
+            'url' => Storage::url($path),
+            'path' => $path,
+        ], 'Berkas karya berhasil diunggah.');
+    }
+
     public function berkas(Karya $karya)
     {
         abort_unless($karya->file && Storage::disk('local')->exists($karya->file), 404);

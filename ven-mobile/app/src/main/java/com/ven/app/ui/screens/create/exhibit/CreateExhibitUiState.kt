@@ -6,11 +6,11 @@ import androidx.compose.runtime.Immutable
 import com.ven.app.R
 import com.ven.app.ui.components.ui.CreateContentType
 
-enum class ExhibitTemplateType {
-    Small,
-    Medium,
-    Big,
-    Event,
+enum class ExhibitTemplateType(val dbValue: String) {
+    Small("kecil"),
+    Medium("sedang"),
+    Big("besar"),
+    Event("acara");
 }
 
 @Immutable
@@ -21,7 +21,9 @@ data class ExhibitTemplateItem(
     val capacity: Int,
     val scaleMultiplier: Float = 1.0f,
     val unityTemplateId: String = "",
-)
+) {
+    val tipe: String get() = type.dbValue
+}
 
 val defaultExhibitTemplates: List<ExhibitTemplateItem> = listOf(
     ExhibitTemplateItem(

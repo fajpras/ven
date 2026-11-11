@@ -172,5 +172,39 @@ class ExhibitionPublishFlowTest extends TestCase
             'id_pengguna' => $this->user->id_pengguna,
             'status_kode' => 200,
         ]);
+
+        $idPameran = $response->json('data.id_pameran');
+
+        // Pastikan tabel objek mencatat id_pameran
+        $this->assertDatabaseHas('objek', [
+            'id_pameran' => $idPameran,
+            'jenis' => 'panel',
+        ]);
+        $this->assertDatabaseHas('objek', [
+            'id_pameran' => $idPameran,
+            'jenis' => 'aset',
+        ]);
+
+        // Pastikan tabel karya mencatat id_pameran
+        $this->assertDatabaseHas('karya', [
+            'id_pameran' => $idPameran,
+            'id_pengguna' => $this->user->id_pengguna,
+            'file' => 'https://example.com/poster.jpg',
+        ]);
+    }
+
+    public function test_upload_media_karya_berhasil_dan_mengembalikan_url(): void
+    {
+        $file = UploadedFile::fake()->image('karya_lukisan.png', 1024, 1024);
+
+        $response = $this->postJson('/api/karya/upload-media', [
+            'file' => $file,
+        ]);
+
+        $response->assertOk()
+            ->assertJsonStructure([
+                'message',
+                'data' => ['url', 'path'],
+            ]);
     }
 }

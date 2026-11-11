@@ -66,6 +66,7 @@ class PameranController extends Controller
     {
         return $this->ok($pameran->load([
             'model3d', self::PENGGUNA_PUBLIK, 'ruangan',
+            'objek.posisi', 'objek.model3d', 'objek.karya.kategori',
             'karya.kategori', 'karya.objek.posisi', 'karya.objek.model3d',
         ]));
     }
@@ -316,21 +317,27 @@ class PameranController extends Controller
                     $isItemPanel = ($itemSurface === 'wall') || str_contains($itemPrefab, 'panel') || str_contains($itemPrefab, 'poster') || str_contains($itemPrefab, 'frame');
 
                     $objek = \App\Models\Objek::create([
+                        'id_pameran' => $pameran->id_pameran,
                         'id_posisi' => $posisi->id_posisi,
                         'id_model' => $objekModel->id_model,
                         'jenis' => $isItemPanel ? 'panel' : 'aset',
                     ]);
 
-                    if (!empty($item['contentUrl'])) {
+                    if (!empty($item['contentUrl']) || !empty($item['artworkTitle'])) {
+                        $artworkTitle = !empty($item['artworkTitle']) ? trim($item['artworkTitle']) : ($validated['title'] . ' - Karya');
+                        $artworkDesc = !empty($item['artworkDescription']) ? trim($item['artworkDescription']) : ($validated['description'] ?? 'Karya dalam pameran virtual');
+                        $categoryId = !empty($item['categoryId']) ? (int) $item['categoryId'] : ($defaultCategory?->id_kategori ?? 1);
+                        $fileUrl = !empty($item['contentUrl']) ? $item['contentUrl'] : 'karya/default_artwork.jpg';
+
                         \App\Models\Karya::create([
-                            'id_kategori' => $defaultCategory?->id_kategori ?? 1,
+                            'id_kategori' => $categoryId,
                             'id_pengguna' => $user->id_pengguna,
                             'id_pameran' => $pameran->id_pameran,
                             'id_objek' => $objek->id_objek,
-                            'judul' => $validated['title'] . ' - Karya Panel',
+                            'judul' => $artworkTitle,
                             'jenis' => !empty($item['isVideo']) ? 'video' : 'poster',
-                            'deskripsi' => $validated['description'] ?? 'Karya dalam pameran virtual',
-                            'file' => $item['contentUrl'],
+                            'deskripsi' => $artworkDesc,
+                            'file' => $fileUrl,
                         ]);
                     }
                 }
@@ -357,14 +364,15 @@ class PameranController extends Controller
     {
         $pameran->load([
             'model3d', 'ruangan',
-            'karya.kategori', 'karya.objek.posisi', 'karya.objek.model3d',
+            'objek.posisi', 'objek.model3d', 'objek.karya.kategori',
         ]);
 
         $items = [];
-        foreach ($pameran->karya as $karya) {
-            $posisi = $karya->objek?->posisi;
+        foreach ($pameran->objek as $obj) {
+            $posisi = $obj->posisi;
+            $karya = $obj->karya->first();
             $items[] = [
-                'prefabId' => $karya->objek?->model3d?->nama ?? 'panel',
+                'prefabId' => $obj->model3d?->nama ?? 'panel',
                 'position' => [
                     'x' => (float) ($posisi?->posisi_x ?? 0.0),
                     'y' => (float) ($posisi?->posisi_y ?? 0.0),
@@ -375,8 +383,10 @@ class PameranController extends Controller
                     'y' => (float) ($posisi?->rotasi_z ?? 0.0),
                     'z' => 0.0,
                 ],
-                'contentType' => $karya->jenis,
-                'contentUrl' => $karya->file,
+                'contentType' => $karya?->jenis ?? '',
+                'contentUrl' => $karya?->file ?? '',
+                'title' => $karya?->judul ?? '',
+                'description' => $karya?->deskripsi ?? '',
             ];
         }
 

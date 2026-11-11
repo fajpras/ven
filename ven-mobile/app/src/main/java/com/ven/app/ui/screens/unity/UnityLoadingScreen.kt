@@ -59,6 +59,7 @@ fun UnityLoadingScreen(
     title: String = "",
     description: String = "",
     bannerUrl: String = "",
+    tipe: String = "kecil",
     isEditor: Boolean = true,
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -87,6 +88,7 @@ fun UnityLoadingScreen(
                     title = title,
                     description = description,
                     bannerUrl = bannerUrl,
+                    tipe = tipe,
                 )
             } else {
                 UnityLauncher.createViewerIntent(context, targetId)

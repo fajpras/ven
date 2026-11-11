@@ -31,6 +31,7 @@ object UnityLauncher {
         title: String = "",
         description: String = "",
         bannerUrl: String = "",
+        tipe: String = "kecil",
     ): Intent {
         val sessionManager = SessionManager.getInstance(context)
         val token = sessionManager.getToken().orEmpty()
@@ -40,6 +41,8 @@ object UnityLauncher {
         return Intent(context, UnityPlayerGameActivity::class.java).apply {
             putExtra("templateId", finalTemplateId)
             putExtra("template_id", finalTemplateId)
+            putExtra("tipe", tipe)
+            putExtra("tipe_pameran", tipe)
             putExtra("title", title)
             putExtra("description", description)
             putExtra("bannerUrl", bannerUrl)

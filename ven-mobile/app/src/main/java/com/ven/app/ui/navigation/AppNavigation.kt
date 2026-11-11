@@ -347,6 +347,7 @@ fun AppNavHost(showExplore: Boolean = false) {
                                 title = createExhibitState.title,
                                 description = createExhibitState.description,
                                 bannerUrl = createExhibitState.bannerUrl,
+                                tipe = template.tipe,
                             )
                         )
                     }
@@ -382,17 +383,23 @@ fun AppNavHost(showExplore: Boolean = false) {
                     type = NavType.StringType
                     defaultValue = ""
                 },
+                navArgument("tipe") {
+                    type = NavType.StringType
+                    defaultValue = "kecil"
+                },
             ),
         ) { backStackEntry ->
             val templateId = backStackEntry.arguments?.getString("templateId") ?: "template01"
             val title = backStackEntry.arguments?.getString("title") ?: ""
             val description = backStackEntry.arguments?.getString("description") ?: ""
             val bannerUrl = backStackEntry.arguments?.getString("bannerUrl") ?: ""
+            val tipe = backStackEntry.arguments?.getString("tipe") ?: "kecil"
             UnityLoadingScreen(
                 targetId = templateId,
                 title = title,
                 description = description,
                 bannerUrl = bannerUrl,
+                tipe = tipe,
                 isEditor = true,
                 onBackClick = {
                     createExhibitViewModel.clearTemporaryData()

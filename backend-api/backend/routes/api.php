@@ -61,6 +61,7 @@ Route::middleware(CatatKeamanan::class)->group(function () {
             Route::get('karya', 'index');
             Route::get('karya/rekomendasi', 'rekomendasi');
             Route::post('karya', 'store');
+            Route::post('karya/upload-media', 'uploadMedia');
             Route::get('karya/{karya}', 'show')->whereUuid('karya');
 
             Route::match(['put', 'patch', 'post'], 'karya/{karya}', 'update')->whereUuid('karya');
