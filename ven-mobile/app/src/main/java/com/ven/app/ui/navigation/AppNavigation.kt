@@ -83,6 +83,7 @@ import com.ven.app.ui.screens.settings.SettingsScreen
 import com.ven.app.ui.screens.settings.ThemeScreen
 import com.ven.app.ui.screens.settings.VerifyEmailRoute
 import com.ven.app.ui.screens.settings.dummyHistoryEntries
+import com.ven.app.ui.screens.splash.SplashScreen
 import com.ven.app.ui.theme.VexTheme
 
 /**
@@ -100,7 +101,7 @@ fun AppNavHost(showExplore: Boolean = false) {
     var isAccountDisabled by remember { mutableStateOf(false) }
 
     val isLoggedIn = remember { !sessionManager.getToken().isNullOrBlank() }
-    val startDestination = if (showExplore || isLoggedIn) Screen.Home.route else Screen.Login.route
+    val startDestination = if (showExplore) Screen.Home.route else Screen.Splash.route
     val navController = rememberNavController()
     val forgotViewModel: ForgotPasswordViewModel = viewModel()
     val homeViewModel: HomeViewModel = viewModel()
@@ -141,6 +142,43 @@ fun AppNavHost(showExplore: Boolean = false) {
         popEnterTransition = { fadeIn(tween(180)) },
         popExitTransition = { fadeOut(tween(220)) },
     ) {
+        // -------------------------------------------------------------
+        // 0. Alur Splash / Welcome
+        // -------------------------------------------------------------
+        composable(Screen.Splash.route) {
+            SplashScreen(
+                user = sessionManager.getUser(),
+                isLoggedIn = !sessionManager.getToken().isNullOrBlank(),
+                onNavigateToLogin = {
+                    navController.navigate(Screen.Login.route)
+                },
+                onNavigateToRegister = {
+                    navController.navigate(Screen.Register.route)
+                },
+                onNavigateToHome = {
+                    val user = sessionManager.getUser()
+                    if (user?.needsOnboarding == true) {
+                        navController.navigate(Screen.OnboardingInterest.route) {
+                            popUpTo(Screen.Splash.route) { inclusive = true }
+                        }
+                    } else {
+                        homeViewModel.muatUlang(filterSeen = false)
+                        exploreViewModel.muatUlang(filterSeen = false)
+                        navController.navigate(Screen.Home.route) {
+                            popUpTo(Screen.Splash.route) { inclusive = true }
+                        }
+                    }
+                },
+                onNavigateToExplore = {
+                    homeViewModel.muatUlang(filterSeen = false)
+                    exploreViewModel.muatUlang(filterSeen = false)
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.Splash.route) { inclusive = true }
+                    }
+                },
+            )
+        }
+
         // -------------------------------------------------------------
         // 1. Alur Login
         // -------------------------------------------------------------

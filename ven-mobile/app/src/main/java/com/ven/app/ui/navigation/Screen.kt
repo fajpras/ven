@@ -5,6 +5,9 @@ package com.ven.app.ui.navigation
  * Sesuai arsitektur navigasi di DESIGN.md §3.2 & §7.
  */
 sealed class Screen(val route: String) {
+    // Splash / Welcome Flow
+    data object Splash : Screen("splash")
+
     // Auth Flow
     data object Login : Screen("login")
     data object Register : Screen("register")
