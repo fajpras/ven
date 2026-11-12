@@ -251,6 +251,7 @@
     <string name="ai_chat_error_rate_limit">You have reached the maximum requests limit. Please wait a moment.</string>
     <string name="ai_chat_retry">Retry</string>
     <string name="ai_chat_sparkle_desc">AI Assistant Sparkle</string>
+    <string name="ai_chat_out_of_scope_rejection">Sorry, I can only answer questions regarding artworks or exhibitions in the VEN application.</string>
 
     <!-- Create Content Strings (§8.13 Create Post) -->
     <string name="create_post_title">New Post</string>

@@ -251,6 +251,7 @@
     <string name="ai_chat_error_rate_limit">Anda telah mencapai batas permintaan. Mohon tunggu sebentar.</string>
     <string name="ai_chat_retry">Coba lagi</string>
     <string name="ai_chat_sparkle_desc">Percikan Asisten AI</string>
+    <string name="ai_chat_out_of_scope_rejection">Maaf, saya hanya dapat menjawab pertanyaan seputar karya atau pameran yang ada pada aplikasi VEN.</string>
 
     <!-- Create Content Strings (§8.13 Create Post) -->
     <string name="create_post_title">Postingan Baru</string>

@@ -31,7 +31,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.ven.app.ui.screens.ai.AiChatDummyData
 import com.ven.app.ui.theme.ChatBodyStyle
 import com.ven.app.ui.theme.ThemeMode
 import com.ven.app.ui.theme.VexSpace
@@ -144,7 +143,7 @@ fun AiTypingIndicator(
 private fun ChatMessageAiDarkPreview() {
     VexTheme(mode = ThemeMode.Dark) {
         ChatMessageAi(
-            text = AiChatDummyData.INITIAL_AI_RESPONSE,
+            text = "Halo! Saya asisten AI resmi VEN. Ada yang bisa saya bantu seputar karya atau pameran di aplikasi ini?",
         )
     }
 }

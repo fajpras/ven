@@ -29,7 +29,6 @@ import androidx.compose.ui.unit.sp
 import com.ven.app.R
 import com.ven.app.ui.icons.VexIcon
 import com.ven.app.ui.icons.VexIcons
-import com.ven.app.ui.screens.ai.AiChatDummyData
 import com.ven.app.ui.screens.ai.ChatConversation
 import com.ven.app.ui.theme.ElmsSans
 import com.ven.app.ui.theme.ThemeMode
@@ -146,8 +145,8 @@ fun ChatHistoryDrawer(
 private fun ChatHistoryDrawerDarkPreview() {
     VexTheme(mode = ThemeMode.Dark) {
         ChatHistoryDrawer(
-            chatHistory = AiChatDummyData.sampleConversations,
-            selectedChatId = "chat_1",
+            chatHistory = emptyList(),
+            selectedChatId = null,
             onNewChatClick = {},
             onSelectChat = {},
         )
@@ -159,8 +158,8 @@ private fun ChatHistoryDrawerDarkPreview() {
 private fun ChatHistoryDrawerLightPreview() {
     VexTheme(mode = ThemeMode.Light) {
         ChatHistoryDrawer(
-            chatHistory = AiChatDummyData.sampleConversations,
-            selectedChatId = "chat_1",
+            chatHistory = emptyList(),
+            selectedChatId = null,
             onNewChatClick = {},
             onSelectChat = {},
         )
