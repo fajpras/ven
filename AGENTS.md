@@ -32,6 +32,13 @@ Dokumen ini memuat panduan utama bagi AI Coding Agent dalam mengembangkan dan me
 5. **Database Concurrency & Logging**:
    - Observer aktivitas harus mengimplementasikan `ShouldHandleEventsAfterCommit`.
    - Pemanggilan manual `LogSistem::aktivitas` tidak boleh dilakukan di dalam transaksi data yang belum di-commit untuk mencegah *lock-wait* antar koneksi PDO.
+6. **Sinkronisasi Status Proyek (Wajib Saat Ada Fitur Baru)**:
+   - Setiap penambahan, perubahan, atau penghapusan fitur **wajib memperbarui** `docs/STATUS-PROYEK-VEN.md` pada perubahan/commit yang sama.
+   - Status modul harus diubah sesuai kondisi nyata: `✅ Selesai`, `⚠️ Sebagian`, atau `❌ Belum/Mock`.
+   - Modul yang sebelumnya mock dan kini sudah tersambung API harus dipindahkan dari bagian "Masih Mock" ke "Sudah Selesai".
+   - Angka hasil test (backend/Android), tanggal verifikasi, branch, dan commit wajib diperbarui.
+   - Dilarang menandai fitur "selesai" tanpa bukti test/build/smoke test.
+   - Patuhi detail aturan di `.agents/rules/status-proyek.md`.
 
 ---
 
@@ -43,4 +50,12 @@ Bila menangani tugas spesifik, aktifkan skill di `.agents/skills/`:
 - `android-compose-expert`: Standar Android Kotlin, Jetpack Compose, MVVM/MVI.
 - `ven-security-audit`: Standar keamanan AES-256-GCM, Blind Index, OTP, RBAC.
 - `ven-tdd-testing`: Standar pengujian PHPUnit dan isolasi fixture test.
+
+---
+
+## 4. Aturan Tambahan (Rules)
+Selain prinsip kerja di atas, AI Agent wajib membaca dan mematuhi aturan berikut:
+- `.agents/rules/clean-code.md`: Standar koding bersih dan struktur folder.
+- `.agents/rules/no-git-push.md`: Larangan `git push` otomatis oleh AI.
+- `.agents/rules/status-proyek.md`: Kewajiban memperbarui status proyek setiap ada penambahan fitur.
 

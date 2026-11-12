@@ -13320,6 +13320,8 @@ IL_004b:
 		NullCheck(L_13);
 		GameObject_t76FEDD663AB33C991A9C9A23129337651094216F* L_14;
 		L_14 = Component_get_gameObject_m57AEFBB14DB39EC476F740BA000E170355DE691B(L_13, NULL);
+		NullCheck(L_14);
+		GameObject_SetActive_m638E92E1E75E519E5B24CF150B08CA8E0CDFAB92(L_14, (bool)1, NULL);
 		__this->___roomInstance = L_14;
 		Il2CppCodeGenWriteBarrier((void**)(&__this->___roomInstance), (void*)L_14);
 		//<source_info:D:/UNITY/VEN/Assets/Scripts/RoomLoader.cs:112>
