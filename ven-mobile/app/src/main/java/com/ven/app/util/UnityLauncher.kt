@@ -17,11 +17,11 @@ object UnityLauncher {
      */
     fun mapTemplateId(templateId: String): String {
         return when (templateId.trim().lowercase()) {
-            "tpl_small", "small", "template01" -> "template01"
-            "tpl_medium", "medium", "template02" -> "template02"
-            "tpl_big", "big", "template03" -> "template03"
-            "tpl_event", "event", "template04" -> "template04"
-            else -> templateId.ifBlank { "template01" }
+            "tpl_small", "small", "kecil", "template01" -> "template01"
+            "tpl_medium", "medium", "sedang", "template02" -> "template02"
+            "tpl_big", "big", "besar", "template03" -> "template03"
+            "tpl_event", "event", "acara", "template04" -> "template04"
+            else -> "template01"
         }
     }
 

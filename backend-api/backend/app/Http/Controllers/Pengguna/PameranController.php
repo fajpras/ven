@@ -390,12 +390,32 @@ class PameranController extends Controller
             ];
         }
 
+        if (empty($items)) {
+            $items = [
+                ['prefabId' => 'hpanel_01', 'position' => ['x' => 0.0, 'y' => 1.8, 'z' => 5.2], 'rotation' => ['x' => 0.0, 'y' => 180.0, 'z' => 0.0], 'contentType' => 'poster', 'contentUrl' => '', 'title' => $pameran->judul, 'description' => 'Karya Utama'],
+                ['prefabId' => 'vpanel_01', 'position' => ['x' => -4.8, 'y' => 1.8, 'z' => 1.5], 'rotation' => ['x' => 0.0, 'y' => 90.0, 'z' => 0.0], 'contentType' => 'poster', 'contentUrl' => '', 'title' => 'Karya Visual 1', 'description' => ''],
+                ['prefabId' => 'vpanel_02', 'position' => ['x' => 4.8, 'y' => 1.8, 'z' => 1.5], 'rotation' => ['x' => 0.0, 'y' => -90.0, 'z' => 0.0], 'contentType' => 'poster', 'contentUrl' => '', 'title' => 'Karya Visual 2', 'description' => ''],
+                ['prefabId' => 'sculpture_01', 'position' => ['x' => 2.0, 'y' => 0.0, 'z' => 0.0], 'rotation' => ['x' => 0.0, 'y' => -45.0, 'z' => 0.0], 'contentType' => '3d', 'contentUrl' => '', 'title' => 'Instalasi 3D', 'description' => ''],
+                ['prefabId' => 'bench_01', 'position' => ['x' => -2.0, 'y' => 0.0, 'z' => 0.0], 'rotation' => ['x' => 0.0, 'y' => 90.0, 'z' => 0.0], 'contentType' => 'aset', 'contentUrl' => '', 'title' => '', 'description' => ''],
+            ];
+        }
+
+        $rawTpl = $pameran->model3d?->file ? strtolower(basename($pameran->model3d->file, '.glb')) : '';
+        if (!in_array($rawTpl, ['template01', 'template02', 'template03', 'template04'], true)) {
+            $rawTpl = match (strtolower((string) $pameran->tipe)) {
+                'sedang' => 'template02',
+                'besar' => 'template03',
+                'acara' => 'template04',
+                default => 'template01',
+            };
+        }
+
         $dto = [
             'roomId' => (string) $pameran->id_pameran,
-            'templateId' => $pameran->model3d?->file ? basename($pameran->model3d->file, '.glb') : 'tpl_small',
+            'templateId' => $rawTpl,
             'title' => $pameran->judul,
             'description' => 'Pameran Virtual 3D',
-            'wallColor' => $pameran->warna ?? '#1565C0',
+            'wallColor' => $pameran->warna ?? '#FFFFFF',
             'isPublic' => true,
             'ownerId' => (string) $pameran->id_pengguna,
             'viewerId' => (string) ($request->user()?->id_pengguna ?? ''),
