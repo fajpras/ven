@@ -1,10 +1,12 @@
 # Status Proyek VEN — Daftar Modul, Verifikasi, dan Kendala
 
-> **Tanggal verifikasi:** 12 November 2026
+> **Tanggal verifikasi:** 13 November 2026
 >
 > **Branch aktif:** `integration-test`
 >
-> **Commit terakhir:** `f5375a8` — `feat(unityLibrary): sync newly exported Unity build with PlayScene routing and updated TemplateLoader`
+> **Commit terakhir:** `c19f7dc` — `feat(ui): redesign CreateOptionsBottomSheet with modern cards, badges, and gradient accents`
+>
+> **Perubahan terbaru:** `fix(api): selalu kembalikan JSON untuk endpoint yang tidak dapat diakses` — 13 November 2026 (commit lokal setelah `c19f7dc`)
 >
 > **Lingkungan:** Windows + Laragon, PHP 8.3.33, Laravel 13.34.0, MySQL, Android Gradle 9.6
 
@@ -20,7 +22,8 @@ Dokumen ini merangkum hasil audit langsung terhadap repositori: modul apa yang s
 |---|---|---|
 | Konfigurasi backend | `php artisan about` | ✅ Laravel 13.34.0, PHP 8.3.33, DB MySQL, storage link aktif |
 | Daftar route backend | `php artisan route:list` | ✅ 99 route terdaftar |
-| Test backend | `php artisan test` | ⚠️ **67 test — 66 lulus, 1 gagal** (322 assertion) |
+| Test backend | `php artisan test` | ⚠️ **74 test — 73 lulus, 1 gagal** (357 assertion) |
+| Fallback galat API | `php artisan test --filter=PenanganKesalahanApiTest` | ✅ **7 test lulus** — 401, 403, 404, 405, 422, 500 tanpa kebocoran detail internal |
 | Smoke test API live | `artisan serve` + login `fajri@ven.test` | ✅ Login, `/api/pameran`, `/api/karya/rekomendasi`, `/api/profil`, `/api/pencarian`, `/api/pameran/23/room-dto` merespons normal |
 | Admin Web Panel | `GET /admin/login` | ✅ HTTP 200 |
 | Build Android | `.\gradlew.bat assembleDebug` | ✅ **BUILD SUCCESSFUL** |
@@ -53,6 +56,7 @@ C:\laragon\bin\php\php-8.3.33-Win32-vs16-x64\php.exe artisan test
 | 10 | Admin Web Panel | Login, akun, posts, exhibitions, activity-log (Blade + Tailwind) | ✅ |
 | 11 | 7 Pilar Audit DB | View, hashing, enkripsi, transaksi ACID, locking, backup otomatis, restore verification | ✅ |
 | 12 | Command & Scheduler | `ven:setup-db`, `ven:initialize-db`, `ven:backup-db`, `ven:restore-db`, `ven:enkripsi-google-id`, `ven:uji-transaksi-pameran` | ✅ |
+| 13 | Penanganan galat API terpusat | `app/Exceptions/PenanganKesalahanApi.php` + `bootstrap/app.php`: semua `/api/*` selalu JSON `{data, message}` untuk 401/403/404/405/413/419/422/429/5xx, tanpa redirect `route('login')` dan tanpa stack trace | ✅ |
 
 Dokumentasi teknis: `backend-api/backend/docs/`.
 
@@ -101,28 +105,33 @@ Dokumentasi teknis: `backend-api/backend/docs/`.
 
 | No | Kendala | Bukti | Dampak | Rekomendasi |
 |:--:|---|---|---|---|
-| 1 | API tanpa autentikasi mengembalikan **HTTP 500**, bukan 401 | `GET /api/pameran` tanpa token → `{"message":"Route [login] not defined."}`. Terjadi di `bootstrap/app.php:37-40`; middleware `Authenticate` mencoba redirect ke route `login` | Postman, Unity, atau browser menerima 500. Aplikasi mobile aman karena `ApiClient` selalu mengirim `Accept: application/json` | Tambahkan `$middleware->redirectGuestsTo(fn () => null)` atau tangani `AuthenticationException` khusus prefix `api/*` agar selalu JSON 401 |
-| 2 | Tabel `ven_testing.reset_kata_sandi` hilang | Migrasi tercatat di tabel `migrations`, tetapi tabel tidak ada. Test gagal: `tests/Feature/ProfilMinatTest.php:291` | 1 test backend gagal | Jalankan `php artisan migrate:fresh --database=mysql` pada database **ven_testing** (jangan `ven`) |
-| 3 | `GEMINI_API_KEY` kosong | Uji live `POST /api/ai/tanya` → `"Layanan AI belum dikonfigurasi. Hubungi administrator."` | Fitur AI Assistant tidak berfungsi nyata; mobile menampilkan jawaban dummy | Isi `GEMINI_API_KEY` di `.env`, lalu `php artisan config:clear` |
-| 4 | Unit test Android usang | `app/src/test/.../ui/navigation/ScreenRouteTest.kt:20` masih mengharapkan `create_exhibit_editor/tpl_small`, sedangkan `Screen.kt:42-55` kini menambahkan query `title/description/bannerUrl/tipe` | 1 test Android gagal (build tetap sukses) | Perbarui ekspektasi test sesuai format route terbaru |
+| 1 | Tabel `ven_testing.reset_kata_sandi` hilang | Migrasi tercatat di tabel `migrations`, tetapi tabel tidak ada. Test gagal: `tests/Feature/ProfilMinatTest.php:291` | 1 test backend gagal | Jalankan `php artisan migrate:fresh --database=mysql` pada database **ven_testing** (jangan `ven`) |
+| 2 | `GEMINI_API_KEY` kosong | Uji live `POST /api/ai/tanya` → `"Layanan AI belum dikonfigurasi. Hubungi administrator."` | Fitur AI Assistant tidak berfungsi nyata; mobile menampilkan jawaban dummy | Isi `GEMINI_API_KEY` di `.env`, lalu `php artisan config:clear` |
+| 3 | Unit test Android usang | `app/src/test/.../ui/navigation/ScreenRouteTest.kt:20` masih mengharapkan `create_exhibit_editor/tpl_small`, sedangkan `Screen.kt:42-55` kini menambahkan query `title/description/bannerUrl/tipe` | 1 test Android gagal (build tetap sukses) | Perbarui ekspektasi test sesuai format route terbaru |
 
 ### Prioritas Sedang
 
 | No | Kendala | Dampak | Rekomendasi |
 |:--:|---|---|---|
-| 5 | Modul Schedule, Request Meeting, Create Post, dan Publish editor masih simulasi | Fitur terlihat jalan tetapi data tidak tersimpan ke server | Buat `ApiKarya` dan `ApiUndangan`, lalu hubungkan ViewModel ke endpoint yang sudah ada |
-| 6 | Source Unity (`.cs`) tidak ada di repo, hanya binary `il2cpp` | Integrasi Unity tidak dapat diaudit dari source; verifikasi butuh perangkat/emulator | Simpan proyek Unity sebagai submodule/folder terpisah atau dokumentasikan prosedur build |
-| 7 | Perubahan binary Unity belum di-commit | `libil2cpp.so` (arm64) termodifikasi dan `compile-data.json` masih untracked | Tinjau ulang lalu commit secara terkontrol (hindari commit binary besar tanpa kebutuhan) |
+| 4 | Modul Schedule, Request Meeting, Create Post, dan Publish editor masih simulasi | Fitur terlihat jalan tetapi data tidak tersimpan ke server | Buat `ApiKarya` dan `ApiUndangan`, lalu hubungkan ViewModel ke endpoint yang sudah ada |
+| 5 | Source Unity (`.cs`) tidak ada di repo, hanya binary `il2cpp` | Integrasi Unity tidak dapat diaudit dari source; verifikasi butuh perangkat/emulator | Simpan proyek Unity sebagai submodule/folder terpisah atau dokumentasikan prosedur build |
+| 6 | Perubahan binary Unity belum di-commit | `libil2cpp.so` (arm64) termodifikasi dan `compile-data.json` masih untracked | Tinjau ulang lalu commit secara terkontrol (hindari commit binary besar tanpa kebutuhan) |
 
 ### Prioritas Rendah / Lingkungan
 
 | No | Kendala | Rekomendasi |
 |:--:|---|---|
-| 8 | `BASE_URL` mobile default `http://10.0.2.2:8000/api/` | Hanya untuk emulator; ubah `ven-mobile/.env` untuk perangkat fisik |
-| 9 | `android:usesCleartextTraffic="true"` aktif | Wajar untuk development; matikan dan gunakan HTTPS untuk rilis |
-| 10 | README menyebut "37 tests passed" | Perbarui angka menjadi 67 test backend / 66 test Android |
-| 11 | APK berukuran ~113,6 MB karena Unity | Pertimbangkan Android App Bundle atau ABI split |
-| 12 | `php` tidak ada di PATH | Gunakan path Laragon atau tambahkan ke environment variable |
+| 7 | `BASE_URL` mobile default `http://10.0.2.2:8000/api/` | Hanya untuk emulator; ubah `ven-mobile/.env` untuk perangkat fisik |
+| 8 | `android:usesCleartextTraffic="true"` aktif | Wajar untuk development; matikan dan gunakan HTTPS untuk rilis |
+| 9 | README menyebut "37 tests passed" | Perbarui angka menjadi 74 test backend / 66 test Android |
+| 10 | APK berukuran ~113,6 MB karena Unity | Pertimbangkan Android App Bundle atau ABI split |
+| 11 | `php` tidak ada di PATH | Gunakan path Laragon atau tambahkan ke environment variable |
+
+### Kendala yang Sudah Diperbaiki
+
+| Tanggal | Kendala | Perbaikan | Bukti |
+|---|---|---|---|
+| 13 Nov 2026 | Request `/api/*` tanpa header `Accept: application/json` menghasilkan **HTTP 500** `Route [login] not defined.` | `bootstrap/app.php`: `redirectGuestsTo` mengembalikan `null` untuk prefix `api`; `app/Exceptions/PenanganKesalahanApi.php` merender semua galat API sebagai JSON `{data, message}` (401/403/404/405/413/419/422/429/5xx) tanpa membocorkan detail internal | `tests/Feature/PenanganKesalahanApiTest.php` — 7 test lulus; smoke test live `GET /api/profil` tanpa header → `401 application/json` |
 
 ---
 
@@ -132,7 +141,7 @@ Dokumentasi teknis: `backend-api/backend/docs/`.
 - **Android:** alur utama selesai dan berhasil di-build (APK tersedia). Autentikasi, home, explore, profil, settings, create exhibit, dan viewer Unity sudah terhubung API.
 - **Belum selesai:** Schedule, Request Meeting, Create Post, publish dari editor Compose, riwayat aktivitas, dan AI live.
 - **Kegagalan test** yang ada (1 backend, 1 Android) disebabkan masalah environment/test usang, bukan kegagalan build aplikasi.
-- **Bug paling mendesak:** respons 500 untuk request API tanpa autentikasi (seharusnya 401 JSON).
+- **Bug yang sudah diperbaiki (13 Nov 2026):** request API tanpa autentikasi kini selalu mengembalikan **401 JSON**, bukan 500 `Route [login] not defined`. Seluruh galat `/api/*` (404, 405, 422, 429, 5xx, dll.) memakai envelope JSON yang sama dan tidak menampilkan stack trace.
 
 ---
 
@@ -145,6 +154,7 @@ $php = "C:\laragon\bin\php\php-8.3.33-Win32-vs16-x64\php.exe"
 & $php artisan about
 & $php artisan route:list
 & $php artisan test
+& $php vendor\phpunit\phpunit\phpunit tests/Feature/PenanganKesalahanApiTest.php
 
 # Android — build & unit test
 cd ..\..\ven-mobile
