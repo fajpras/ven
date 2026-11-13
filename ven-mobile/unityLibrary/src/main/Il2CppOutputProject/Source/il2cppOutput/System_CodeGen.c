@@ -83,6 +83,7 @@ extern void Uri_get_OriginalString_m3031F9054CA10F2C55C0E2415CC19810D360A5D6 (vo
 extern void Uri_get_DnsSafeHost_mE5001E7AE7F1879A2059024EA06C9031F6320A2B (void);
 extern void Uri_get_IsAbsoluteUri_m2F9B759B85D295639D7959A616E1FBC203D756DF (void);
 extern void Uri_get_UserEscaped_m5A376B8E2DDB815CAA2E34AF8890FBA943DC2085 (void);
+extern void Uri_GetLeftPart_mCD76AFF4AF320A23BCB70AA59E2C1BF78120BC7D (void);
 extern void Uri_IsGenDelim_mED487423251FBC7A3AA85A70023D531DED88B0D3 (void);
 extern void Uri_IsHexDigit_m89270CD137F8D5AAC9953CB367BF194D0D0EEDBC (void);
 extern void Uri_FromHex_m30578BD6ADBA0FE875257A8296ED979DC7849020 (void);
@@ -840,7 +841,7 @@ extern void WebRequestModuleElementCollection__ctor_m62C156D78336B2E37EA6F10D477
 extern void DiagnosticsConfigurationHandler__ctor_mDFB0000E6218840F66D21BB6C9BF3F647CCBC5A3 (void);
 extern void DiagnosticsConfigurationHandler_Create_mF21B1CC68B87DE078690B2B493FCDC5F728CBAAB (void);
 extern void ThrowStub_ThrowNotSupportedException_m14168B43936EF78B7B8AC08BD815254DAA1D9FA2 (void);
-static Il2CppMethodPointer s_methodPointers[983] = 
+static Il2CppMethodPointer s_methodPointers[984] = 
 {
 	OidLookup_ToOid_m084AE2948BA1D784EAC148B97B6D5EF94F0D58B0,
 	OidLookup_ShouldUseCache_mAF605BA00A22EA400B99D24286837F6904C84ED0,
@@ -918,6 +919,7 @@ static Il2CppMethodPointer s_methodPointers[983] =
 	Uri_get_DnsSafeHost_mE5001E7AE7F1879A2059024EA06C9031F6320A2B,
 	Uri_get_IsAbsoluteUri_m2F9B759B85D295639D7959A616E1FBC203D756DF,
 	Uri_get_UserEscaped_m5A376B8E2DDB815CAA2E34AF8890FBA943DC2085,
+	Uri_GetLeftPart_mCD76AFF4AF320A23BCB70AA59E2C1BF78120BC7D,
 	Uri_IsGenDelim_mED487423251FBC7A3AA85A70023D531DED88B0D3,
 	Uri_IsHexDigit_m89270CD137F8D5AAC9953CB367BF194D0D0EEDBC,
 	Uri_FromHex_m30578BD6ADBA0FE875257A8296ED979DC7849020,
@@ -1837,17 +1839,17 @@ extern void RegexPrefix_get_CaseInsensitive_m4DAE2D9E91916BFFAB928F7DCAA20A5ABD4
 extern void RegexPrefix_get_Prefix_m844D02262C0720B0DC488AD1541713AD37BC518E_AdjustorThunk (void);
 static Il2CppTokenAdjustorThunkPair s_adjustorThunks[9] = 
 {
-	{ 0x0600017A, CachedCodeEntryKey__ctor_mE505E40C97820B3FD140F6212F0B4ECF8745585F_AdjustorThunk },
-	{ 0x0600017B, CachedCodeEntryKey_Equals_m59F40708B97179EA5C9019EA6A958D7AB8BC8CA2_AdjustorThunk },
-	{ 0x0600017C, CachedCodeEntryKey_Equals_m55F9ED97CB9AF357034A75C2FDB8498FC55D3AF0_AdjustorThunk },
-	{ 0x0600017E, CachedCodeEntryKey_GetHashCode_m253B53C100F840B987A487020F02184019D776DE_AdjustorThunk },
-	{ 0x060001AB, LowerCaseMapping__ctor_m06D0A21D5D72E39535F82076EF046F98C62D7D5A_AdjustorThunk },
-	{ 0x060001AF, SingleRange__ctor_m14FD490AFB119E412298554D31FADDCB9465511E_AdjustorThunk },
-	{ 0x06000257, RegexPrefix__ctor_m05CD44F32CB0B5F8B2C080EAB94886F9743E86A4_AdjustorThunk },
-	{ 0x06000258, RegexPrefix_get_CaseInsensitive_m4DAE2D9E91916BFFAB928F7DCAA20A5ABD4560E6_AdjustorThunk },
-	{ 0x0600025A, RegexPrefix_get_Prefix_m844D02262C0720B0DC488AD1541713AD37BC518E_AdjustorThunk },
+	{ 0x0600017B, CachedCodeEntryKey__ctor_mE505E40C97820B3FD140F6212F0B4ECF8745585F_AdjustorThunk },
+	{ 0x0600017C, CachedCodeEntryKey_Equals_m59F40708B97179EA5C9019EA6A958D7AB8BC8CA2_AdjustorThunk },
+	{ 0x0600017D, CachedCodeEntryKey_Equals_m55F9ED97CB9AF357034A75C2FDB8498FC55D3AF0_AdjustorThunk },
+	{ 0x0600017F, CachedCodeEntryKey_GetHashCode_m253B53C100F840B987A487020F02184019D776DE_AdjustorThunk },
+	{ 0x060001AC, LowerCaseMapping__ctor_m06D0A21D5D72E39535F82076EF046F98C62D7D5A_AdjustorThunk },
+	{ 0x060001B0, SingleRange__ctor_m14FD490AFB119E412298554D31FADDCB9465511E_AdjustorThunk },
+	{ 0x06000258, RegexPrefix__ctor_m05CD44F32CB0B5F8B2C080EAB94886F9743E86A4_AdjustorThunk },
+	{ 0x06000259, RegexPrefix_get_CaseInsensitive_m4DAE2D9E91916BFFAB928F7DCAA20A5ABD4560E6_AdjustorThunk },
+	{ 0x0600025B, RegexPrefix_get_Prefix_m844D02262C0720B0DC488AD1541713AD37BC518E_AdjustorThunk },
 };
-static const int32_t s_InvokerIndices[983] = 
+static const int32_t s_InvokerIndices[984] = 
 {
 	17558,
 	22394,
@@ -1925,6 +1927,7 @@ static const int32_t s_InvokerIndices[983] =
 	13771,
 	13575,
 	13575,
+	9024,
 	22415,
 	22415,
 	22590,
@@ -2835,17 +2838,17 @@ static const int32_t s_InvokerIndices[983] =
 };
 static const Il2CppTokenRangePair s_rgctxIndices[11] = 
 {
-	{ 0x0200006B, { 2, 20 } },
-	{ 0x02000070, { 22, 26 } },
-	{ 0x02000071, { 48, 5 } },
-	{ 0x02000072, { 53, 3 } },
-	{ 0x02000073, { 56, 53 } },
-	{ 0x02000074, { 109, 9 } },
-	{ 0x02000075, { 118, 5 } },
-	{ 0x02000076, { 123, 5 } },
-	{ 0x02000077, { 128, 12 } },
-	{ 0x02000078, { 140, 11 } },
-	{ 0x0600030C, { 0, 2 } },
+	{ 0x0200006C, { 2, 20 } },
+	{ 0x02000071, { 22, 26 } },
+	{ 0x02000072, { 48, 5 } },
+	{ 0x02000073, { 53, 3 } },
+	{ 0x02000074, { 56, 53 } },
+	{ 0x02000075, { 109, 9 } },
+	{ 0x02000076, { 118, 5 } },
+	{ 0x02000077, { 123, 5 } },
+	{ 0x02000078, { 128, 12 } },
+	{ 0x02000079, { 140, 11 } },
+	{ 0x0600030D, { 0, 2 } },
 };
 extern const uint32_t g_rgctx_TU26_t633A31097C4ACDEA7F1CF739800D99D7461E2B39;
 extern const uint32_t g_rgctx_T_t047CCAB016DADA45BF2B971B3E7C13F5D9EEAD31;
@@ -3156,7 +3159,7 @@ IL2CPP_EXTERN_C const Il2CppCodeGenModule g_System_CodeGenModule;
 const Il2CppCodeGenModule g_System_CodeGenModule = 
 {
 	"System.dll",
-	983,
+	984,
 	s_methodPointers,
 	9,
 	s_adjustorThunks,
