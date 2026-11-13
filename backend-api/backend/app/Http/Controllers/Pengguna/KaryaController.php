@@ -256,14 +256,50 @@ class KaryaController extends Controller
         return $this->ok($objek->fresh()->load('posisi'), 'Posisi objek diperbarui.');
     }
 
+    public function uploadMedia(Request $request)
+    {
+        $request->validate([
+            'file' => ['required', 'file', 'max:51200', 'mimes:jpeg,jpg,png,webp,mp4,webm,mov,mp3,wav,ogg'],
+        ]);
+
+        $path = $request->file('file')->store('karya', 'public');
+
+        return $this->ok([
+            'url' => Storage::url($path),
+            'path' => $path,
+        ], 'Berkas karya berhasil diunggah.');
+    }
+
     public function berkas(Karya $karya)
     {
-        abort_unless($karya->file && Storage::disk('local')->exists($karya->file), 404);
+        if (! $karya->file) {
+            abort(404);
+        }
 
-        return Storage::disk('local')->response($karya->file, null, [
-            'X-Content-Type-Options' => 'nosniff',
-            'Cache-Control' => 'private, max-age=1800',
-        ]);
+        $cleanPath = ltrim(preg_replace('#^/?storage/#', '', $karya->file), '/');
+
+        if (Storage::disk('public')->exists($cleanPath)) {
+            return Storage::disk('public')->response($cleanPath, null, [
+                'X-Content-Type-Options' => 'nosniff',
+                'Cache-Control' => 'public, max-age=86400',
+            ]);
+        }
+
+        if (Storage::disk('local')->exists($karya->file)) {
+            return Storage::disk('local')->response($karya->file, null, [
+                'X-Content-Type-Options' => 'nosniff',
+                'Cache-Control' => 'private, max-age=1800',
+            ]);
+        }
+
+        if (Storage::disk('local')->exists($cleanPath)) {
+            return Storage::disk('local')->response($cleanPath, null, [
+                'X-Content-Type-Options' => 'nosniff',
+                'Cache-Control' => 'private, max-age=1800',
+            ]);
+        }
+
+        abort(404);
     }
 
     private function rules(Request $request, bool $wajib): array

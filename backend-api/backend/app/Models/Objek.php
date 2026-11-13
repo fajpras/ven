@@ -13,7 +13,12 @@ class Objek extends Model
     protected $table = 'objek';
     protected $primaryKey = 'id_objek';
 
-    protected $fillable = ['id_model', 'jenis', 'id_posisi'];
+    protected $fillable = ['id_pameran', 'id_model', 'jenis', 'id_posisi'];
+
+    public function pameran(): BelongsTo
+    {
+        return $this->belongsTo(Pameran::class, 'id_pameran', 'id_pameran');
+    }
 
     public function model3d(): BelongsTo
     {

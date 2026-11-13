@@ -8,6 +8,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.width
+import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -21,7 +24,9 @@ import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -54,7 +59,7 @@ import com.ven.app.ui.theme.VexTheme
 fun CreateExhibitTemplateScreen(
     onCloseClick: () -> Unit,
     onNavigateToPost: () -> Unit,
-    onTemplateSelected: (ExhibitTemplateItem) -> Unit,
+    onTemplateSelected: (template: ExhibitTemplateItem) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: CreateExhibitViewModel = viewModel(),
 ) {
@@ -70,6 +75,7 @@ fun CreateExhibitTemplateScreen(
                     }
                 }
                 CreateExhibitEvent.SwitchToPost -> onNavigateToPost()
+                else -> Unit
             }
         }
     }
@@ -77,7 +83,9 @@ fun CreateExhibitTemplateScreen(
     CreateExhibitTemplateContent(
         state = state,
         onCloseClick = onCloseClick,
-        onTemplateClick = viewModel::onTemplateSelected,
+        onTemplateClick = { template ->
+            viewModel.onTemplateSelected(template)
+        },
         onContentTypeSelected = viewModel::onContentTypeSelected,
         modifier = modifier,
     )
@@ -161,7 +169,7 @@ fun ExhibitTemplateCard(
     Column(
         modifier = modifier.fillMaxWidth(),
     ) {
-        // Baris Header: Nama Template di kiri, Jumlah Kapasitas Post di kanan
+        // Baris Header: Nama Template di kiri + Badge Tipe DB, Jumlah Kapasitas Post di kanan
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -169,13 +177,31 @@ fun ExhibitTemplateCard(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(
-                text = stringResource(template.nameRes),
-                style = MaterialTheme.typography.titleMedium.copy(
-                    fontWeight = FontWeight.SemiBold,
-                ),
-                color = colors.text,
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = stringResource(template.nameRes),
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.SemiBold,
+                    ),
+                    color = colors.text,
+                )
+                Spacer(modifier = Modifier.width(VexSpace.s2))
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(VexRadius.xs))
+                        .background(colors.primary.copy(alpha = 0.15f))
+                        .padding(horizontal = VexSpace.s2, vertical = 2.dp),
+                ) {
+                    Text(
+                        text = template.type.dbValue.uppercase(),
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 10.sp,
+                        ),
+                        color = colors.primary,
+                    )
+                }
+            }
 
             Text(
                 text = stringResource(R.string.create_exhibit_post_count, template.capacity),

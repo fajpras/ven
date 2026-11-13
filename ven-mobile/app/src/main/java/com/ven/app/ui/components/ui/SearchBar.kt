@@ -86,7 +86,7 @@ fun SearchBar(
             ) {
                 VexIcon(
                     id = VexIcons.Back,
-                    contentDescription = stringResource(R.string.common_back),
+                    contentDescription = "Back",
                     size = VexSize.iconSm,
                     tint = colors.text,
                 )

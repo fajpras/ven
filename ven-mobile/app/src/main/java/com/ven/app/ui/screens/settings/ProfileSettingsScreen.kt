@@ -143,7 +143,7 @@ fun ProfileSettingsScreen(
                         ) {
                             VexIcon(
                                 id = VexIcons.Edit,
-                                contentDescription = stringResource(R.string.settings_edit_profile_title),
+                                contentDescription = "Edit Profile",
                                 size = 22.dp,
                                 tint = colors.text,
                             )

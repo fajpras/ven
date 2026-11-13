@@ -218,7 +218,7 @@ fun AiChatScreenContent(
 private fun AiChatScreenEmptyDarkPreview() {
     VexTheme(mode = ThemeMode.Dark) {
         AiChatScreenContent(
-            uiState = AiChatUiState(),
+            uiState = AiChatDummyData.initialEmptyUiState,
             onTabSelected = {},
             onInputChange = {},
             onSendMessage = {},
@@ -233,13 +233,7 @@ private fun AiChatScreenEmptyDarkPreview() {
 private fun AiChatScreenConversationDarkPreview() {
     VexTheme(mode = ThemeMode.Dark) {
         AiChatScreenContent(
-            uiState = AiChatUiState(
-                currentChatId = "preview_1",
-                messages = listOf(
-                    ChatMessage(id = "1", sender = ChatSender.User, text = "Apa itu VEN?"),
-                    ChatMessage(id = "2", sender = ChatSender.Ai, text = "VEN adalah platform pameran seni virtual 3D."),
-                ),
-            ),
+            uiState = AiChatDummyData.initialConversationUiState,
             onTabSelected = {},
             onInputChange = {},
             onSendMessage = {},
@@ -254,13 +248,7 @@ private fun AiChatScreenConversationDarkPreview() {
 private fun AiChatScreenConversationLightPreview() {
     VexTheme(mode = ThemeMode.Light) {
         AiChatScreenContent(
-            uiState = AiChatUiState(
-                currentChatId = "preview_1",
-                messages = listOf(
-                    ChatMessage(id = "1", sender = ChatSender.User, text = "Apa itu VEN?"),
-                    ChatMessage(id = "2", sender = ChatSender.Ai, text = "VEN adalah platform pameran seni virtual 3D."),
-                ),
-            ),
+            uiState = AiChatDummyData.initialConversationUiState,
             onTabSelected = {},
             onInputChange = {},
             onSendMessage = {},

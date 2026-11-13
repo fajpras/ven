@@ -5,6 +5,9 @@ package com.ven.app.ui.navigation
  * Sesuai arsitektur navigasi di DESIGN.md §3.2 & §7.
  */
 sealed class Screen(val route: String) {
+    // Splash / Welcome Flow
+    data object Splash : Screen("splash")
+
     // Auth Flow
     data object Login : Screen("login")
     data object Register : Screen("register")
@@ -34,12 +37,28 @@ sealed class Screen(val route: String) {
 
     // Create Content Flow
     data object CreatePost : Screen("create_post")
+    data object CreateExhibitInfo : Screen("create_exhibit_info")
     data object CreateExhibit : Screen("create_exhibit")
-    data object CreateExhibitEditor : Screen("create_exhibit_editor/{templateId}") {
-        fun createRoute(templateId: String) = "create_exhibit_editor/$templateId"
+    data object CreateExhibitEditor : Screen("create_exhibit_editor/{templateId}?title={title}&description={description}&bannerUrl={bannerUrl}&tipe={tipe}") {
+        fun createRoute(
+            templateId: String,
+            title: String = "",
+            description: String = "",
+            bannerUrl: String = "",
+            tipe: String = "kecil",
+        ): String {
+            val encodedTitle = java.net.URLEncoder.encode(title, "UTF-8")
+            val encodedDesc = java.net.URLEncoder.encode(description, "UTF-8")
+            val encodedBanner = java.net.URLEncoder.encode(bannerUrl, "UTF-8")
+            val encodedTipe = java.net.URLEncoder.encode(tipe, "UTF-8")
+            return "create_exhibit_editor/$templateId?title=$encodedTitle&description=$encodedDesc&bannerUrl=$encodedBanner&tipe=$encodedTipe"
+        }
     }
 
     // SubPage Flow
+    data object ViewExhibit : Screen("view_exhibit/{exhibitId}") {
+        fun createRoute(exhibitId: String) = "view_exhibit/$exhibitId"
+    }
     data object RequestMeeting : Screen("request_meeting/{postId}") {
         fun createRoute(postId: String) = "request_meeting/$postId"
     }

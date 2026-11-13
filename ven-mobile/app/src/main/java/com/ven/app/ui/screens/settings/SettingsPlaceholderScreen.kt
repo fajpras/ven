@@ -47,7 +47,7 @@ fun SettingsPlaceholderScreen(
             contentAlignment = Alignment.Center,
         ) {
             Text(
-                text = stringResource(R.string.settings_placeholder_coming_soon, title),
+                text = "$title (Coming Soon)",
                 style = MaterialTheme.typography.titleMedium,
                 color = colors.textMuted,
             )

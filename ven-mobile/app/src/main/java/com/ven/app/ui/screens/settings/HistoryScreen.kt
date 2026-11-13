@@ -28,6 +28,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.ven.app.R
@@ -113,12 +117,21 @@ fun HistoryScreen(
 
                     Spacer(modifier = Modifier.height(VexSpace.s5))
 
+                    // Deskripsi Status Request Terjadwal
+                    val annotatedText = buildAnnotatedString {
+                        append("Your request which is scheduled in ")
+                        withStyle(SpanStyle(fontWeight = FontWeight.Bold, color = colors.text)) {
+                            append(entry.fullDateFormatted)
+                        }
+                        append(" at ")
+                        withStyle(SpanStyle(fontWeight = FontWeight.Bold, color = colors.text)) {
+                            append(entry.timeText)
+                        }
+                        append(" has been finished.")
+                    }
+
                     Text(
-                        text = stringResource(
-                            R.string.settings_history_detail_msg,
-                            entry.fullDateFormatted,
-                            entry.timeText,
-                        ),
+                        text = annotatedText,
                         style = MaterialTheme.typography.bodyLarge,
                         color = colors.text,
                     )

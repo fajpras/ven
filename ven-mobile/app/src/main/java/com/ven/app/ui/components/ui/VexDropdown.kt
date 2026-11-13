@@ -28,11 +28,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.ven.app.R
 import com.ven.app.ui.icons.VexIcon
 import com.ven.app.ui.icons.VexIcons
 import com.ven.app.ui.theme.ThemeMode
@@ -55,7 +53,7 @@ fun VexDropdown(
     onOptionSelected: (String) -> Unit,
     modifier: Modifier = Modifier,
     label: String = "",
-    placeholder: String = stringResource(R.string.common_select_option),
+    placeholder: String = "Select an option",
     enabled: Boolean = true,
 ) {
     val colors = VexTheme.colors
@@ -102,7 +100,7 @@ fun VexDropdown(
 
                 VexIcon(
                     id = VexIcons.ChevronDown,
-                    contentDescription = stringResource(R.string.common_dropdown_desc),
+                    contentDescription = "Dropdown icon",
                     size = VexSize.icon,
                     tint = colors.text,
                 )

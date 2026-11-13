@@ -1,35 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">VEN</string>
-    <string name="common_back">Back</string>
-    <string name="common_selected">Selected</string>
-    <string name="common_select_option">Select an option</string>
-    <string name="common_dropdown_desc">Dropdown icon</string>
-    <string name="common_password_show">Show password</string>
-    <string name="common_password_hide">Hide password</string>
-    <string name="common_anonymous">Anonymous</string>
-    <string name="common_creator">Creator</string>
-    <string name="common_artwork">Artwork</string>
-    <string name="common_cancel">Cancel</string>
-    <string name="common_user">user</string>
-    <string name="bottom_nav_home">Home</string>
-    <string name="bottom_nav_schedule">Schedule</string>
-    <string name="bottom_nav_ai">AI Assistant</string>
-    <string name="bottom_nav_explore">Explore</string>
-    <string name="bottom_nav_profile">Profile</string>
-    <string name="time_just_now">Just now</string>
-    <string name="time_minute_ago">1 minute ago</string>
-    <string name="time_minutes_ago">%1$d minutes ago</string>
-    <string name="time_hour_ago">1 hour ago</string>
-    <string name="time_hours_ago">%1$d hours ago</string>
-    <string name="time_day_ago">1 day ago</string>
-    <string name="time_days_ago">%1$d days ago</string>
-    <string name="time_week_ago">1 week ago</string>
-    <string name="time_weeks_ago">%1$d weeks ago</string>
-    <string name="time_month_ago">1 month ago</string>
-    <string name="time_months_ago">%1$d months ago</string>
-    <string name="time_year_ago">1 year ago</string>
-    <string name="time_years_ago">%1$d years ago</string>
     <string name="interest_title">Interest</string>
     <string name="interest_maybe_later">Maybe later</string>
     <string name="interest_save">Save</string>
@@ -51,27 +22,10 @@
     <string name="auth_placeholder_username">Username</string>
     <string name="auth_placeholder_confirm_password">Confirm Password</string>
     <string name="register_error_email">Invalid email format</string>
-    <string name="register_error_username">Username must be 3-30 characters; letters, numbers, dots, and underscores only</string>
+    <string name="register_error_username">Username 3-30 karakter, hanya huruf, angka, titik, dan garis bawah</string>
     <string name="register_error_confirm">Passwords do not match</string>
     <string name="auth_login_error_empty">Email/Username and Password cannot be empty</string>
     <string name="register_error_failed">Registration failed, please try again</string>
-    <string name="auth_login_error_failed">Login failed, please check your credentials</string>
-    <string name="auth_google_sign_in_failed">Failed to sign in with Google</string>
-    <string name="auth_google_cancelled">Google authentication cancelled</string>
-    <string name="auth_google_register_failed">Failed to register with Google</string>
-    <string name="auth_google_error_not_configured">Google Client ID is not configured in the .env file</string>
-    <string name="auth_google_error_credentials">Unrecognized Google credentials</string>
-    <string name="auth_google_generic_error">An error occurred during Google Sign-In</string>
-    <string name="auth_error_send_otp">Failed to send verification code</string>
-    <string name="auth_error_resend_otp">Failed to resend code</string>
-    <string name="auth_error_otp_code_length">Verification code must be 6 digits</string>
-    <string name="auth_error_reset_password">Failed to reset password</string>
-    <string name="auth_password_rule_min_length">At least %1$d characters</string>
-    <string name="auth_password_rule_uppercase">Contains uppercase letter (A-Z)</string>
-    <string name="auth_password_rule_lowercase">Contains lowercase letter (a-z)</string>
-    <string name="auth_password_rule_digit">Contains a number (0-9)</string>
-    <string name="auth_password_rule_symbol">Contains a symbol (e.g. ! @ # $ %)</string>
-    <string name="forgot_password_error_email_format">Invalid email format</string>
 
     <!-- Forgot & Reset Password Strings -->
     <string name="forgot_password_title">Forgot Password</string>
@@ -158,15 +112,15 @@
     <string name="settings_phone_label">Phone</string>
     <string name="settings_description_label">Description</string>
     <string name="settings_interest_label">Interest</string>
-    <string name="settings_username_error">Username must be 3-30 characters; letters, numbers, dots, and underscores only</string>
-    <string name="settings_name_error">Name is required, maximum 30 characters</string>
-    <string name="settings_phone_error">Phone number must be 8-15 digits and can start with +</string>
-    <string name="settings_description_error">Description maximum 150 characters</string>
+    <string name="settings_username_error">Username 3-30 karakter, hanya huruf, angka, titik, dan garis bawah</string>
+    <string name="settings_name_error">Nama wajib diisi, maksimal 30 karakter</string>
+    <string name="settings_phone_error">Nomor HP harus 8-15 digit dan boleh diawali +</string>
+    <string name="settings_description_error">Deskripsi maksimal 150 karakter</string>
     <string name="settings_description_counter">%1$d/150</string>
-    <string name="settings_photo_invalid">Choose a JPG, PNG, or WebP photo</string>
-    <string name="settings_photo_too_large">Photo size maximum 5 MB</string>
-    <string name="settings_photo_uploading">Uploading photo...</string>
-    <string name="settings_session_expired">Your session has expired. Please sign in again.</string>
+    <string name="settings_photo_invalid">Pilih foto JPG, PNG, atau WebP</string>
+    <string name="settings_photo_too_large">Ukuran foto maksimal 5 MB</string>
+    <string name="settings_photo_uploading">Mengunggah foto...</string>
+    <string name="settings_session_expired">Sesi Anda berakhir. Silakan masuk kembali.</string>
 
     <string name="settings_new_email_label">New email</string>
     <string name="settings_password_label">Password</string>
@@ -251,7 +205,6 @@
     <string name="ai_chat_error_rate_limit">You have reached the maximum requests limit. Please wait a moment.</string>
     <string name="ai_chat_retry">Retry</string>
     <string name="ai_chat_sparkle_desc">AI Assistant Sparkle</string>
-    <string name="ai_chat_out_of_scope_rejection">Sorry, I can only answer questions regarding artworks or exhibitions in the VEN application.</string>
 
     <!-- Create Content Strings (§8.13 Create Post) -->
     <string name="create_post_title">New Post</string>
@@ -274,6 +227,12 @@
 
     <!-- Create Exhibit Strings (§8.14 Create Exhibit) -->
     <string name="create_exhibit_title">New Exhibit</string>
+    <string name="create_exhibit_info_title">Exhibit Information</string>
+    <string name="create_exhibit_next_step">Open 3D Editor</string>
+    <string name="create_exhibit_title_error_empty">Title cannot be empty</string>
+    <string name="create_exhibit_title_error_max">Title cannot exceed 100 characters</string>
+    <string name="create_exhibit_banner_required">Please select a cover banner</string>
+    <string name="create_exhibit_banner_uploading">Uploading banner…</string>
     <string name="create_exhibit_template_small">Small</string>
     <string name="create_exhibit_template_medium">Medium</string>
     <string name="create_exhibit_template_big">Big</string>
@@ -316,48 +275,20 @@
 
     <!-- Create Content Options Sheet -->
     <string name="create_sheet_title">Create</string>
+    <string name="create_sheet_subtitle">Choose what kind of content you want to publish</string>
+    <string name="create_sheet_close">Close</string>
     <string name="create_sheet_post_title">New Post</string>
     <string name="create_sheet_post_desc">Share artwork, photos, or designs to the feed</string>
+    <string name="create_sheet_post_badge">2D FEED</string>
     <string name="create_sheet_exhibit_title">New Exhibit (3D)</string>
     <string name="create_sheet_exhibit_desc">Build an interactive 3D virtual exhibition room</string>
-
-    <!-- Shared UI Labels -->
-    <string name="post_media_desc">Artwork by %1$s</string>
-    <string name="post_media_loading">Loading artwork...</string>
-    <string name="post_media_fallback">Virtual Artwork</string>
-    <string name="media_grid_untitled_artwork">Artwork</string>
-    <string name="profile_unknown_user">User Profile</string>
-    <string name="profile_user_not_found">User profile not found.</string>
-    <string name="settings_placeholder_coming_soon">%1$s (Coming Soon)</string>
-
-    <!-- Local Error Messages -->
-    <string name="settings_error_password_mismatch">Password confirmation does not match</string>
-    <string name="settings_error_change_email_failed">Failed to change email</string>
-    <string name="settings_error_change_password_failed">Failed to change password</string>
-    <string name="settings_error_load_interests">Failed to load interest categories</string>
-    <string name="settings_error_save_profile">Failed to save profile</string>
-    <string name="settings_error_save_interests">Profile saved, but interest categories failed to save</string>
-    <string name="settings_error_upload_photo">Failed to upload photo</string>
-    <string name="settings_error_deactivate_failed">Failed to deactivate account</string>
-    <string name="interest_error_load">Failed to load interest categories</string>
-    <string name="interest_error_save">Failed to save interest categories</string>
-    <string name="request_meeting_error_time_required">Meeting time is required</string>
-
-    <string-array name="request_meeting_day_headers">
-        <item>Mon</item>
-        <item>Tue</item>
-        <item>Wed</item>
-        <item>Thu</item>
-        <item>Fri</item>
-        <item>Sat</item>
-        <item>Sun</item>
-    </string-array>
+    <string name="create_sheet_exhibit_badge">3D VIRTUAL</string>
 
     <!-- Account Deactivation (UC-04) -->
-    <string name="settings_deactivate_button">Deactivate Account</string>
-    <string name="settings_deactivate_terms">I understand that my account will be temporarily deactivated and can be reactivated by signing in again.</string>
-    <string name="settings_deactivate_confirm_title">Confirm Account Deactivation</string>
-    <string name="settings_deactivate_confirm_msg">Are you sure you want to temporarily deactivate your account? You can reactivate it by signing in again.</string>
-    <string name="settings_deactivate_confirm_yes">Yes</string>
-    <string name="settings_deactivate_confirm_no">Cancel</string>
+    <string name="settings_deactivate_button">Deaktivasi Akun</string>
+    <string name="settings_deactivate_terms">Saya memahami bahwa akun saya akan dinonaktifkan sementara dan dapat diaktifkan kembali dengan masuk kembali.</string>
+    <string name="settings_deactivate_confirm_title">Konfirmasi Deaktivasi Akun</string>
+    <string name="settings_deactivate_confirm_msg">Apakah Anda yakin ingin menonaktifkan akun sementara? Anda dapat mengaktifkannya kembali dengan masuk kembali ke aplikasi.</string>
+    <string name="settings_deactivate_confirm_yes">Ya</string>
+    <string name="settings_deactivate_confirm_no">Batal</string>
 </resources>

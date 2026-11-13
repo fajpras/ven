@@ -1,8 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.VEN" parent="Theme.AppCompat.DayNight.NoActionBar">
+    <style name="Theme.VEN" parent="android:Theme.Material.NoActionBar">
         <item name="android:windowBackground">#1F1F1F</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">#252525</item>
+    </style>
+
+    <style name="Theme.VEN.UnityLoading" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="android:windowBackground">#110E1C</item>
+        <item name="android:statusBarColor">#110E1C</item>
+        <item name="android:navigationBarColor">#110E1C</item>
+        <item name="android:windowAnimationStyle">@null</item>
     </style>
 </resources>

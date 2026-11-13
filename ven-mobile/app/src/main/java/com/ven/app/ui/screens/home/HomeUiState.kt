@@ -1,8 +1,6 @@
 package com.ven.app.ui.screens.home
 
 import androidx.compose.runtime.Immutable
-import com.ven.app.R
-import com.ven.app.core.localization.AppStrings
 import com.ven.app.data.api.models.KaryaItemModel
 import com.ven.app.data.api.models.PameranItemModel
 import com.ven.app.ui.screens.explore.PostsFeedItem
@@ -58,7 +56,7 @@ data class HomeUiState(
  * Helper mapper dari DTO ke UI models.
  */
 fun PameranItemModel.toComingSoonEvent(): ComingSoonEvent {
-    val dateDisplay = createdAt?.take(10) ?: AppStrings.get(R.string.home_coming_soon)
+    val dateDisplay = createdAt?.take(10) ?: "Coming Soon"
     return ComingSoonEvent(
         id = idPameran.toString(),
         title = judul,
@@ -68,7 +66,7 @@ fun PameranItemModel.toComingSoonEvent(): ComingSoonEvent {
 }
 
 fun KaryaItemModel.toPostItem(): PostItem {
-    val author = pengguna?.namaPanggilan ?: pengguna?.nama ?: AppStrings.get(R.string.common_anonymous)
+    val author = pengguna?.namaPanggilan ?: pengguna?.nama ?: "Anonim"
     val relativeTime = DateFormatter.formatRelativeTime(createdAt)
     return PostItem(
         id = idKarya,

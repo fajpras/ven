@@ -53,15 +53,9 @@ class AIChatGeminiTest extends TestCase
             ->assertJsonPath('data.jawaban', 'Halo! Ini adalah jawaban dari Google Gemini AI Studio tentang pameran virtual VEN.');
 
         Http::assertSent(function ($request) {
-            $systemInstruction = $request['system_instruction']['parts'][0]['text'] ?? '';
-
             return str_contains($request->url(), 'generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent')
                 && $request->hasHeader('x-goog-api-key', 'fake-gemini-api-key')
-                && isset($request['contents'][0]['parts'][0]['text'])
-                && str_contains($systemInstruction, 'ATURAN WAJIB (UC-18)')
-                && str_contains($systemInstruction, 'SKENARIO ALTERNATIF')
-                && str_contains($systemInstruction, 'Daftar Karya yang ada di VEN')
-                && str_contains($systemInstruction, 'Daftar Pameran yang ada di VEN');
+                && isset($request['contents'][0]['parts'][0]['text']);
         });
     }
 

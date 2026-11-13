@@ -1,7 +1,7 @@
 <div align="center">
 
-# 🏛️ VEN — Virtual Exhibition Network
-### *The Next-Generation Digital Art & 3D Virtual Gallery Ecosystem*
+# 🏛️ VEN — Value Exhibition Network
+### *The Next-Generation Digital Art & 3D Value Gallery Ecosystem*
 
 [![Android](https://img.shields.io/badge/Android-Kotlin%20%7C%20Jetpack%20Compose-3DDC84?style=for-the-badge&logo=android&logoColor=white)](ven-mobile/)
 [![Backend](https://img.shields.io/badge/Backend-Laravel%20%7C%20PHP%208.3-FF2D20?style=for-the-badge&logo=laravel&logoColor=white)](backend-api/backend/)
@@ -11,7 +11,7 @@
 [![Security](https://img.shields.io/badge/Security-7%20Pillars%20Audited-green?style=for-the-badge&logo=shield&logoColor=white)](backend-api/backend/docs/)
 
 <p align="center">
-  <b>VEN (Virtual Exhibition Network)</b> adalah ekosistem pameran seni dan galeri 3D digital interaktif yang menjembatani seniman, desainer, kurator, dan pengunjung dalam ruang pameran imersif. Memadukan aplikasi native <b>Android (Jetpack Compose)</b> dengan backend RESTful API berkinerja tinggi berbasis <b>Laravel 11/12</b>, arsitektur basis data <i>Least Privilege</i>, audit keamanan berlapis, serta integrasi kecerdasan buatan <b>Google Gemini</b>.
+  <b>VEN (Value Exhibition Network)</b> adalah ekosistem pameran seni dan galeri 3D digital interaktif yang menjembatani seniman, desainer, kurator, dan pengunjung dalam ruang pameran imersif. Memadukan aplikasi native <b>Android (Jetpack Compose)</b> dengan backend RESTful API berkinerja tinggi berbasis <b>Laravel 11/12</b>, arsitektur basis data <i>Least Privilege</i>, audit keamanan berlapis, serta integrasi kecerdasan buatan <b>Google Gemini</b>.
 </p>
 
 ---
@@ -19,28 +19,34 @@
 </div>
 
 ## 📑 Daftar Isi
-- [Tentang VEN](#-tentang-ven)
-- [Arsitektur Sistem](#-arsitektur-sistem)
-- [Fitur Utama](#-fitur-utama)
-  - [1. Mobile Client (Android Native)](#1-mobile-client-android-native)
-  - [2. Backend API & Admin Web Panel](#2-backend-api--admin-web-panel)
-  - [3. 7 Pilar Kepatuhan Audit Keamanan Basis Data](#3-7-pilar-kepatuhan-audit-keamanan-basis-data)
-- [Struktur Repositori](#-struktur-repositori)
-- [Panduan Memulai Cepat (Getting Started)](#-panduan-memulai-cepat-getting-started)
-  - [Prasyarat Sistem](#prasyarat-sistem)
-  - [Langkah Setup Backend & Database](#langkah-setup-backend--database)
-  - [Langkah Menjalankan Mobile App](#langkah-menjalankan-mobile-app)
-- [Pengujian Otomatis (Automated Testing)](#-pengujian-otomatis-automated-testing)
-- [Standar Pengembangan & Git Workflow](#-standar-pengembangan--git-workflow)
-- [Lisensi](#-lisensi)
+- [🏛️ VEN — Value Exhibition Network](#️-ven--value-exhibition-network)
+    - [*The Next-Generation Digital Art \& 3D Value Gallery Ecosystem*](#the-next-generation-digital-art--3d-value-gallery-ecosystem)
+  - [📑 Daftar Isi](#-daftar-isi)
+  - [💡 Tentang VEN](#-tentang-ven)
+  - [🏛️ Arsitektur Sistem](#️-arsitektur-sistem)
+  - [✨ Fitur Utama](#-fitur-utama)
+    - [1. Mobile Client (Android Native)](#1-mobile-client-android-native)
+    - [2. Backend API \& Admin Web Panel](#2-backend-api--admin-web-panel)
+    - [3. 7 Pilar Kepatuhan Audit Keamanan Basis Data](#3-7-pilar-kepatuhan-audit-keamanan-basis-data)
+  - [📁 Struktur Repositori](#-struktur-repositori)
+  - [🚀 Panduan Memulai Cepat (Getting Started)](#-panduan-memulai-cepat-getting-started)
+    - [Prasyarat Sistem](#prasyarat-sistem)
+    - [Langkah Setup Backend \& Database](#langkah-setup-backend--database)
+    - [Langkah Menjalankan Mobile App](#langkah-menjalankan-mobile-app)
+  - [🧪 Pengujian Otomatis (Automated Testing)](#-pengujian-otomatis-automated-testing)
+    - [1. Backend API \& Keamanan Database (PHPUnit)](#1-backend-api--keamanan-database-phpunit)
+    - [2. Android Mobile Client (Gradle Unit Test)](#2-android-mobile-client-gradle-unit-test)
+    - [3. Postman API Suite](#3-postman-api-suite)
+  - [🛠️ Standar Pengembangan \& Git Workflow](#️-standar-pengembangan--git-workflow)
+  - [📄 Lisensi \& Hak Cipta](#-lisensi--hak-cipta)
 
 ---
 
 ## 💡 Tentang VEN
 
-Platform **VEN** dirancang untuk mendemokratisasi akses karya seni, desain grafis, poster, dan model 3D melalui ruang virtual digital. Melalui platform ini:
-1. **Kreator** dapat mempublikasikan karya poster 2D maupun merancang ruang pameran 3D (*Virtual Exhibit*) lengkap dengan penataan furnitur dan pencahayaan.
-2. **Pengunjung** dapat menjelajahi galeri pameran secara virtual, melihat detail karya, mengajukan jadwal pertemuan (*Request Meeting*), dan berkonsultasi dengan asisten kurator AI cerdas.
+Platform **VEN** dirancang untuk mendemokratisasi akses karya seni, desain grafis, poster, dan model 3D melalui ruang Value digital. Melalui platform ini:
+1. **Kreator** dapat mempublikasikan karya poster 2D maupun merancang ruang pameran 3D (*Value Exhibit*) lengkap dengan penataan furnitur dan pencahayaan.
+2. **Pengunjung** dapat menjelajahi galeri pameran secara Value, melihat detail karya, mengajukan jadwal pertemuan (*Request Meeting*), dan berkonsultasi dengan asisten kurator AI cerdas.
 3. **Administrator & Kurator** memiliki dasbor terpusat untuk memoderasi karya, memverifikasi kepatuhan konten pameran, mengaudit log aktivitas sistem, dan mengelola sanksi akun secara *real-time*.
 
 ---
@@ -103,7 +109,7 @@ Dibangun menggunakan **Kotlin** dan **Jetpack Compose** dengan pendekatan *Unidi
   * Pencarian terpadu dengan *debounce* instan: tab *For You, Accounts, Posts,* dan *Exhibits*.
   * Filter modal kategori dinamis berbasis *Bottom Sheet*.
 * 🏛️ **3D Exhibition Editor**:
-  * Pembuatan ruang pameran virtual interaktif: checklist persiapan, penamaan, pemilihan template ruang, penempatan objek/furnitur, dan kontrol palet warna.
+  * Pembuatan ruang pameran Value interaktif: checklist persiapan, penamaan, pemilihan template ruang, penempatan objek/furnitur, dan kontrol palet warna.
 * 📅 **Jadwal Pertemuan (Schedule & Meeting Requests)**:
   * Pengajuan, peninjauan, dan konfirmasi jadwal temu kurator/seniman (*Approved, Waiting, Requests*).
 * 🤖 **Asisten Cerdas AI (Gemini Assistant)**:
@@ -275,5 +281,5 @@ Koleksi lengkap pengujian endpoint API dan verifikasi 7 pilar kepatuhan database
 
 ## 📄 Lisensi & Hak Cipta
 
-Hak Cipta © 2026 Tim Pengembang **VEN (Virtual Exhibition Network)**.  
+Hak Cipta © 2026 Tim Pengembang **VEN (Value Exhibition Network)**.  
 Seluruh hak cipta dilindungi undang-undang.

@@ -8,7 +8,6 @@ import androidx.credentials.exceptions.GetCredentialCancellationException
 import androidx.credentials.exceptions.GetCredentialException
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
-import com.ven.app.R
 import com.ven.app.core.config.AppConfig
 
 object GoogleAuthHelper {
@@ -18,7 +17,7 @@ object GoogleAuthHelper {
         serverClientId: String = AppConfig.googleServerClientId
     ): Result<String> {
         if (serverClientId.isBlank()) {
-            return Result.failure(Exception(context.getString(R.string.auth_google_error_not_configured)))
+            return Result.failure(Exception("Google Client ID belum dikonfigurasi di file .env"))
         }
 
         return try {
@@ -45,14 +44,14 @@ object GoogleAuthHelper {
                 val googleIdTokenCredential = GoogleIdTokenCredential.createFrom(credential.data)
                 Result.success(googleIdTokenCredential.idToken)
             } else {
-                Result.failure(Exception(context.getString(R.string.auth_google_error_credentials)))
+                Result.failure(Exception("Kredensial Google tidak dikenali"))
             }
         } catch (e: GetCredentialCancellationException) {
-            Result.failure(Exception(context.getString(R.string.auth_google_cancelled)))
+            Result.failure(Exception("Login Google dibatalkan"))
         } catch (e: GetCredentialException) {
-            Result.failure(Exception(e.localizedMessage ?: context.getString(R.string.auth_google_sign_in_failed)))
+            Result.failure(Exception(e.localizedMessage ?: "Gagal autentikasi Google"))
         } catch (e: Exception) {
-            Result.failure(Exception(e.localizedMessage ?: context.getString(R.string.auth_google_generic_error)))
+            Result.failure(Exception(e.localizedMessage ?: "Terjadi kesalahan pada Google Sign-In"))
         }
     }
 }

@@ -29,7 +29,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
@@ -139,7 +138,6 @@ private fun BottomNavItem(
     profileContent: (@Composable (isSelected: Boolean) -> Unit)? = null,
 ) {
     val colors = VexTheme.colors
-    val title = stringResource(tab.titleRes)
     val interactionSource = remember { MutableInteractionSource() }
 
     Box(
@@ -157,7 +155,7 @@ private fun BottomNavItem(
             .semantics {
                 this.selected = isSelected
                 this.role = Role.Tab
-                this.contentDescription = title
+                this.contentDescription = tab.title
             },
         contentAlignment = Alignment.Center,
     ) {
@@ -165,7 +163,7 @@ private fun BottomNavItem(
             // Tab Profile: Foto avatar bulat 28dp dengan border saat aktif
             ProfileTabItem(
                 isSelected = isSelected,
-                contentDescription = title,
+                contentDescription = tab.title,
                 profilePainter = profilePainter,
                 profileInitials = profileInitials,
                 profileContent = profileContent,
@@ -180,7 +178,7 @@ private fun BottomNavItem(
 
             VexIcon(
                 id = iconRes,
-                contentDescription = title,
+                contentDescription = tab.title,
                 size = VexSize.iconLg,
                 tint = colors.text,
             )

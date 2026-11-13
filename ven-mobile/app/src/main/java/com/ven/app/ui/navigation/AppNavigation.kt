@@ -25,23 +25,20 @@ import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.ven.app.R
-import com.ven.app.core.localization.AppStrings
 import com.ven.app.data.api.ApiClient
 import com.ven.app.data.api.ApiLogin
 import com.ven.app.data.api.ApiPencarian
 import com.ven.app.data.api.SessionManager
 import com.ven.app.util.DateFormatter
+import com.ven.app.util.UnityLauncher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import com.ven.app.data.preference.AppLanguage
 import com.ven.app.data.preference.ThemePreferences
 import com.ven.app.ui.components.feature.CreateOptionsBottomSheet
 import com.ven.app.ui.components.layout.AppScaffold
@@ -54,7 +51,9 @@ import com.ven.app.ui.screens.auth.RegisterRoute
 import com.ven.app.ui.screens.auth.ResetPasswordScreen
 import com.ven.app.ui.screens.auth.VerifyOtpScreen
 import com.ven.app.ui.screens.create.exhibit.CreateExhibitTemplateScreen
-import com.ven.app.ui.screens.create.exhibit.editor.CreateExhibitEditorScreen
+import com.ven.app.ui.screens.create.exhibit.CreateExhibitViewModel
+import com.ven.app.ui.screens.create.exhibit.info.CreateExhibitInfoScreen
+import com.ven.app.ui.screens.unity.UnityLoadingScreen
 import com.ven.app.ui.screens.create.post.CreatePostScreen
 import com.ven.app.ui.screens.explore.ExploreScreen
 import com.ven.app.ui.screens.explore.ExploreViewModel
@@ -84,6 +83,7 @@ import com.ven.app.ui.screens.settings.SettingsScreen
 import com.ven.app.ui.screens.settings.ThemeScreen
 import com.ven.app.ui.screens.settings.VerifyEmailRoute
 import com.ven.app.ui.screens.settings.dummyHistoryEntries
+import com.ven.app.ui.screens.splash.SplashScreen
 import com.ven.app.ui.theme.VexTheme
 
 /**
@@ -97,14 +97,17 @@ fun AppNavHost(showExplore: Boolean = false) {
     val sessionManager = remember { SessionManager.getInstance(context) }
     val coroutineScope = rememberCoroutineScope()
     val currentTheme by themePreferences.themeMode.collectAsStateWithLifecycle()
-    var currentLanguage by remember { mutableStateOf(AppLanguage.current()) }
+    var selectedLanguage by remember { mutableStateOf("English") }
     var isAccountDisabled by remember { mutableStateOf(false) }
 
-    val startDestination = if (showExplore) Screen.Home.route else Screen.Login.route
+    val isLoggedIn = remember { !sessionManager.getToken().isNullOrBlank() }
+    val startDestination = if (showExplore) Screen.Home.route else Screen.Splash.route
     val navController = rememberNavController()
     val forgotViewModel: ForgotPasswordViewModel = viewModel()
     val homeViewModel: HomeViewModel = viewModel()
     val exploreViewModel: ExploreViewModel = viewModel()
+    val createExhibitViewModel: CreateExhibitViewModel = viewModel()
+    val createExhibitState by createExhibitViewModel.uiState.collectAsStateWithLifecycle()
     val forgotState by forgotViewModel.uiState.collectAsStateWithLifecycle()
     val changeEmailViewModel: ChangeEmailViewModel = viewModel()
 
@@ -139,6 +142,19 @@ fun AppNavHost(showExplore: Boolean = false) {
         popEnterTransition = { fadeIn(tween(180)) },
         popExitTransition = { fadeOut(tween(220)) },
     ) {
+        // -------------------------------------------------------------
+        // 0. Alur Splash
+        // -------------------------------------------------------------
+        composable(Screen.Splash.route) {
+            SplashScreen(
+                onSplashFinished = {
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(Screen.Splash.route) { inclusive = true }
+                    }
+                },
+            )
+        }
+
         // -------------------------------------------------------------
         // 1. Alur Login
         // -------------------------------------------------------------
@@ -274,7 +290,10 @@ fun AppNavHost(showExplore: Boolean = false) {
                     navController.navigate(Screen.CreateExhibit.route)
                 },
                 onNavigateToExhibitEditor = { id ->
-                    navController.navigate(Screen.CreateExhibitEditor.createRoute(id))
+                    navController.navigate(Screen.CreateExhibitEditor.createRoute(id.ifBlank { "template01" }))
+                },
+                onNavigateToExhibitViewer = { id ->
+                    navController.navigate(Screen.ViewExhibit.createRoute(id))
                 },
                 onNavigateToUserProfile = { userId ->
                     navController.navigate(Screen.UserProfile.createRoute(userId))
@@ -301,41 +320,146 @@ fun AppNavHost(showExplore: Boolean = false) {
         }
 
         // -------------------------------------------------------------
-        // 5a-2. Create Content Flow: Create Exhibit (Template Picker)
+        // 5a-1. Create Content Flow: Create Exhibit (Pilih Template - Langkah 1)
         // -------------------------------------------------------------
         composable(Screen.CreateExhibit.route) {
             CreateExhibitTemplateScreen(
-                onCloseClick = { navController.popBackStack() },
+                viewModel = createExhibitViewModel,
+                onCloseClick = {
+                    createExhibitViewModel.clearTemporaryData()
+                    navController.popBackStack()
+                },
                 onNavigateToPost = {
                     navController.navigate(Screen.CreatePost.route) {
                         popUpTo(Screen.CreateExhibit.route) { inclusive = true }
                         launchSingleTop = true
                     }
                 },
-                onTemplateSelected = { template ->
-                    navController.navigate(Screen.CreateExhibitEditor.createRoute(template.id))
+                onTemplateSelected = { _ ->
+                    navController.navigate(Screen.CreateExhibitInfo.route)
                 },
             )
         }
 
         // -------------------------------------------------------------
-        // 5a-3. Create Content Flow: Create Exhibit (3D Canvas Editor & 4 Tool Sheets)
+        // 5a-2. Create Content Flow: Create Exhibit (Informasi Pameran - Langkah 2)
+        // -------------------------------------------------------------
+        composable(Screen.CreateExhibitInfo.route) {
+            val context = LocalContext.current
+            CreateExhibitInfoScreen(
+                state = createExhibitState,
+                onCloseClick = {
+                    navController.popBackStack()
+                },
+                onTitleChange = createExhibitViewModel::onTitleChange,
+                onDescriptionChange = createExhibitViewModel::onDescriptionChange,
+                onBannerSelected = createExhibitViewModel::onBannerSelected,
+                onNextClick = {
+                    createExhibitViewModel.validateAndProceedToEditor(context) {
+                        val latest = createExhibitViewModel.uiState.value
+                        val template = latest.selectedTemplate ?: latest.templates.firstOrNull() ?: createExhibitState.selectedTemplate ?: createExhibitState.templates.first()
+                        val finalTemplateId = template.unityTemplateId.ifBlank { template.id }
+
+                        var resolvedBanner = latest.bannerUrl
+                        if (resolvedBanner.isBlank() && latest.bannerUri != null) {
+                            try {
+                                val cacheBanner = java.io.File(context.cacheDir, "exhibit_banner_preview.jpg")
+                                context.contentResolver.openInputStream(latest.bannerUri!!)?.use { input ->
+                                    cacheBanner.outputStream().use { output -> input.copyTo(output) }
+                                }
+                                resolvedBanner = cacheBanner.absolutePath
+                            } catch (_: Exception) {}
+                        }
+
+                        navController.navigate(
+                            Screen.CreateExhibitEditor.createRoute(
+                                templateId = finalTemplateId,
+                                title = latest.title,
+                                description = latest.description,
+                                bannerUrl = resolvedBanner,
+                                tipe = template.tipe,
+                            )
+                        )
+                    }
+                },
+                onNavigateToPost = {
+                    navController.navigate(Screen.CreatePost.route) {
+                        popUpTo(Screen.CreateExhibit.route) { inclusive = true }
+                        launchSingleTop = true
+                    }
+                },
+            )
+        }
+
+        // -------------------------------------------------------------
+        // 5a-3. Create Content Flow: Create Exhibit (Unity 3D Engine Editor)
         // -------------------------------------------------------------
         composable(
             route = Screen.CreateExhibitEditor.route,
             arguments = listOf(
                 navArgument("templateId") {
                     type = NavType.StringType
-                    defaultValue = "tpl_small"
+                    defaultValue = "template01"
+                },
+                navArgument("title") {
+                    type = NavType.StringType
+                    defaultValue = ""
+                },
+                navArgument("description") {
+                    type = NavType.StringType
+                    defaultValue = ""
+                },
+                navArgument("bannerUrl") {
+                    type = NavType.StringType
+                    defaultValue = ""
+                },
+                navArgument("tipe") {
+                    type = NavType.StringType
+                    defaultValue = "kecil"
                 },
             ),
-        ) {
-            CreateExhibitEditorScreen(
-                onBackClick = { navController.popBackStack() },
-                onPublishSuccess = {
-                    if (!navController.popBackStack(Screen.CreateExhibit.route, inclusive = true)) {
-                        navController.popBackStack()
+        ) { backStackEntry ->
+            val templateId = backStackEntry.arguments?.getString("templateId") ?: "template01"
+            val title = backStackEntry.arguments?.getString("title") ?: ""
+            val description = backStackEntry.arguments?.getString("description") ?: ""
+            val bannerUrl = backStackEntry.arguments?.getString("bannerUrl") ?: ""
+            val tipe = backStackEntry.arguments?.getString("tipe") ?: "kecil"
+            UnityLoadingScreen(
+                targetId = templateId,
+                title = title,
+                description = description,
+                bannerUrl = bannerUrl,
+                tipe = tipe,
+                isEditor = true,
+                onBackClick = {
+                    createExhibitViewModel.clearTemporaryData()
+                    if (!navController.popBackStack(Screen.Home.route, inclusive = false)) {
+                        navController.navigate(Screen.Home.route) {
+                            popUpTo(0)
+                        }
                     }
+                },
+            )
+        }
+
+        // -------------------------------------------------------------
+        // 5a-4. View Existing Exhibition (Unity 3D Engine Viewer / PlayScene)
+        // -------------------------------------------------------------
+        composable(
+            route = Screen.ViewExhibit.route,
+            arguments = listOf(
+                navArgument("exhibitId") {
+                    type = NavType.StringType
+                    defaultValue = ""
+                },
+            ),
+        ) { backStackEntry ->
+            val exhibitId = backStackEntry.arguments?.getString("exhibitId") ?: ""
+            UnityLoadingScreen(
+                targetId = exhibitId,
+                isEditor = false,
+                onBackClick = {
+                    navController.popBackStack()
                 },
             )
         }
@@ -377,14 +501,12 @@ fun AppNavHost(showExplore: Boolean = false) {
                             if (res.isSuccessful) {
                                 val detail = res.body()?.data
                                 val mapped = detail?.karya?.map { k ->
-                                    val author = detail.pengguna?.namaPanggilan ?: detail.pengguna?.nama
-                                        ?: AppStrings.get(R.string.common_creator)
+                                    val author = detail.pengguna?.namaPanggilan ?: detail.pengguna?.nama ?: "Kreator"
                                     PostsFeedItem(
                                         id = k.idKarya,
                                         username = "@$author",
                                         title = k.judul,
-                                        category = k.kategori?.nama
-                                            ?: AppStrings.get(R.string.common_artwork),
+                                        category = k.kategori?.nama ?: "Karya",
                                         timestampText = DateFormatter.formatRelativeTime(k.createdAt),
                                         description = k.deskripsi.orEmpty(),
                                         imageUrl = k.fileUrl ?: k.file,
@@ -437,7 +559,7 @@ fun AppNavHost(showExplore: Boolean = false) {
                     navController.navigate(Screen.RequestMeeting.createRoute(id))
                 },
                 onView3dClick = { id ->
-                    navController.navigate(Screen.CreateExhibitEditor.createRoute(id.ifBlank { "tpl_small" }))
+                    navController.navigate(Screen.ViewExhibit.createRoute(id))
                 },
                 initialPostId = postId.ifBlank { null },
                 onUserClick = { clickedUserId ->
@@ -466,7 +588,7 @@ fun AppNavHost(showExplore: Boolean = false) {
                     navController.navigate(Screen.PostsFeed.createRoute(postId = media.id, userId = userId))
                 },
                 onExhibitClick = { exhibitId ->
-                    navController.navigate(Screen.CreateExhibitEditor.createRoute(exhibitId))
+                    navController.navigate(Screen.ViewExhibit.createRoute(exhibitId))
                 },
             )
         }
@@ -605,11 +727,8 @@ fun AppNavHost(showExplore: Boolean = false) {
 
         composable(Screen.SettingsLanguage.route) {
             LanguageScreen(
-                currentLanguage = currentLanguage,
-                onLanguageSelected = { language ->
-                    currentLanguage = language
-                    AppLanguage.select(language)
-                },
+                currentLanguage = selectedLanguage,
+                onLanguageSelected = { selectedLanguage = it },
                 onBackClick = { navController.popBackStack() },
             )
         }
@@ -635,14 +754,14 @@ fun AppNavHost(showExplore: Boolean = false) {
 
         composable(Screen.SettingsPrivacy.route) {
             SettingsPlaceholderScreen(
-                title = stringResource(R.string.settings_item_privacy_policy),
+                title = "Privacy Policy",
                 onBackClick = { navController.popBackStack() },
             )
         }
 
         composable(Screen.SettingsHelp.route) {
             SettingsPlaceholderScreen(
-                title = stringResource(R.string.settings_item_help),
+                title = "Help",
                 onBackClick = { navController.popBackStack() },
             )
         }
@@ -661,6 +780,7 @@ fun MainHomeScreen(
     onNavigateToCreatePost: () -> Unit = {},
     onNavigateToCreateExhibit: () -> Unit = {},
     onNavigateToExhibitEditor: (templateIdOrExhibitId: String) -> Unit = {},
+    onNavigateToExhibitViewer: (exhibitId: String) -> Unit = {},
     onNavigateToUserProfile: (userId: String) -> Unit = {},
 ) {
     var currentTab by rememberSaveable { mutableStateOf(initialTab) }
@@ -742,8 +862,8 @@ fun MainHomeScreen(
                     onRefresh = { homeViewModel.muatUlang(filterSeen = true) },
                     onCreateClick = handleCreateClick,
                     onRequestMeetingClick = onRequestMeetingClick,
-                    onView3dClick = { pameranId -> onNavigateToExhibitEditor(pameranId ?: "tpl_small") },
-                    onBannerClick = { eventId -> onNavigateToExhibitEditor(eventId) },
+                    onView3dClick = { pameranId -> pameranId?.let { onNavigateToExhibitViewer(it) } ?: onNavigateToExhibitViewer("tpl_small") },
+                    onBannerClick = { eventId -> onNavigateToExhibitViewer(eventId) },
                     onLoadMore = homeViewModel::loadNextChunk,
                     onUserClick = onNavigateToUserProfile,
                 )
@@ -781,7 +901,7 @@ fun MainHomeScreen(
                     },
                     onRefresh = { exploreViewModel.muatUlang(filterSeen = true) },
                     onMediaClick = { media -> onNavigateToPostsFeed(media.id, "") },
-                    onExhibitClick = { exhibit -> onNavigateToExhibitEditor(exhibit.id) },
+                    onExhibitClick = { exhibit -> onNavigateToExhibitViewer(exhibit.id) },
                     onAccountClick = onNavigateToUserProfile,
                     viewModel = exploreViewModel,
                 )
@@ -797,7 +917,7 @@ fun MainHomeScreen(
                     onRetryClick = profileViewModel::muat,
                     onMediaClick = { media ->
                         if (profileState.selectedTab == com.ven.app.ui.screens.profile.ProfileTab.Exhibits) {
-                            onNavigateToExhibitEditor(media.id)
+                            onNavigateToExhibitViewer(media.id)
                         } else {
                             onNavigateToPostsFeed(media.id, "me")
                         }

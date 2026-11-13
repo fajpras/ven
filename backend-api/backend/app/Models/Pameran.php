@@ -46,4 +46,9 @@ class Pameran extends Model
     {
         return $this->hasMany(Karya::class, 'id_pameran', 'id_pameran');
     }
+
+    public function objek(): HasMany
+    {
+        return $this->hasMany(Objek::class, 'id_pameran', 'id_pameran');
+    }
 }

@@ -23,6 +23,7 @@ data class ProfileSettingsData(
 data class SettingsUiState(
     val profileData: ProfileSettingsData = ProfileSettingsData(),
     val themeMode: ThemeMode = ThemeMode.Dark,
+    val selectedLanguage: String = "English",
     val isAccountDisabled: Boolean = false,
     val historyEntries: List<HistoryEntry> = emptyList(),
     val selectedHistoryEntry: HistoryEntry? = null,

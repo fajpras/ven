@@ -2,12 +2,7 @@ package com.ven.app.ui.screens.ai
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.ven.app.R
-import com.ven.app.VenApplication
-import com.ven.app.core.localization.AppStrings
 import com.ven.app.data.api.ApiAiChat
-import com.ven.app.data.api.SessionManager
-import com.ven.app.data.preference.AiChatHistoryPreferences
 import java.util.UUID
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -16,33 +11,14 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 /**
- * ViewModel untuk halaman AI Assistant (DESIGN.md §8.12.6, UC-18 Tanya AI).
- * Mengelola state percakapan, drawer riwayat lokal persisten per pengguna, serta interaksi API online / fallback offline.
+ * ViewModel untuk halaman AI Assistant (DESIGN.md §8.12.6).
+ * Mengelola state percakapan, drawer riwayat, serta interaksi API online / fallback offline mockup.
  */
-class AiChatViewModel(
-    private val historyPrefs: AiChatHistoryPreferences? = try {
-        AiChatHistoryPreferences.getInstance(VenApplication.instance)
-    } catch (_: Exception) {
-        null
-    },
-) : ViewModel() {
-
-    private val currentUserId: String
-        get() = try {
-            SessionManager.getInstance(VenApplication.instance).getUser()?.idPengguna ?: "guest"
-        } catch (_: Exception) {
-            "guest"
-        }
+class AiChatViewModel : ViewModel() {
 
     private val _uiState = MutableStateFlow(
         AiChatUiState(
-            chatHistory = historyPrefs?.loadHistory(
-                try {
-                    SessionManager.getInstance(VenApplication.instance).getUser()?.idPengguna ?: "guest"
-                } catch (_: Exception) {
-                    "guest"
-                }
-            ) ?: emptyList(),
+            chatHistory = AiChatDummyData.sampleConversations,
         )
     )
     val uiState: StateFlow<AiChatUiState> = _uiState.asStateFlow()
@@ -78,12 +54,9 @@ class AiChatViewModel(
 
         viewModelScope.launch {
             val result = ApiAiChat.tanya(currentInput)
-            val rawResponse = result.getOrNull()
-
-            val aiResponseText = if (rawResponse != null && !rawResponse.contains("belum dikonfigurasi")) {
-                rawResponse
-            } else {
-                getFallbackResponse(currentInput)
+            val aiResponseText = result.getOrElse {
+                // Fallback graceful untuk demo offline / jika API key backend belum diisi
+                AiChatDummyData.INITIAL_AI_RESPONSE
             }
 
             val aiMessage = ChatMessage(
@@ -121,8 +94,6 @@ class AiChatViewModel(
                         )
                     )
                 }
-
-                historyPrefs?.saveHistory(currentUserId, existingHistory)
 
                 current.copy(
                     messages = finalMessages,
@@ -165,19 +136,5 @@ class AiChatViewModel(
 
     fun onDismissError() {
         _uiState.update { it.copy(errorMessage = null) }
-    }
-
-    private fun getFallbackResponse(input: String): String {
-        val lower = input.lowercase()
-        val isAboutVen = lower.contains("karya") || lower.contains("pameran") ||
-            lower.contains("seni") || lower.contains("art") || lower.contains("exhibit") ||
-            lower.contains("expo") || lower.contains("kreator") || lower.contains("creator") ||
-            lower.contains("3d") || lower.contains("virtual") || lower.contains("ven")
-
-        return if (isAboutVen) {
-            "Layanan AI sedang tidak dapat dijangkau. Mohon periksa koneksi internet Anda atau coba beberapa saat lagi."
-        } else {
-            AppStrings.get(R.string.ai_chat_out_of_scope_rejection)
-        }
     }
 }

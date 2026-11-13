@@ -23,7 +23,7 @@ android {
 
     defaultConfig {
         applicationId = "com.ven.app"
-        minSdk = 24
+        minSdk = 25
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"
@@ -37,6 +37,10 @@ android {
 
         testInstrumentationRunner =
             "androidx.test.runner.AndroidJUnitRunner"
+
+        ndk {
+            abiFilters.add("arm64-v8a")
+        }
 
         vectorDrawables {
             useSupportLibrary = true
@@ -63,7 +67,17 @@ android {
         buildConfig = true
     }
 
+    // Dibutuhkan Unity supaya aset game tidak dikompres
+    androidResources {
+        noCompress += listOf(
+            ".unity3d", ".ress", ".resource", ".obb", ".bundle", ".unityexp"
+        )
+    }
+
     packaging {
+        jniLibs {
+            useLegacyPackaging = true   // dibutuhkan library native Unity
+        }
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
@@ -71,9 +85,19 @@ android {
 }
 
 dependencies {
+    // Unity
+    implementation(project(":unityLibrary"))
+    implementation(
+        fileTree(
+            mapOf(
+                "dir" to "../unityLibrary/libs",
+                "include" to listOf("*.jar")
+            )
+        )
+    )
+
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)
-    implementation(libs.androidx.appcompat)
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.graphics)
@@ -91,6 +115,10 @@ dependencies {
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
 
+    // Unity dependencies
+    implementation("androidx.appcompat:appcompat:1.6.1")
+    implementation("androidx.games:games-activity:4.4.0")
+
     // Google Sign-In
     implementation("androidx.credentials:credentials:1.3.0")
     implementation("androidx.credentials:credentials-play-services-auth:1.3.0")
@@ -107,7 +135,8 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.tooling)
 }
 
-// Lock versi dependensi yang di-resolve oleh Gradle.
-dependencyLocking {
-    lockAllConfigurations()
-}
+// Dimatikan sementara: lockfile lama akan bikin Sync gagal karena
+// ada dependensi baru dari unityLibrary. Aktifkan lagi nanti.
+// dependencyLocking {
+//     lockAllConfigurations()
+// }

@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.ripple
@@ -36,7 +37,6 @@ import com.ven.app.ui.icons.VexIcon
 import com.ven.app.ui.icons.VexIcons
 import com.ven.app.ui.theme.ThemeMode
 import com.ven.app.ui.theme.VexRadius
-import com.ven.app.ui.theme.VexSize
 import com.ven.app.ui.theme.VexSpace
 import com.ven.app.ui.theme.VexTheme
 
@@ -64,37 +64,65 @@ fun CreateOptionsBottomSheet(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = VexSpace.s6)
                 .padding(bottom = VexSpace.s6)
                 .navigationBarsPadding(),
         ) {
-            // Judul Modal Bottom Sheet
-            Text(
-                text = stringResource(R.string.create_sheet_title),
-                style = MaterialTheme.typography.titleLarge.copy(
-                    fontWeight = FontWeight.Bold,
-                ),
-                color = colors.text,
-                modifier = Modifier.padding(bottom = VexSpace.s4),
-            )
+            // Header Minimalis: Judul + Tombol Tutup Bersih
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = VexSpace.s6, end = VexSpace.s4)
+                    .padding(top = VexSpace.s1, bottom = VexSpace.s2),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = stringResource(R.string.create_sheet_title),
+                    style = MaterialTheme.typography.titleLarge.copy(
+                        fontWeight = FontWeight.Bold,
+                    ),
+                    color = colors.text,
+                )
+
+                IconButton(
+                    onClick = onDismissRequest,
+                    modifier = Modifier.size(36.dp),
+                ) {
+                    VexIcon(
+                        id = VexIcons.Close,
+                        contentDescription = stringResource(R.string.create_sheet_close),
+                        tint = colors.textMuted,
+                        size = 20.dp,
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(VexSpace.s1))
 
             // Pilihan 1: New Post
             CreateOptionRow(
                 iconRes = VexIcons.Tab.Posts.filled,
                 iconTint = colors.primary,
-                iconBgColor = colors.primary.copy(alpha = 0.12f),
+                iconBgColor = colors.primary.copy(alpha = 0.10f),
                 title = stringResource(R.string.create_sheet_post_title),
                 description = stringResource(R.string.create_sheet_post_desc),
                 onClick = onCreatePostClick,
             )
 
-            Spacer(modifier = Modifier.height(VexSpace.s3))
+            // Garis Pembatas Halus (Hairline Divider)
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = VexSpace.s6)
+                    .height(0.6.dp)
+                    .background(colors.border.copy(alpha = 0.4f)),
+            )
 
             // Pilihan 2: New Exhibit (3D)
             CreateOptionRow(
                 iconRes = VexIcons.Tab.Exhibits.filled,
                 iconTint = Color(0xFFFF9A00),
-                iconBgColor = Color(0xFFFF9A00).copy(alpha = 0.15f),
+                iconBgColor = Color(0xFFFF9A00).copy(alpha = 0.12f),
                 title = stringResource(R.string.create_sheet_exhibit_title),
                 description = stringResource(R.string.create_sheet_exhibit_desc),
                 onClick = onCreateExhibitClick,
@@ -114,41 +142,38 @@ private fun CreateOptionRow(
     modifier: Modifier = Modifier,
 ) {
     val colors = VexTheme.colors
-    val rowShape = RoundedCornerShape(VexRadius.md)
 
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .clip(rowShape)
-            .background(colors.surfaceInput)
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
-                indication = ripple(color = colors.text.copy(alpha = 0.1f)),
+                indication = ripple(color = colors.text.copy(alpha = 0.08f)),
                 role = Role.Button,
                 onClick = onClick,
             )
-            .padding(VexSpace.s4),
+            .padding(horizontal = VexSpace.s6, vertical = VexSpace.s4),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        // Kotak Ikon
+        // Kotak Ikon Lembut
         Box(
             modifier = Modifier
-                .size(48.dp)
+                .size(44.dp)
                 .clip(RoundedCornerShape(VexRadius.md))
                 .background(iconBgColor),
             contentAlignment = Alignment.Center,
         ) {
             VexIcon(
                 id = iconRes,
-                contentDescription = title,
+                contentDescription = null,
                 tint = iconTint,
-                size = 24.dp,
+                size = 22.dp,
             )
         }
 
         Spacer(modifier = Modifier.width(VexSpace.s4))
 
-        // Teks Judul & Deskripsi
+        // Label Judul & Deskripsi
         Column(
             modifier = Modifier.weight(1f),
             verticalArrangement = Arrangement.Center,
@@ -170,12 +195,12 @@ private fun CreateOptionRow(
 
         Spacer(modifier = Modifier.width(VexSpace.s2))
 
-        // Ikon Panah Kanan
+        // Chevron Ramping
         VexIcon(
             id = VexIcons.ChevronRight,
             contentDescription = null,
-            tint = colors.textMuted,
-            size = 20.dp,
+            tint = colors.textMuted.copy(alpha = 0.6f),
+            size = 18.dp,
         )
     }
 }

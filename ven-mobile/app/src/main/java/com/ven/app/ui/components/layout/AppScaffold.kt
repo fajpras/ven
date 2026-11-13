@@ -14,9 +14,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
-import com.ven.app.R
 import com.ven.app.ui.navigation.BottomNavTab
 import com.ven.app.ui.theme.ThemeMode
 import com.ven.app.ui.theme.VexTheme
@@ -85,7 +83,7 @@ private fun AppScaffoldDarkPreview() {
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
-                    text = "Current Screen: ${stringResource(selectedTab.titleRes)}",
+                    text = "Current Screen: ${selectedTab.title}",
                     color = VexTheme.colors.text,
                 )
             }
@@ -110,7 +108,7 @@ private fun AppScaffoldLightPreview() {
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
-                    text = "Current Screen: ${stringResource(selectedTab.titleRes)}",
+                    text = "Current Screen: ${selectedTab.title}",
                     color = VexTheme.colors.text,
                 )
             }

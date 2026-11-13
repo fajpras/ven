@@ -1,13 +1,11 @@
-﻿package com.ven.app.ui.navigation
+package com.ven.app.ui.navigation
 
-import androidx.annotation.StringRes
-import com.ven.app.R
 import com.ven.app.ui.icons.VexIconPair
 import com.ven.app.ui.icons.VexIcons
 
 /**
  * 5 Tab item navigasi bottom bar untuk aplikasi VEN (Virtual Exhibition).
- * Urutan dari kiri ke kanan (sesuai DESIGN.md A15 7):
+ * Urutan dari kiri ke kanan (sesuai DESIGN.md §7):
  * 1. Home (rumah)
  * 2. Schedule (kalender bertitik)
  * 3. AI Assistant (sparkle / bintang berkilau 4 sudut)
@@ -21,32 +19,32 @@ import com.ven.app.ui.icons.VexIcons
  */
 enum class BottomNavTab(
     val route: String,
-    @param:StringRes val titleRes: Int,
+    val title: String,
     val iconPair: VexIconPair? = null,
 ) {
     Home(
         route = "home",
-        titleRes = R.string.bottom_nav_home,
+        title = "Home",
         iconPair = VexIcons.Nav.Home,
     ),
     Schedule(
         route = "schedule",
-        titleRes = R.string.bottom_nav_schedule,
+        title = "Schedule",
         iconPair = VexIcons.Nav.Schedule,
     ),
     Ai(
         route = "ai",
-        titleRes = R.string.bottom_nav_ai,
+        title = "AI Assistant",
         iconPair = VexIcons.Nav.Ai,
     ),
     Explore(
         route = "explore",
-        titleRes = R.string.bottom_nav_explore,
+        title = "Explore",
         iconPair = VexIcons.Nav.Explore,
     ),
     Profile(
         route = "profile",
-        titleRes = R.string.bottom_nav_profile,
+        title = "Profile",
         iconPair = null,
     );
 

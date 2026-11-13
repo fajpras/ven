@@ -1,7 +1,5 @@
-﻿package com.ven.app.util
+package com.ven.app.util
 
-import com.ven.app.R
-import com.ven.app.core.localization.AppStrings
 import java.text.SimpleDateFormat
 import java.time.LocalDate
 import java.time.YearMonth
@@ -11,9 +9,15 @@ import java.util.TimeZone
 
 /**
  * Utilitas pemformat tanggal untuk aplikasi VEN.
- * Sesuai spesifikasi arsitektur DESIGN.md A3.2 & A8.6.1.
+ * Sesuai spesifikasi arsitektur DESIGN.md §3.2 & §8.6.1.
  */
 object DateFormatter {
+
+    private val requestMeetingPattern: DateTimeFormatter =
+        DateTimeFormatter.ofPattern("EEE, d MMMM yyyy", Locale.ENGLISH)
+
+    private val monthYearPattern: DateTimeFormatter =
+        DateTimeFormatter.ofPattern("MMMM yyyy", Locale.ENGLISH)
 
     private val utcDatePatterns = listOf(
         "yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'",
@@ -31,14 +35,14 @@ object DateFormatter {
      * Memformat tanggal menjadi format "Sat, 26 September 2026".
      */
     fun formatRequestMeetingDate(date: LocalDate): String {
-        return date.format(DateTimeFormatter.ofPattern("EEE, d MMMM yyyy", AppStrings.locale()))
+        return date.format(requestMeetingPattern)
     }
 
     /**
      * Memformat YearMonth menjadi format "September 2026".
      */
     fun formatMonthYear(yearMonth: YearMonth): String {
-        return yearMonth.format(DateTimeFormatter.ofPattern("MMMM yyyy", AppStrings.locale()))
+        return yearMonth.format(monthYearPattern)
     }
 
     /**
@@ -46,7 +50,7 @@ object DateFormatter {
      * (mis. "Just now", "2 hours ago", "1 day ago", "3 days ago").
      */
     fun formatRelativeTime(dateString: String?, nowMillis: Long = System.currentTimeMillis()): String {
-        if (dateString.isNullOrBlank()) return AppStrings.get(R.string.time_just_now)
+        if (dateString.isNullOrBlank()) return "Just now"
 
         var parsedMillis: Long? = null
 
@@ -88,7 +92,7 @@ object DateFormatter {
         }
 
         val diffMillis = nowMillis - parsedMillis
-        if (diffMillis <= 0) return AppStrings.get(R.string.time_just_now)
+        if (diffMillis <= 0) return "Just now"
 
         val seconds = diffMillis / 1000
         val minutes = seconds / 60
@@ -99,37 +103,13 @@ object DateFormatter {
         val years = days / 365
 
         return when {
-            seconds < 60 -> AppStrings.get(R.string.time_just_now)
-            minutes < 60 -> if (minutes == 1L) {
-                AppStrings.get(R.string.time_minute_ago)
-            } else {
-                AppStrings.get(R.string.time_minutes_ago, minutes)
-            }
-            hours < 24 -> if (hours == 1L) {
-                AppStrings.get(R.string.time_hour_ago)
-            } else {
-                AppStrings.get(R.string.time_hours_ago, hours)
-            }
-            days < 7 -> if (days == 1L) {
-                AppStrings.get(R.string.time_day_ago)
-            } else {
-                AppStrings.get(R.string.time_days_ago, days)
-            }
-            weeks < 4 -> if (weeks == 1L) {
-                AppStrings.get(R.string.time_week_ago)
-            } else {
-                AppStrings.get(R.string.time_weeks_ago, weeks)
-            }
-            months < 12 -> if (months == 1L) {
-                AppStrings.get(R.string.time_month_ago)
-            } else {
-                AppStrings.get(R.string.time_months_ago, months)
-            }
-            else -> if (years == 1L) {
-                AppStrings.get(R.string.time_year_ago)
-            } else {
-                AppStrings.get(R.string.time_years_ago, years)
-            }
+            seconds < 60 -> "Just now"
+            minutes < 60 -> if (minutes == 1L) "1 minute ago" else "$minutes minutes ago"
+            hours < 24 -> if (hours == 1L) "1 hour ago" else "$hours hours ago"
+            days < 7 -> if (days == 1L) "1 day ago" else "$days days ago"
+            weeks < 4 -> if (weeks == 1L) "1 week ago" else "$weeks weeks ago"
+            months < 12 -> if (months == 1L) "1 month ago" else "$months months ago"
+            else -> if (years == 1L) "1 year ago" else "$years years ago"
         }
     }
 }

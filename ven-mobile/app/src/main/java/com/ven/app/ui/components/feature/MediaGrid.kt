@@ -29,13 +29,17 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -78,10 +82,14 @@ fun MediaGridTile(
         maxHeight = 480,
     )
 
+    val isLandscape = aspectRatio > 1.0f
+    val shape = if (isLandscape) RoundedCornerShape(8.dp) else RectangleShape
+
     Box(
         modifier = modifier
             .fillMaxWidth()
             .aspectRatio(aspectRatio)
+            .clip(shape)
             .background(colors.surfaceInput)
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
@@ -107,31 +115,29 @@ fun MediaGridTile(
             )
         }
 
-        // Overlay gradient dan label judul karya
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    Brush.verticalGradient(
-                        colors = listOf(
-                            Color.Transparent,
-                            Color.Black.copy(alpha = 0.80f),
+        // Label judul karya tanpa overlay gradient shadow gelap yang menggelapkan gambar
+        if (item.title.isNotBlank()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 8.dp, vertical = 6.dp),
+                contentAlignment = Alignment.BottomStart,
+            ) {
+                Text(
+                    text = item.title,
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        fontWeight = FontWeight.SemiBold,
+                        shadow = Shadow(
+                            color = Color.Black.copy(alpha = 0.85f),
+                            offset = Offset(0f, 1f),
+                            blurRadius = 3f,
                         ),
-                        startY = 60f,
                     ),
-                ),
-            contentAlignment = Alignment.BottomStart,
-        ) {
-            Text(
-                text = item.title.ifBlank { stringResource(R.string.media_grid_untitled_artwork) },
-                style = MaterialTheme.typography.labelSmall.copy(
-                    fontWeight = FontWeight.SemiBold,
-                ),
-                color = Color.White,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
-            )
+                    color = Color.White,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
         }
     }
 }
