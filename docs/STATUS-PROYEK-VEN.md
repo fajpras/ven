@@ -6,7 +6,7 @@
 >
 > **Commit terakhir:** `41a0503` — `feat(web): halaman 404 Blade kustom bertema VEN`
 >
-> **Perubahan terbaru:** redirect browser API ke halaman 404 + desain 404 minimalis & nama aplikasi **Value Exhibition Network** — 13 November 2026 (commit lokal setelah `41a0503`)
+> **Perubahan terbaru:** akar situs `GET /` kini menjawab **404** (tidak lagi mengarah ke login admin/beranda) dan halaman 404 tidak lagi memuat tautan "Kembali ke Beranda" — 13 November 2026 (commit lokal setelah `41a0503`)
 >
 > **Lingkungan:** Windows + Laragon, PHP 8.3.33, Laravel 13.34.0, MySQL, Android Gradle 9.6
 
@@ -24,7 +24,8 @@ Dokumen ini merangkum hasil audit langsung terhadap repositori: modul apa yang s
 | Daftar route backend | `php artisan route:list` | ✅ 99 route terdaftar |
 | Test backend | `php artisan test` | ⚠️ **78 test — 77 lulus, 1 gagal** (375 assertion) |
 | Fallback galat API | `php artisan test --filter=PenanganKesalahanApiTest` | ✅ **9 test lulus** — 401, 403, 404, 405, 422, 500 tanpa kebocoran detail internal + redirect browser & JSON untuk klien API |
-| Halaman galat web | `GET /halaman-tidak-ada` | ✅ Blade 404 minimalis (tanpa kartu/dekorasi), mandiri (tanpa aset Vite), merek "Value Exhibition Network", respons `text/html` |
+| Halaman galat web | `GET /halaman-tidak-ada` | ✅ Blade 404 minimalis (tanpa kartu/dekorasi), mandiri (tanpa aset Vite), merek "Value Exhibition Network", respons `text/html`, tanpa tautan ke beranda |
+| Akar situs | `GET /` | ✅ HTTP **404** — panel admin tidak terekspos, tidak redirect ke login/beranda |
 | API dibuka dari browser | `GET /api/pameran/25` + `Accept: text/html` | ✅ `302` → `/404`, halaman 404 kustom ditampilkan; klien API (`application/json`, wildcard, tanpa Accept) tetap menerima JSON |
 | Smoke test API live | `artisan serve` + login `fajri@ven.test` | ✅ Login, `/api/pameran`, `/api/karya/rekomendasi`, `/api/profil`, `/api/pencarian`, `/api/pameran/23/room-dto` merespons normal |
 | Admin Web Panel | `GET /admin/login` | ✅ HTTP 200 |
@@ -136,6 +137,7 @@ Dokumentasi teknis: `backend-api/backend/docs/`.
 |---|---|---|---|
 | 13 Nov 2026 | Request `/api/*` tanpa header `Accept: application/json` menghasilkan **HTTP 500** `Route [login] not defined.` | `bootstrap/app.php`: `redirectGuestsTo` mengembalikan `null` untuk prefix `api`; `app/Exceptions/PenanganKesalahanApi.php` merender semua galat API sebagai JSON `{data, message}` (401/403/404/405/413/419/422/429/5xx) tanpa membocorkan detail internal. Halaman web 404 memakai Blade kustom `resources/views/errors/404.blade.php` | `tests/Feature/PenanganKesalahanApiTest.php` — 7 test lulus; `tests/Feature/Halaman404Test.php` — 2 test lulus; smoke test live `GET /api/profil` tanpa header → `401 application/json`, `GET /halaman-tidak-ada` → `404 text/html` |
 | 13 Nov 2026 | Membuka endpoint `/api/*` langsung di browser menampilkan **JSON 401 mentah** (membingungkan pengguna), dan halaman 404 masih terlalu ramai (kartu besar + dekorasi) serta memakai nama "Virtual Exhibition Navigator" | `PenanganKesalahanApi` mendeteksi navigasi browser dan mengalihkan ke `/404`; klien API tetap menerima JSON. Blade 404 dirombak menjadi minimalis (logo kecil, angka 404 gradien, satu tombol, footer ringkas) dengan merek **Value Exhibition Network** | `PenanganKesalahanApiTest` — 9 test lulus (termasuk redirect browser dan JSON untuk `application/json`, wildcard, serta tanpa Accept); `Halaman404Test` — 2 test lulus. Smoke test live: browser → `302 /404`; `application/json`/`*/*`/tanpa Accept → `401 application/json`; `/halaman-tidak-ada` → `404 text/html` |
+| 13 Nov 2026 | Membuka `http://localhost:8000/` langsung menampilkan/ mengarahkan pengunjung ke beranda & login admin sehingga panel admin mudah ditemukan | `routes/web.php`: route `/` mengembalikan `abort(404)` (tanpa redirect). Blade 404 tidak lagi memuat logo sebagai tautan maupun tombol "Kembali ke Beranda" agar tidak ada jalan pintas ke beranda | `AdminPanelAksesTest` — 3 test lulus (`GET /` → 404); `Halaman404Test` — 2 test lulus (tanpa "Kembali ke Beranda"); `PenanganKesalahanApiTest` — 9 test lulus. Smoke test live: `GET /` → `404 text/html` |
 
 ---
 
@@ -146,6 +148,7 @@ Dokumentasi teknis: `backend-api/backend/docs/`.
 - **Belum selesai:** Schedule, Request Meeting, Create Post, publish dari editor Compose, riwayat aktivitas, dan AI live.
 - **Kegagalan test** yang ada (1 backend, 1 Android) disebabkan masalah environment/test usang, bukan kegagalan build aplikasi.
 - **Bug yang sudah diperbaiki (13 Nov 2026):** request API tanpa autentikasi kini selalu mengembalikan **401 JSON**, bukan 500 `Route [login] not defined`. Seluruh galat `/api/*` (404, 405, 422, 429, 5xx, dll.) memakai envelope JSON yang sama dan tidak menampilkan stack trace. Endpoint API yang dibuka langsung dari browser kini dialihkan ke halaman 404 kustom, sehingga pengguna tidak melihat JSON mentah.
+- **Akar situs (13 Nov 2026):** `GET /` tidak lagi mengarah ke beranda/login admin, melainkan **404** tanpa tautan balik ke beranda, sehingga panel admin tidak terekspos dari alamat utama.
 
 ---
 
@@ -160,6 +163,7 @@ $php = "C:\laragon\bin\php\php-8.3.33-Win32-vs16-x64\php.exe"
 & $php artisan test
 & $php vendor\phpunit\phpunit\phpunit tests/Feature/PenanganKesalahanApiTest.php
 & $php vendor\phpunit\phpunit\phpunit tests/Feature/Halaman404Test.php
+& $php vendor\phpunit\phpunit\phpunit tests/Feature/AdminPanelAksesTest.php
 
 # Android — build & unit test
 cd ..\..\ven-mobile

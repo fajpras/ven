@@ -8,8 +8,10 @@ use App\Http\Controllers\Admin\Web\AdminPostController;
 use App\Http\Middleware\HanyaAdminWeb;
 use Illuminate\Support\Facades\Route;
 
+// Root publik tidak boleh membuka beranda maupun login admin.
+// Akses langsung ke "/" sengaja dijawab 404 agar panel admin tidak terekspos.
 Route::get('/', function () {
-    return redirect()->route('admin.login');
+    abort(404);
 });
 
 // Admin Authentication Routes

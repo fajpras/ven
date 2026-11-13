@@ -12,7 +12,7 @@ class Halaman404Test extends TestCase
 
         $response->assertStatus(404)
             ->assertSee('Halaman Tidak Ditemukan')
-            ->assertSee('Kembali ke Beranda')
+            ->assertDontSee('Kembali ke Beranda')
             ->assertSee('Value Exhibition Network')
             ->assertDontSee('RouteNotFoundException');
 

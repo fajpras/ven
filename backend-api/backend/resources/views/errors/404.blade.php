@@ -94,62 +94,24 @@
             color: var(--muted);
         }
 
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            height: 44px;
-            margin-top: 28px;
-            padding: 0 22px;
-            border-radius: 10px;
-            background: linear-gradient(90deg, var(--brand) 0%, var(--brand-soft) 100%);
-            color: #ffffff;
-            font-size: 14px;
-            font-weight: 600;
-            text-decoration: none;
-            box-shadow: 0 8px 20px rgba(186, 24, 245, 0.24);
-            transition: opacity 0.15s ease, transform 0.15s ease;
-        }
-
-        .btn:hover {
-            opacity: 0.92;
-        }
-
-        .btn:active {
-            transform: scale(0.98);
-        }
-
-        .btn:focus-visible {
-            outline: 3px solid rgba(186, 24, 245, 0.35);
-            outline-offset: 3px;
-        }
-
         footer {
             margin: 0;
             font-size: 12px;
             color: var(--muted);
         }
-
-        @media (prefers-reduced-motion: reduce) {
-            .btn {
-                transition: none;
-            }
-        }
     </style>
 </head>
 <body>
     <main class="hero">
-        <a class="brand" href="{{ url('/') }}" aria-label="VEN — kembali ke beranda">
+        <div class="brand">
             <img src="{{ asset('assets/admin/logo-ven.svg') }}" alt="VEN">
-        </a>
+        </div>
 
         <p class="code">404</p>
         <h1>Halaman Tidak Ditemukan</h1>
         <p class="desc">
             Halaman yang Anda tuju tidak tersedia atau sudah dipindahkan.
         </p>
-
-        <a class="btn" href="{{ url('/') }}">Kembali ke Beranda</a>
     </main>
 
     <footer>&copy; {{ date('Y') }} VEN &mdash; Value Exhibition Network</footer>

@@ -8,9 +8,9 @@ use Tests\TestCase;
 
 class AdminPanelAksesTest extends TestCase
 {
-    public function test_halaman_utama_mengarahkan_ke_login_admin(): void
+    public function test_halaman_utama_menampilkan_404_bukan_beranda(): void
     {
-        $this->get('/')->assertRedirect(route('admin.login'));
+        $this->get('/')->assertNotFound();
     }
 
     public function test_halaman_admin_tidak_dapat_diakses_tanpa_login(): void
