@@ -275,10 +275,14 @@
 
     <!-- Create Content Options Sheet -->
     <string name="create_sheet_title">Create</string>
+    <string name="create_sheet_subtitle">Choose what kind of content you want to publish</string>
+    <string name="create_sheet_close">Close</string>
     <string name="create_sheet_post_title">New Post</string>
     <string name="create_sheet_post_desc">Share artwork, photos, or designs to the feed</string>
+    <string name="create_sheet_post_badge">2D FEED</string>
     <string name="create_sheet_exhibit_title">New Exhibit (3D)</string>
     <string name="create_sheet_exhibit_desc">Build an interactive 3D virtual exhibition room</string>
+    <string name="create_sheet_exhibit_badge">3D VIRTUAL</string>
 
     <!-- Account Deactivation (UC-04) -->
     <string name="settings_deactivate_button">Deaktivasi Akun</string>
