@@ -38,20 +38,56 @@ final class PenanganKesalahanApi
     ];
 
     /**
-     * Ubah exception menjadi respons JSON untuk request /api/*.
+     * Ubah exception menjadi respons untuk request /api/*.
+     *
+     * - Browser yang membuka endpoint langsung dialihkan ke halaman 404 agar
+     *   tidak melihat JSON mentah.
+     * - Klien API (Android/Unity/Postman) tetap menerima JSON.
      *
      * Mengembalikan null bila request bukan dari API, sehingga penanganan
      * bawaan Laravel (halaman web) tetap dipakai.
      */
-    public static function render(Throwable $e, Request $request): ?JsonResponse
+    public static function render(Throwable $e, Request $request): ?Response
     {
         if (! $request->is('api', 'api/*')) {
             return null;
         }
 
+        // Biarkan Laravel mengembalikan respons yang sudah dibentuk sendiri.
+        if ($e instanceof HttpResponseException) {
+            return null;
+        }
+
+        if (self::dariBrowser($request)) {
+            return redirect('/404');
+        }
+
+        return self::responsJson($e);
+    }
+
+    /**
+     * Deteksi navigasi halaman dari browser, bukan panggilan API.
+     *
+     * Browser mengirim Sec-Fetch-Mode: navigate saat membuka alamat langsung,
+     * lengkap dengan Accept text/html dan User-Agent Mozilla. Klien API
+     * (Android/Unity/Postman/curl) tidak memenuhi kombinasi tersebut, sehingga
+     * tetap menerima JSON.
+     */
+    private static function dariBrowser(Request $request): bool
+    {
+        if (strtolower((string) $request->header('Sec-Fetch-Mode')) === 'navigate') {
+            return true;
+        }
+
+        $accept = strtolower((string) $request->header('Accept'));
+        $agen = strtolower((string) $request->header('User-Agent'));
+
+        return str_contains($accept, 'text/html') && str_contains($agen, 'mozilla');
+    }
+
+    private static function responsJson(Throwable $e): JsonResponse
+    {
         return match (true) {
-            // Biarkan Laravel mengembalikan respons yang sudah dibentuk sendiri.
-            $e instanceof HttpResponseException => null,
             $e instanceof AuthenticationException => self::buat(401, self::PESAN_SESI_BERAKHIR),
             $e instanceof ValidationException => self::buat(
                 status: 422,

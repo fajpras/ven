@@ -82,6 +82,31 @@ class PenanganKesalahanApiTest extends TestCase
             ]);
     }
 
+    public function test_api_yang_dibuka_dari_browser_dialihkan_ke_halaman_404(): void
+    {
+        $this->withHeaders([
+            'Accept' => 'text/html,application/xhtml+xml',
+            'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0 Safari/537.36',
+            'Sec-Fetch-Mode' => 'navigate',
+        ])->get('/api/profil')->assertRedirect('/404');
+
+        $this->get('/404')
+            ->assertStatus(404)
+            ->assertSee('Halaman Tidak Ditemukan')
+            ->assertSee('Value Exhibition Network');
+    }
+
+    public function test_api_dengan_accept_json_atau_wildcard_tetap_mendapat_json(): void
+    {
+        $this->get('/api/profil', ['Accept' => 'application/json'])
+            ->assertStatus(401)
+            ->assertJson(['data' => null, 'message' => PenanganKesalahanApi::PESAN_SESI_BERAKHIR]);
+
+        $this->get('/api/profil', ['Accept' => '*/*'])
+            ->assertStatus(401)
+            ->assertJson(['data' => null, 'message' => PenanganKesalahanApi::PESAN_SESI_BERAKHIR]);
+    }
+
     public function test_galat_server_tidak_membocorkan_detail_internal(): void
     {
         Route::get('/api/_uji/galat-server', function (): never {

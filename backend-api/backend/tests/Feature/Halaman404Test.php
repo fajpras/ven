@@ -13,7 +13,7 @@ class Halaman404Test extends TestCase
         $response->assertStatus(404)
             ->assertSee('Halaman Tidak Ditemukan')
             ->assertSee('Kembali ke Beranda')
-            ->assertSee('Muat Ulang')
+            ->assertSee('Value Exhibition Network')
             ->assertDontSee('RouteNotFoundException');
 
         $this->assertStringStartsWith('text/html', (string) $response->headers->get('content-type'));
