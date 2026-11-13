@@ -2,6 +2,7 @@ package com.ven.app.ui.screens.auth
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.ven.app.data.api.ApiLogin
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
@@ -72,10 +73,21 @@ class ForgotPasswordViewModel : ViewModel() {
 
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, errorMessage = null) }
-            delay(1000) // Simulasi panggilan API POST /password/forgot
-            _uiState.update { it.copy(isLoading = false) }
-            startCooldownTimer()
-            _events.send(ForgotPasswordEvent.NavigateToVerifyOtp)
+
+            val result = ApiLogin.lupaKataSandi(state.email)
+
+            result.onSuccess {
+                _uiState.update { it.copy(isLoading = false) }
+                startCooldownTimer()
+                _events.send(ForgotPasswordEvent.NavigateToVerifyOtp)
+            }.onFailure { exception ->
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        errorMessage = exception.message ?: "Gagal mengirim kode verifikasi"
+                    )
+                }
+            }
         }
     }
 
@@ -84,9 +96,20 @@ class ForgotPasswordViewModel : ViewModel() {
 
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, errorMessage = null) }
-            delay(800) // Simulasi resend
-            _uiState.update { it.copy(isLoading = false) }
-            startCooldownTimer()
+
+            val result = ApiLogin.lupaKataSandi(_uiState.value.email)
+
+            result.onSuccess {
+                _uiState.update { it.copy(isLoading = false) }
+                startCooldownTimer()
+            }.onFailure { exception ->
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        errorMessage = exception.message ?: "Gagal mengirim ulang kode"
+                    )
+                }
+            }
         }
     }
 
@@ -97,26 +120,40 @@ class ForgotPasswordViewModel : ViewModel() {
             return
         }
 
+        // Backend memverifikasi OTP menyatu dengan reset kata sandi,
+        // jadi di sini cukup validasi lokal lalu lanjut ke layar kata sandi baru.
+        _uiState.update { it.copy(errorMessage = null) }
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, errorMessage = null) }
-            delay(1000) // Simulasi verifikasi OTP
-            _uiState.update { it.copy(isLoading = false) }
             _events.send(ForgotPasswordEvent.NavigateToResetPassword)
         }
     }
 
-    fun resetPassword(toHome: Boolean = true) {
+    fun resetPassword(toHome: Boolean = false) {
         val state = _uiState.value
         if (!state.canReset) return
 
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, errorMessage = null) }
-            delay(1200) // Simulasi panggilan API POST /password/reset
-            _uiState.update { it.copy(isLoading = false) }
-            if (toHome) {
-                _events.send(ForgotPasswordEvent.NavigateToHome)
-            } else {
-                _events.send(ForgotPasswordEvent.NavigateToLogin)
+
+            val result = ApiLogin.resetKataSandi(
+                email = state.email,
+                otp = state.otp,
+                kataSandiBaru = state.newPassword,
+            )
+
+            result.onSuccess {
+                _uiState.update { it.copy(isLoading = false) }
+                _events.send(
+                    if (toHome) ForgotPasswordEvent.NavigateToHome
+                    else ForgotPasswordEvent.NavigateToLogin
+                )
+            }.onFailure { exception ->
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        errorMessage = exception.message ?: "Gagal mengubah kata sandi"
+                    )
+                }
             }
         }
     }

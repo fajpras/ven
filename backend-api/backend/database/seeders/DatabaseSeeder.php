@@ -22,7 +22,9 @@ class DatabaseSeeder extends Seeder
             $this->call([
                 KategoriSeeder::class,
                 PenggunaSeeder::class,
+                ModelSeeder::class,
                 PameranSeeder::class,
+                KaryaDanPameranSeeder::class,
             ]);
         } finally {
             DB::setDefaultConnection($original);

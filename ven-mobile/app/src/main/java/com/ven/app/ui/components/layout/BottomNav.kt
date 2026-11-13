@@ -65,6 +65,7 @@ fun BottomNav(
     selectedTab: BottomNavTab,
     onTabSelected: (BottomNavTab) -> Unit,
     modifier: Modifier = Modifier,
+    onTabReselected: ((BottomNavTab) -> Unit)? = null,
     tabs: List<BottomNavTab> = BottomNavTab.entries,
     profilePainter: Painter? = null,
     profileInitials: String = "V",
@@ -103,7 +104,13 @@ fun BottomNav(
                     BottomNavItem(
                         tab = tab,
                         isSelected = isSelected,
-                        onClick = { onTabSelected(tab) },
+                        onClick = {
+                            if (isSelected) {
+                                onTabReselected?.invoke(tab)
+                            } else {
+                                onTabSelected(tab)
+                            }
+                        },
                         modifier = Modifier
                             .weight(1f)
                             .fillMaxHeight(),

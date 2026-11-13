@@ -6,7 +6,7 @@ import com.ven.app.ui.components.feature.MediaGridItem
 
 /**
  * Tab pilihan pada halaman hasil pencarian Explore sesuai DESIGN.md §8.5.3:
- * - ForYou: Gabungan seksi Accounts (maks 2-3) + Posts (grid 2 kolom).
+ * - ForYou: Gabungan seksi Accounts (maks 2-3) + Exhibits + Posts.
  * - Accounts: Daftar vertikal akun.
  * - Posts: Grid 2 kolom karya.
  * - Exhibits: Daftar vertikal banner pameran 16:9.
@@ -39,6 +39,7 @@ sealed interface RecentSearchItem {
         val username: String,
         val fullName: String,
         @param:DrawableRes val avatarRes: Int? = null,
+        val avatarUrl: String? = null,
     ) : RecentSearchItem
 }
 
@@ -51,6 +52,7 @@ data class ExploreAccountItem(
     val username: String,
     val fullName: String,
     @param:DrawableRes val avatarRes: Int? = null,
+    val avatarUrl: String? = null,
 )
 
 /**
@@ -61,12 +63,14 @@ data class ExhibitItem(
     val id: String,
     val title: String,
     @param:DrawableRes val bannerRes: Int? = null,
+    val bannerUrl: String? = null,
+    val category: String? = null,
 )
 
 /**
  * UI State untuk [ExploreScreen] mengikuti pola MVI (Unidirectional Data Flow).
  * Sesuai DESIGN.md §8.5.6. Mengelola 4 state tampilan secara lokal:
- * Discovery, Search History, Search Results, dan Filter Sheet.
+ * Discovery, Search History, Search Results, dan Filter Sheet dengan paginasi chunk.
  */
 @Immutable
 data class ExploreUiState(
@@ -81,7 +85,13 @@ data class ExploreUiState(
     val resultAccounts: List<ExploreAccountItem> = emptyList(),
     val resultPosts: List<MediaGridItem> = emptyList(),
     val resultExhibits: List<ExhibitItem> = emptyList(),
+    val feedPosts: List<PostsFeedItem> = emptyList(),
     val isLoading: Boolean = false,
+    val isRefreshing: Boolean = false,
+    val seenMediaIds: Set<String> = emptySet(),
+    val currentPostsPage: Int = 1,
+    val canLoadMorePosts: Boolean = true,
+    val isLoadingMorePosts: Boolean = false,
 ) {
     /** Apakah pengguna sedang menampilkan hasil pencarian (kueri tidak kosong). */
     val isShowingResults: Boolean

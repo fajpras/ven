@@ -12,12 +12,16 @@ pluginManagement {
     }
 }
 dependencyResolutionManagement {
-    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
     repositories {
         google()
         mavenCentral()
+        flatDir {
+            dirs("unityLibrary/libs")
+        }
     }
 }
 
 rootProject.name = "ven-mobile"
 include(":app")
+include(":unityLibrary")

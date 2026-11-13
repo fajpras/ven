@@ -1,6 +1,10 @@
 package com.ven.app.ui.screens.home
 
 import androidx.compose.runtime.Immutable
+import com.ven.app.data.api.models.KaryaItemModel
+import com.ven.app.data.api.models.PameranItemModel
+import com.ven.app.ui.screens.explore.PostsFeedItem
+import com.ven.app.util.DateFormatter
 
 /**
  * Data model untuk item banner pameran yang akan datang ("Coming Soon").
@@ -20,7 +24,11 @@ data class ComingSoonEvent(
 data class PostItem(
     val id: String,
     val username: String,
+    val userId: String? = null,
+    val userAvatarUrl: String? = null,
     val title: String,
+    val category: String? = null,
+    val timestampText: String? = null,
     val imageUrl: String? = null,
     val pameranId: String? = null,
     val aspectRatio: Float = 4f / 5f,
@@ -29,12 +37,63 @@ data class PostItem(
 
 /**
  * UI State untuk Home Screen.
- * Sesuai prinsip Clean Architecture & MVI/MVVM.
+ * Sesuai prinsip Clean Architecture & MVI/MVVM dengan dukungan paginasi chunk.
  */
 @Immutable
 data class HomeUiState(
     val isLoading: Boolean = false,
+    val isRefreshing: Boolean = false,
+    val isLoadingMore: Boolean = false,
+    val canLoadMore: Boolean = true,
+    val currentPage: Int = 1,
     val comingSoonEvents: List<ComingSoonEvent> = emptyList(),
     val posts: List<PostItem> = emptyList(),
+    val seenPostIds: Set<String> = emptySet(),
     val errorMessage: String? = null,
 )
+
+/**
+ * Helper mapper dari DTO ke UI models.
+ */
+fun PameranItemModel.toComingSoonEvent(): ComingSoonEvent {
+    val dateDisplay = createdAt?.take(10) ?: "Coming Soon"
+    return ComingSoonEvent(
+        id = idPameran.toString(),
+        title = judul,
+        dateText = dateDisplay,
+        imageUrl = banner,
+    )
+}
+
+fun KaryaItemModel.toPostItem(): PostItem {
+    val author = pengguna?.namaPanggilan ?: pengguna?.nama ?: "Anonim"
+    val relativeTime = DateFormatter.formatRelativeTime(createdAt)
+    return PostItem(
+        id = idKarya,
+        username = "@$author",
+        userId = pengguna?.idPengguna,
+        userAvatarUrl = pengguna?.fotoProfil,
+        title = judul,
+        category = kategori?.nama,
+        timestampText = relativeTime,
+        imageUrl = fileUrl ?: file,
+        pameranId = idPameran?.toString(),
+        description = deskripsi ?: "",
+    )
+}
+
+fun PostItem.toFeedItem(): PostsFeedItem {
+    return PostsFeedItem(
+        id = id,
+        username = username,
+        userId = userId,
+        userAvatarUrl = userAvatarUrl,
+        title = title,
+        category = category,
+        timestampText = timestampText,
+        description = description,
+        imageUrl = imageUrl,
+        pameranId = pameranId,
+        aspectRatio = aspectRatio,
+    )
+}

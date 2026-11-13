@@ -24,6 +24,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -51,6 +52,7 @@ import com.ven.app.ui.icons.VexIcons
 import com.ven.app.ui.navigation.BottomNavTab
 import com.ven.app.ui.theme.CategoryColorMap
 import com.ven.app.ui.theme.ThemeMode
+import com.ven.app.ui.theme.VexAspect
 import com.ven.app.ui.theme.VexSpace
 import com.ven.app.ui.theme.VexTheme
 
@@ -91,7 +93,7 @@ fun ProfileScreen(
         modifier = modifier,
         topBar = {
             VexTopBar.Profile(
-                username = profile?.username ?: "gra._.aph",
+                username = profile?.username.orEmpty(),
                 onCreateClick = onCreateClick,
                 onMenuClick = onMenuClick,
             )
@@ -141,15 +143,20 @@ fun ProfileScreen(
                     ProfileTab.Exhibits -> uiState.exhibits
                 }
 
-                LazyVerticalGrid(
-                    columns = GridCells.Fixed(3),
+                PullToRefreshBox(
+                    isRefreshing = uiState.isLoading,
+                    onRefresh = onRetryClick,
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(innerPadding),
-                    horizontalArrangement = Arrangement.spacedBy(2.dp),
-                    verticalArrangement = Arrangement.spacedBy(2.dp),
-                    contentPadding = PaddingValues(bottom = VexSpace.s6),
                 ) {
+                    LazyVerticalGrid(
+                        columns = GridCells.Fixed(3),
+                        modifier = Modifier.fillMaxSize(),
+                        horizontalArrangement = Arrangement.spacedBy(2.dp),
+                        verticalArrangement = Arrangement.spacedBy(2.dp),
+                        contentPadding = PaddingValues(bottom = VexSpace.s6),
+                    ) {
                     // -----------------------------------------------------
                     // Item Span Penuh: Header Profil, Bio, Kontak & Tabs
                     // -----------------------------------------------------
@@ -169,6 +176,7 @@ fun ProfileScreen(
                                     initials = profile.username,
                                     size = AvatarSize.Lg,
                                     imageRes = profile.avatarRes,
+                                    imageBitmap = uiState.avatarBitmap,
                                     contentDescription = profile.fullName,
                                 )
 
@@ -316,16 +324,28 @@ fun ProfileScreen(
                     }
 
                     // -----------------------------------------------------
-                    // Media Items (Poster Grid 3 Kolom)
+                    // Media Items (Poster Grid 3 Kolom untuk Posts, Full Banner 16:9 untuk Exhibits)
                     // -----------------------------------------------------
                     if (currentMediaItems.isNotEmpty()) {
+                        val isExhibits = uiState.selectedTab == ProfileTab.Exhibits
                         items(
                             items = currentMediaItems,
                             key = { it.id },
+                            span = {
+                                if (isExhibits) GridItemSpan(maxLineSpan) else GridItemSpan(1)
+                            },
                         ) { item ->
                             MediaGridTile(
                                 item = item,
                                 onClick = { onMediaClick(item) },
+                                aspectRatio = if (isExhibits) (16f / 9f) else VexAspect.poster,
+                                modifier = if (isExhibits) {
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 4.dp, vertical = 4.dp)
+                                } else {
+                                    Modifier
+                                },
                             )
                         }
                     } else {
@@ -352,6 +372,7 @@ fun ProfileScreen(
                 }
             }
         }
+    }
 
         // ---------------------------------------------------------
         // Bottom Sheet: Daftar Lengkap Keahlian / Skills

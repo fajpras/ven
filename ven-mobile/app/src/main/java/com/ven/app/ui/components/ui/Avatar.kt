@@ -12,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -40,9 +41,12 @@ fun Avatar(
     modifier: Modifier = Modifier,
     size: AvatarSize = AvatarSize.Md,
     @DrawableRes imageRes: Int? = null,
+    imageBitmap: ImageBitmap? = null,
+    imageUrl: String? = null,
     contentDescription: String? = null,
 ) {
     val colors = VexTheme.colors
+    val resolvedImageBitmap = imageBitmap ?: imageUrl?.let { rememberAsyncImageBitmap(it) }
 
     Box(
         modifier = modifier
@@ -50,7 +54,14 @@ fun Avatar(
             .clip(CircleShape),
         contentAlignment = Alignment.Center,
     ) {
-        if (imageRes != null) {
+        if (resolvedImageBitmap != null) {
+            Image(
+                bitmap = resolvedImageBitmap,
+                contentDescription = contentDescription,
+                modifier = Modifier.matchParentSize(),
+                contentScale = ContentScale.Crop,
+            )
+        } else if (imageRes != null) {
             Image(
                 painter = painterResource(id = imageRes),
                 contentDescription = contentDescription,

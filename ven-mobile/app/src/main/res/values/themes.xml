@@ -5,4 +5,11 @@
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">#252525</item>
     </style>
+
+    <style name="Theme.VEN.UnityLoading" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="android:windowBackground">#110E1C</item>
+        <item name="android:statusBarColor">#110E1C</item>
+        <item name="android:navigationBarColor">#110E1C</item>
+        <item name="android:windowAnimationStyle">@null</item>
+    </style>
 </resources>

@@ -195,7 +195,7 @@ class SetupDatabase extends Command
     {
         $read = ['SELECT'];
         return [
-            'pengguna'               => ['SELECT', 'UPDATE (nama, nama_panggilan, deskripsi, foto_profil, email, kata_sandi, status, onboarding_selesai, updated_at)'],
+            'pengguna'               => ['SELECT', 'UPDATE (nama, nama_panggilan, nomor_hp, deskripsi, foto_profil, email, kata_sandi, status, onboarding_selesai, updated_at)'],
             'pengguna_kategori'      => ['SELECT', 'INSERT', 'UPDATE', 'DELETE'],
             'pameran'                => ['SELECT', 'INSERT', 'UPDATE (id_model, judul, banner, warna, tipe, updated_at, deleted_at)'],
             'ruangan'                => ['SELECT', 'INSERT'],
@@ -204,7 +204,7 @@ class SetupDatabase extends Command
             'posisi_objek'           => ['SELECT', 'INSERT', 'DELETE'],
             'undangan'               => ['SELECT', 'INSERT', 'UPDATE (status, catatan, tautan)'],
             'reset_kata_sandi'       => ['SELECT', 'INSERT', 'UPDATE (percobaan, used_at)'],
-            'personal_access_tokens' => ['SELECT'],
+            'personal_access_tokens' => ['SELECT', 'DELETE'],
             'kategori'               => $read,
             'model'                  => $read,
             'sanksi_akun'            => $read,

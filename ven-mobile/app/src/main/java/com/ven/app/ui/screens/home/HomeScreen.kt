@@ -6,11 +6,21 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -34,16 +44,12 @@ import com.ven.app.ui.theme.VexTheme
  * 1. TopBar ([VexTopBar.Home]):
  *    - Tombol "+" di kiri (membuka Create Flow).
  *    - Logo VEN di kanan.
- *    - Latar menyatu dengan kanvas (#1F1F1F), tanpa garis pembatas bawah.
  * 2. Seksi "Coming Soon":
- *    - Judul: "Coming Soon" (20sp SemiBold, padding horizontal 24dp).
- *    - Carousel horizontal poster pameran ([CarouselExhibitions] + [EventBanner]) dengan snap behavior, rasio 16:9, radius 8–12dp.
- *    - Garis pembatas 1dp warna border (#313131).
+ *    - Carousel horizontal poster pameran.
  * 3. Feed Karya ([PostCard]):
- *    - Header: @username di kiri, ikon kalender (Request Meeting) & ikon play (Virtual 3D Room) di kanan.
- *    - Media post: Gambar selebar layar (edge-to-edge), 0dp radius.
- * 4. Bottom Navigation Bar ([BottomNavTab.Home] aktif).
+ *    - Mendukung chunked loading / paginasi otomatis saat mendekati akhir list.
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     uiState: HomeUiState,
@@ -53,12 +59,33 @@ fun HomeScreen(
     onView3dClick: (pameranId: String?) -> Unit,
     onBannerClick: (eventId: String) -> Unit,
     modifier: Modifier = Modifier,
+    listState: LazyListState = rememberLazyListState(),
+    onTabReselected: ((BottomNavTab) -> Unit)? = null,
+    onRefresh: () -> Unit = {},
+    onLoadMore: () -> Unit = {},
+    onUserClick: (userId: String) -> Unit = {},
 ) {
     val colors = VexTheme.colors
+
+    // Deteksi scroll chunk: memicu pemuatan data berikutnya secara halus
+    val shouldLoadMore by remember {
+        derivedStateOf {
+            val total = listState.layoutInfo.totalItemsCount
+            val lastVisible = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
+            total > 0 && lastVisible >= total - 3
+        }
+    }
+
+    LaunchedEffect(shouldLoadMore) {
+        if (shouldLoadMore && uiState.canLoadMore && !uiState.isLoadingMore && !uiState.isLoading) {
+            onLoadMore()
+        }
+    }
 
     AppScaffold(
         currentTab = BottomNavTab.Home,
         onTabSelected = onTabSelected,
+        onTabReselected = onTabReselected,
         modifier = modifier,
         topBar = {
             VexTopBar.Home(
@@ -66,12 +93,18 @@ fun HomeScreen(
             )
         },
     ) { innerPadding ->
-        LazyColumn(
+        PullToRefreshBox(
+            isRefreshing = uiState.isRefreshing,
+            onRefresh = onRefresh,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding),
-            contentPadding = PaddingValues(bottom = VexSpace.s6),
         ) {
+            LazyColumn(
+                state = listState,
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(bottom = VexSpace.s6),
+            ) {
             // ---------------------------------------------------------
             // Seksi 1: Coming Soon Carousel
             // ---------------------------------------------------------
@@ -96,7 +129,7 @@ fun HomeScreen(
             }
 
             // ---------------------------------------------------------
-            // Seksi 2: Feed Post Karya
+            // Seksi 2: Feed Post Karya (Chunked & Cached)
             // ---------------------------------------------------------
             if (uiState.posts.isNotEmpty()) {
                 items(
@@ -105,12 +138,37 @@ fun HomeScreen(
                 ) { post ->
                     PostCard(
                         username = post.username,
+                        userAvatarUrl = post.userAvatarUrl,
+                        title = post.title,
+                        category = post.category,
+                        timestampText = post.timestampText,
                         description = post.description,
                         imageUrl = post.imageUrl,
                         aspectRatio = post.aspectRatio,
                         onRequestMeetingClick = { onRequestMeetingClick(post.id) },
                         onView3dClick = { onView3dClick(post.pameranId) },
+                        onUsernameClick = {
+                            post.userId?.let { onUserClick(it) }
+                        },
                     )
+                }
+
+                // Indikator loading saat memuat chunk berikutnya
+                if (uiState.isLoadingMore) {
+                    item {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 16.dp),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(24.dp),
+                                color = colors.primaryText,
+                                strokeWidth = 2.dp,
+                            )
+                        }
+                    }
                 }
             } else if (!uiState.isLoading) {
                 // Empty State Feed
@@ -132,41 +190,13 @@ fun HomeScreen(
         }
     }
 }
+}
 
 // ---------------------------------------------------------
 // Previews untuk Dark Mode & Light Mode
 // ---------------------------------------------------------
 
-val SampleHomeUiState = HomeUiState(
-    comingSoonEvents = listOf(
-        ComingSoonEvent(
-            id = "1",
-            title = "Open Source Competition",
-            dateText = "24th Sep 2026",
-        ),
-        ComingSoonEvent(
-            id = "2",
-            title = "PBL EXPO 2026",
-            dateText = "1st Oct 2026",
-        ),
-    ),
-    posts = listOf(
-        PostItem(
-            id = "p1",
-            username = "Graaph",
-            title = "Digital Painting Concept",
-            pameranId = "ex1",
-            description = "Concept art eksplorasi arsitektur cyberpunk dan pencahayaan neon untuk kompetisi open source. Kunjungi showroom 3D di https://vex.art/exhibit/digital-concept untuk melihat detail tekstur dan aset interaktif! Jangan lupa tinggalkan feedback Anda sebelum expo dimulai.",
-        ),
-        PostItem(
-            id = "p2",
-            username = "StudioVex",
-            title = "3D Environment Design",
-            pameranId = "ex2",
-            description = "Desain lingkungan 3D untuk PBL EXPO 2026. Info lebih lanjut kunjungi https://vex.art/expo-2026",
-        ),
-    ),
-)
+val SampleHomeUiState = HomeUiState()
 
 @Preview(name = "Home Screen - Dark Mode", showBackground = true, backgroundColor = 0xFF1F1F1F)
 @Composable

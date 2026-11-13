@@ -8,6 +8,7 @@ use App\Models\Objek;
 use App\Models\PosisiObjek;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
@@ -41,17 +42,101 @@ class KaryaController extends Controller
     public function rekomendasi(Request $request)
     {
         $user = $request->user();
+        $page = $request->integer('page', 1);
+        $perPage = min($request->integer('per_page', 12), 24);
+        $excludeIds = array_filter(array_map('trim', explode(',', (string) $request->query('exclude', ''))));
+        $refresh = $request->boolean('refresh', false);
 
-        $query = Karya::query()->select('karya.*')->with(['kategori', self::PENGGUNA_PUBLIK]);
+        // Ambil kategori minat pengguna
+        $userCategories = $user ? $user->kategori()->get() : collect();
+        $hasOthers = $userCategories->contains(fn ($k) => strcasecmp($k->kategori, 'others') === 0);
+        $minatIds = $userCategories->pluck('id_kategori')->toArray();
 
-        if ($user->kategori()->exists()) {
-            $query->join('pengguna_kategori', fn ($join) => $join
-                ->on('karya.id_kategori', '=', 'pengguna_kategori.id_kategori')
-                ->where('pengguna_kategori.id_pengguna', '=', $user->id_pengguna))
-                ->orderByDesc('pengguna_kategori.bobot');
+        // KASUS 1: Pengguna memilih "Others" ATAU belum memiliki minat (guest/skip)
+        // -> Tampilkan karya dari SELURUH kategori yang ada semuanya
+        if ($hasOthers || empty($minatIds)) {
+            $query = Karya::query()->select('karya.*')->with(['kategori', self::PENGGUNA_PUBLIK]);
+
+            if (!empty($excludeIds)) {
+                $query->whereNotIn('karya.id_karya', $excludeIds);
+            }
+
+            if ($refresh) {
+                $query->inRandomOrder();
+            } else {
+                $query->latest('karya.created_at');
+            }
+
+            $karya = $query->paginate($perPage);
+
+            // Fallback: Jika seluruh karya sudah pernah dilihat, acak ulang seluruh karya
+            if ($karya->isEmpty() && !empty($excludeIds)) {
+                $karya = Karya::query()->select('karya.*')->with(['kategori', self::PENGGUNA_PUBLIK])
+                    ->inRandomOrder()
+                    ->paginate($perPage);
+            }
+
+            return $this->ok($karya);
         }
 
-        return $this->ok($query->latest('karya.created_at')->paginate(24));
+        // KASUS 2: Pengguna memilih kategori spesifik (misal: 3D, UI/UX) TANPA "Others"
+        // Hitung apakah masih ada karya dari kategori yang dipilih yang belum pernah dilihat
+        $totalMinatTersedia = Karya::whereIn('id_kategori', $minatIds)
+            ->when(!empty($excludeIds), fn ($q) => $q->whereNotIn('id_karya', $excludeIds))
+            ->count();
+
+        if ($totalMinatTersedia > 0) {
+            // Fase A: Tampilkan HANYA karya yang sesuai dengan kategori yang dipilih pengguna
+            $minatQuery = Karya::query()->select('karya.*')
+                ->with(['kategori', self::PENGGUNA_PUBLIK])
+                ->whereIn('karya.id_kategori', $minatIds);
+
+            if (!empty($excludeIds)) {
+                $minatQuery->whereNotIn('karya.id_karya', $excludeIds);
+            }
+
+            if ($refresh) {
+                $minatQuery->inRandomOrder();
+            } else {
+                $minatQuery->latest('karya.created_at');
+            }
+
+            $karya = $minatQuery->paginate($perPage);
+        } else {
+            // Fase B: Karya dari kategori pilihan sudah habis -> Baru menampilkan karya dari kategori lain
+            $lainQuery = Karya::query()->select('karya.*')
+                ->with(['kategori', self::PENGGUNA_PUBLIK])
+                ->whereNotIn('karya.id_kategori', $minatIds);
+
+            if (!empty($excludeIds)) {
+                $lainQuery->whereNotIn('karya.id_karya', $excludeIds);
+            }
+
+            if ($refresh) {
+                $lainQuery->inRandomOrder();
+            } else {
+                $lainQuery->latest('karya.created_at');
+            }
+
+            $karya = $lainQuery->paginate($perPage);
+
+            // Fase C (Fallback): Jika seluruh karya kategori lain sudah pernah dilihat, acak ulang karya kategori lain agar konten tidak pernah habis
+            if ($karya->isEmpty() && !empty($excludeIds)) {
+                $karya = Karya::query()->select('karya.*')->with(['kategori', self::PENGGUNA_PUBLIK])
+                    ->whereNotIn('karya.id_kategori', $minatIds)
+                    ->inRandomOrder()
+                    ->paginate($perPage);
+
+                // Jika di database tidak ada karya kategori lain, fallback acak seluruh karya
+                if ($karya->isEmpty()) {
+                    $karya = Karya::query()->select('karya.*')->with(['kategori', self::PENGGUNA_PUBLIK])
+                        ->inRandomOrder()
+                        ->paginate($perPage);
+                }
+            }
+        }
+
+        return $this->ok($karya);
     }
 
     public function show(Karya $karya)
@@ -171,14 +256,50 @@ class KaryaController extends Controller
         return $this->ok($objek->fresh()->load('posisi'), 'Posisi objek diperbarui.');
     }
 
+    public function uploadMedia(Request $request)
+    {
+        $request->validate([
+            'file' => ['required', 'file', 'max:51200', 'mimes:jpeg,jpg,png,webp,mp4,webm,mov,mp3,wav,ogg'],
+        ]);
+
+        $path = $request->file('file')->store('karya', 'public');
+
+        return $this->ok([
+            'url' => Storage::url($path),
+            'path' => $path,
+        ], 'Berkas karya berhasil diunggah.');
+    }
+
     public function berkas(Karya $karya)
     {
-        abort_unless($karya->file && Storage::disk('local')->exists($karya->file), 404);
+        if (! $karya->file) {
+            abort(404);
+        }
 
-        return Storage::disk('local')->response($karya->file, null, [
-            'X-Content-Type-Options' => 'nosniff',
-            'Cache-Control' => 'private, max-age=1800',
-        ]);
+        $cleanPath = ltrim(preg_replace('#^/?storage/#', '', $karya->file), '/');
+
+        if (Storage::disk('public')->exists($cleanPath)) {
+            return Storage::disk('public')->response($cleanPath, null, [
+                'X-Content-Type-Options' => 'nosniff',
+                'Cache-Control' => 'public, max-age=86400',
+            ]);
+        }
+
+        if (Storage::disk('local')->exists($karya->file)) {
+            return Storage::disk('local')->response($karya->file, null, [
+                'X-Content-Type-Options' => 'nosniff',
+                'Cache-Control' => 'private, max-age=1800',
+            ]);
+        }
+
+        if (Storage::disk('local')->exists($cleanPath)) {
+            return Storage::disk('local')->response($cleanPath, null, [
+                'X-Content-Type-Options' => 'nosniff',
+                'Cache-Control' => 'private, max-age=1800',
+            ]);
+        }
+
+        abort(404);
     }
 
     private function rules(Request $request, bool $wajib): array

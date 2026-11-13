@@ -29,6 +29,7 @@ Route::middleware(CatatKeamanan::class)->group(function () {
         Route::controller(Pengguna\ProfilController::class)->prefix('profil')->group(function () {
             Route::get('/', 'show');
             Route::put('/', 'update');
+            Route::post('foto', 'updateFoto');
             Route::post('email/kirim-otp', 'kirimOtpGantiEmail')->middleware('throttle:5,1');
             Route::put('email', 'gantiEmail')->middleware('throttle:5,1');
             Route::put('kata-sandi', 'updatePassword');
@@ -42,9 +43,15 @@ Route::middleware(CatatKeamanan::class)->group(function () {
         Route::controller(Pengguna\PameranController::class)->group(function () {
             Route::get('model-3d', 'templates');
             Route::get('model-3d/{model3d}', 'templateShow');
+            Route::get('exhibition_templates', 'templates');
             Route::get('pameran', 'index');
+            Route::get('pameran/rekomendasi', 'rekomendasi');
             Route::post('pameran', 'store');
+            Route::post('pameran/banner', 'uploadBanner');
+            Route::post('exhibitions', 'storeFromUnity');
+            Route::get('exhibitions/{pameran}/room-dto', 'roomDto')->whereNumber('pameran');
             Route::get('pameran/{pameran}', 'show')->whereNumber('pameran');
+            Route::get('pameran/{pameran}/room-dto', 'roomDto')->whereNumber('pameran');
             Route::put('pameran/{pameran}', 'update')->whereNumber('pameran');
             Route::delete('pameran/{pameran}', 'destroy')->whereNumber('pameran');
             Route::post('pameran/{pameran}/ruangan', 'storeRuangan')->whereNumber('pameran');
@@ -54,6 +61,7 @@ Route::middleware(CatatKeamanan::class)->group(function () {
             Route::get('karya', 'index');
             Route::get('karya/rekomendasi', 'rekomendasi');
             Route::post('karya', 'store');
+            Route::post('karya/upload-media', 'uploadMedia');
             Route::get('karya/{karya}', 'show')->whereUuid('karya');
 
             Route::match(['put', 'patch', 'post'], 'karya/{karya}', 'update')->whereUuid('karya');
@@ -71,6 +79,8 @@ Route::middleware(CatatKeamanan::class)->group(function () {
         });
 
         Route::post('ai/tanya', [Pengguna\AIChatController::class, 'ask'])->middleware('throttle:10,1');
+        Route::get('pencarian', [Pengguna\PencarianController::class, 'search']);
+        Route::get('pengguna/{pengguna}', [Pengguna\ProfilController::class, 'detailPengguna'])->whereUuid('pengguna');
 
         Route::prefix('admin')->middleware(HanyaAdmin::class)->group(function () {
             Route::controller(Admin\PenggunaController::class)->group(function () {

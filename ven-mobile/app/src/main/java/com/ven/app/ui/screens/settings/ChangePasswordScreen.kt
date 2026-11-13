@@ -4,25 +4,29 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ven.app.R
 import com.ven.app.ui.components.layout.VexBottomActionBar
 import com.ven.app.ui.components.layout.VexTopBar
 import com.ven.app.ui.components.ui.VexButton
 import com.ven.app.ui.components.ui.VexButtonVariant
 import com.ven.app.ui.components.ui.VexPasswordField
+import com.ven.app.ui.components.ui.VexTextFieldVariant
 import com.ven.app.ui.theme.ThemeMode
 import com.ven.app.ui.theme.VexSpace
 import com.ven.app.ui.theme.VexTheme
@@ -31,23 +35,19 @@ import com.ven.app.ui.theme.VexTheme
  * Halaman Change Password.
  * Sesuai wireframe `Wireframe - Setting Password.png` dan DESIGN.md §8.10:
  * - Field: Current password, New password, Confirm password.
- * - Sticky bottom CTA: [VexBottomActionBar] dengan tombol "Send OTP".
+ * - Sticky bottom CTA: [VexBottomActionBar].
  */
 @Composable
 fun ChangePasswordScreen(
+    state: ChangePasswordUiState,
+    onCurrentPasswordChange: (String) -> Unit,
+    onNewPasswordChange: (String) -> Unit,
+    onConfirmPasswordChange: (String) -> Unit,
     onBackClick: () -> Unit,
-    onSendOtpClick: () -> Unit,
+    onSubmitClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val colors = VexTheme.colors
-
-    var currentPassword by remember { mutableStateOf("") }
-    var newPassword by remember { mutableStateOf("") }
-    var confirmPassword by remember { mutableStateOf("") }
-
-    val isFormValid = currentPassword.isNotBlank() &&
-        newPassword.isNotBlank() &&
-        (newPassword == confirmPassword)
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -61,10 +61,11 @@ fun ChangePasswordScreen(
         bottomBar = {
             VexBottomActionBar {
                 VexButton(
-                    text = stringResource(R.string.settings_send_otp),
-                    onClick = onSendOtpClick,
+                    text = stringResource(R.string.settings_save_changes),
+                    onClick = onSubmitClick,
                     variant = VexButtonVariant.Primary,
-                    enabled = isFormValid,
+                    enabled = state.isFormValid,
+                    loading = state.isLoading,
                 )
             }
         },
@@ -79,28 +80,79 @@ fun ChangePasswordScreen(
                 .padding(bottom = VexSpace.s8),
         ) {
             VexPasswordField(
-                value = currentPassword,
-                onValueChange = { currentPassword = it },
+                value = state.kataSandiSaatIni,
+                onValueChange = onCurrentPasswordChange,
+                variant = VexTextFieldVariant.Boxed,
+                placeholder = "",
                 label = stringResource(R.string.settings_current_password_label),
             )
 
             Spacer(modifier = Modifier.height(VexSpace.s4))
 
             VexPasswordField(
-                value = newPassword,
-                onValueChange = { newPassword = it },
+                value = state.kataSandi,
+                onValueChange = onNewPasswordChange,
+                variant = VexTextFieldVariant.Boxed,
+                placeholder = "",
                 label = stringResource(R.string.settings_new_password_label),
             )
 
             Spacer(modifier = Modifier.height(VexSpace.s4))
 
             VexPasswordField(
-                value = confirmPassword,
-                onValueChange = { confirmPassword = it },
+                value = state.konfirmasiKataSandi,
+                onValueChange = onConfirmPasswordChange,
+                variant = VexTextFieldVariant.Boxed,
+                placeholder = "",
                 label = stringResource(R.string.settings_confirm_password_label),
             )
+
+            Spacer(modifier = Modifier.height(VexSpace.s4))
+
+            Text(
+                text = stringResource(R.string.settings_change_password_helper),
+                style = MaterialTheme.typography.bodySmall,
+                color = colors.textMuted,
+            )
+
+            state.errorMessage?.let {
+                Spacer(modifier = Modifier.height(VexSpace.s3))
+                Text(
+                    text = it,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colors.danger,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
         }
     }
+}
+
+/**
+ * Menghubungkan [ChangePasswordScreen] dengan [ChangePasswordViewModel].
+ */
+@Composable
+fun ChangePasswordRoute(
+    onBackClick: () -> Unit,
+    onSaved: () -> Unit,
+    viewModel: ChangePasswordViewModel = viewModel(),
+) {
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+
+    LaunchedEffect(state.isSuccess) {
+        if (state.isSuccess) {
+            onSaved()
+        }
+    }
+
+    ChangePasswordScreen(
+        state = state,
+        onCurrentPasswordChange = viewModel::onKataSandiSaatIniChange,
+        onNewPasswordChange = viewModel::onKataSandiChange,
+        onConfirmPasswordChange = viewModel::onKonfirmasiChange,
+        onBackClick = onBackClick,
+        onSubmitClick = viewModel::simpan,
+    )
 }
 
 // ---------------------------------------------------------
@@ -112,8 +164,12 @@ fun ChangePasswordScreen(
 private fun ChangePasswordDarkPreview() {
     VexTheme(mode = ThemeMode.Dark) {
         ChangePasswordScreen(
+            state = ChangePasswordUiState(),
+            onCurrentPasswordChange = {},
+            onNewPasswordChange = {},
+            onConfirmPasswordChange = {},
             onBackClick = {},
-            onSendOtpClick = {},
+            onSubmitClick = {},
         )
     }
 }
@@ -123,8 +179,12 @@ private fun ChangePasswordDarkPreview() {
 private fun ChangePasswordLightPreview() {
     VexTheme(mode = ThemeMode.Light) {
         ChangePasswordScreen(
+            state = ChangePasswordUiState(),
+            onCurrentPasswordChange = {},
+            onNewPasswordChange = {},
+            onConfirmPasswordChange = {},
             onBackClick = {},
-            onSendOtpClick = {},
+            onSubmitClick = {},
         )
     }
 }

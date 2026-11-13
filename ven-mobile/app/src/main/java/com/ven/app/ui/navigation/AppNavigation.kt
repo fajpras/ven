@@ -1,8 +1,14 @@
 package com.ven.app.ui.navigation
 
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -10,9 +16,12 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.ui.platform.LocalContext
@@ -21,7 +30,15 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.ven.app.data.api.ApiClient
+import com.ven.app.data.api.ApiLogin
+import com.ven.app.data.api.ApiPencarian
 import com.ven.app.data.api.SessionManager
+import com.ven.app.util.DateFormatter
+import com.ven.app.util.UnityLauncher
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import com.ven.app.data.preference.ThemePreferences
 import com.ven.app.ui.components.feature.CreateOptionsBottomSheet
 import com.ven.app.ui.components.layout.AppScaffold
@@ -34,32 +51,39 @@ import com.ven.app.ui.screens.auth.RegisterRoute
 import com.ven.app.ui.screens.auth.ResetPasswordScreen
 import com.ven.app.ui.screens.auth.VerifyOtpScreen
 import com.ven.app.ui.screens.create.exhibit.CreateExhibitTemplateScreen
-import com.ven.app.ui.screens.create.exhibit.editor.CreateExhibitEditorScreen
+import com.ven.app.ui.screens.create.exhibit.CreateExhibitViewModel
+import com.ven.app.ui.screens.create.exhibit.info.CreateExhibitInfoScreen
+import com.ven.app.ui.screens.unity.UnityLoadingScreen
 import com.ven.app.ui.screens.create.post.CreatePostScreen
 import com.ven.app.ui.screens.explore.ExploreScreen
+import com.ven.app.ui.screens.explore.ExploreViewModel
+import com.ven.app.ui.screens.explore.PostsFeedItem
 import com.ven.app.ui.screens.explore.PostsFeedScreen
-import com.ven.app.ui.screens.explore.dummyPostsFeed
 import com.ven.app.ui.screens.home.HomeScreen
 import com.ven.app.ui.screens.home.HomeUiState
-import com.ven.app.ui.screens.home.SampleHomeUiState
+import com.ven.app.ui.screens.home.HomeViewModel
+import com.ven.app.ui.screens.home.toFeedItem
 import com.ven.app.ui.screens.onboarding.InterestRoute
 import com.ven.app.ui.screens.profile.ProfileScreen
-import com.ven.app.ui.screens.profile.dummyProfileUiState
+import com.ven.app.ui.screens.profile.ProfileViewModel
+import com.ven.app.ui.screens.profile.UserProfileDetailScreen
 import com.ven.app.ui.screens.requestmeeting.RequestMeetingEvent
 import com.ven.app.ui.screens.requestmeeting.RequestMeetingScreen
 import com.ven.app.ui.screens.requestmeeting.RequestMeetingViewModel
 import com.ven.app.ui.screens.schedule.ScheduleScreen
-import com.ven.app.ui.screens.settings.AccountStatusScreen
-import com.ven.app.ui.screens.settings.ChangeEmailScreen
-import com.ven.app.ui.screens.settings.ChangePasswordScreen
+import com.ven.app.ui.screens.settings.AccountStatusRoute
+import com.ven.app.ui.screens.settings.ChangeEmailRoute
+import com.ven.app.ui.screens.settings.ChangeEmailViewModel
+import com.ven.app.ui.screens.settings.ChangePasswordRoute
 import com.ven.app.ui.screens.settings.HistoryScreen
 import com.ven.app.ui.screens.settings.LanguageScreen
 import com.ven.app.ui.screens.settings.ProfileSettingsRoute
 import com.ven.app.ui.screens.settings.SettingsPlaceholderScreen
 import com.ven.app.ui.screens.settings.SettingsScreen
 import com.ven.app.ui.screens.settings.ThemeScreen
-import com.ven.app.ui.screens.settings.VerifyEmailScreen
+import com.ven.app.ui.screens.settings.VerifyEmailRoute
 import com.ven.app.ui.screens.settings.dummyHistoryEntries
+import com.ven.app.ui.screens.splash.SplashScreen
 import com.ven.app.ui.theme.VexTheme
 
 /**
@@ -71,14 +95,21 @@ fun AppNavHost(showExplore: Boolean = false) {
     val context = LocalContext.current
     val themePreferences = remember { ThemePreferences.getInstance(context) }
     val sessionManager = remember { SessionManager.getInstance(context) }
+    val coroutineScope = rememberCoroutineScope()
     val currentTheme by themePreferences.themeMode.collectAsStateWithLifecycle()
     var selectedLanguage by remember { mutableStateOf("English") }
     var isAccountDisabled by remember { mutableStateOf(false) }
 
-    val startDestination = if (showExplore) Screen.Home.route else Screen.Login.route
+    val isLoggedIn = remember { !sessionManager.getToken().isNullOrBlank() }
+    val startDestination = if (showExplore) Screen.Home.route else Screen.Splash.route
     val navController = rememberNavController()
     val forgotViewModel: ForgotPasswordViewModel = viewModel()
+    val homeViewModel: HomeViewModel = viewModel()
+    val exploreViewModel: ExploreViewModel = viewModel()
+    val createExhibitViewModel: CreateExhibitViewModel = viewModel()
+    val createExhibitState by createExhibitViewModel.uiState.collectAsStateWithLifecycle()
     val forgotState by forgotViewModel.uiState.collectAsStateWithLifecycle()
+    val changeEmailViewModel: ChangeEmailViewModel = viewModel()
 
     LaunchedEffect(Unit) {
         forgotViewModel.events.collect { event ->
@@ -106,13 +137,32 @@ fun AppNavHost(showExplore: Boolean = false) {
     NavHost(
         navController = navController,
         startDestination = startDestination,
+        enterTransition = { fadeIn(tween(220)) },
+        exitTransition = { fadeOut(tween(180)) },
+        popEnterTransition = { fadeIn(tween(180)) },
+        popExitTransition = { fadeOut(tween(220)) },
     ) {
+        // -------------------------------------------------------------
+        // 0. Alur Splash
+        // -------------------------------------------------------------
+        composable(Screen.Splash.route) {
+            SplashScreen(
+                onSplashFinished = {
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(Screen.Splash.route) { inclusive = true }
+                    }
+                },
+            )
+        }
+
         // -------------------------------------------------------------
         // 1. Alur Login
         // -------------------------------------------------------------
         composable(Screen.Login.route) {
             LoginRoute(
                 onNavigateToHome = {
+                    homeViewModel.muatUlang(filterSeen = false)
+                    exploreViewModel.muatUlang(filterSeen = false)
                     navController.navigate(Screen.Home.route) {
                         popUpTo(Screen.Login.route) { inclusive = true }
                     }
@@ -141,16 +191,18 @@ fun AppNavHost(showExplore: Boolean = false) {
                         popUpTo(Screen.Register.route) { inclusive = true }
                     }
                 },
+                onNavigateToHome = {
+                    homeViewModel.muatUlang(filterSeen = false)
+                    exploreViewModel.muatUlang(filterSeen = false)
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                },
                 onNavigateToLogin = {
                     if (!navController.popBackStack()) {
                         navController.navigate(Screen.Login.route) {
                             popUpTo(Screen.Register.route) { inclusive = true }
                         }
-                    }
-                },
-                onGoogleClick = {
-                    navController.navigate(Screen.OnboardingInterest.route) {
-                        popUpTo(Screen.Register.route) { inclusive = true }
                     }
                 },
             )
@@ -162,7 +214,17 @@ fun AppNavHost(showExplore: Boolean = false) {
         composable(Screen.OnboardingInterest.route) {
             InterestRoute(
                 onFinished = {
+                    sessionManager.getUser()?.let { pengguna ->
+                        sessionManager.updateUser(pengguna.copy(onboardingSelesai = true))
+                    }
+                    homeViewModel.muatUlang(filterSeen = false)
+                    exploreViewModel.muatUlang(filterSeen = false)
                     navController.navigate(Screen.Home.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                },
+                onSessionExpired = {
+                    navController.navigate(Screen.Login.route) {
                         popUpTo(0) { inclusive = true }
                     }
                 },
@@ -199,7 +261,7 @@ fun AppNavHost(showExplore: Boolean = false) {
                 state = forgotState,
                 onNewPasswordChange = forgotViewModel::onNewPasswordChange,
                 onConfirmPasswordChange = forgotViewModel::onConfirmPasswordChange,
-                onResetClick = { forgotViewModel.resetPassword(toHome = true) },
+                onResetClick = { forgotViewModel.resetPassword(toHome = false) },
                 onBackClick = { navController.popBackStack() },
             )
         }
@@ -209,6 +271,8 @@ fun AppNavHost(showExplore: Boolean = false) {
         // -------------------------------------------------------------
         composable(Screen.Home.route) {
             MainHomeScreen(
+                homeViewModel = homeViewModel,
+                exploreViewModel = exploreViewModel,
                 initialTab = if (showExplore) BottomNavTab.Explore else BottomNavTab.Home,
                 onRequestMeetingClick = { postId ->
                     navController.navigate(Screen.RequestMeeting.createRoute(postId))
@@ -216,8 +280,8 @@ fun AppNavHost(showExplore: Boolean = false) {
                 onNavigateToSettings = {
                     navController.navigate(Screen.Settings.route)
                 },
-                onNavigateToPostsFeed = { postId ->
-                    navController.navigate(Screen.PostsFeed.createRoute(postId))
+                onNavigateToPostsFeed = { postId, userId ->
+                    navController.navigate(Screen.PostsFeed.createRoute(postId = postId, userId = userId))
                 },
                 onNavigateToCreatePost = {
                     navController.navigate(Screen.CreatePost.route)
@@ -226,7 +290,13 @@ fun AppNavHost(showExplore: Boolean = false) {
                     navController.navigate(Screen.CreateExhibit.route)
                 },
                 onNavigateToExhibitEditor = { id ->
-                    navController.navigate(Screen.CreateExhibitEditor.createRoute(id))
+                    navController.navigate(Screen.CreateExhibitEditor.createRoute(id.ifBlank { "template01" }))
+                },
+                onNavigateToExhibitViewer = { id ->
+                    navController.navigate(Screen.ViewExhibit.createRoute(id))
+                },
+                onNavigateToUserProfile = { userId ->
+                    navController.navigate(Screen.UserProfile.createRoute(userId))
                 },
             )
         }
@@ -250,41 +320,146 @@ fun AppNavHost(showExplore: Boolean = false) {
         }
 
         // -------------------------------------------------------------
-        // 5a-2. Create Content Flow: Create Exhibit (Template Picker)
+        // 5a-1. Create Content Flow: Create Exhibit (Pilih Template - Langkah 1)
         // -------------------------------------------------------------
         composable(Screen.CreateExhibit.route) {
             CreateExhibitTemplateScreen(
-                onCloseClick = { navController.popBackStack() },
+                viewModel = createExhibitViewModel,
+                onCloseClick = {
+                    createExhibitViewModel.clearTemporaryData()
+                    navController.popBackStack()
+                },
                 onNavigateToPost = {
                     navController.navigate(Screen.CreatePost.route) {
                         popUpTo(Screen.CreateExhibit.route) { inclusive = true }
                         launchSingleTop = true
                     }
                 },
-                onTemplateSelected = { template ->
-                    navController.navigate(Screen.CreateExhibitEditor.createRoute(template.id))
+                onTemplateSelected = { _ ->
+                    navController.navigate(Screen.CreateExhibitInfo.route)
                 },
             )
         }
 
         // -------------------------------------------------------------
-        // 5a-3. Create Content Flow: Create Exhibit (3D Canvas Editor & 4 Tool Sheets)
+        // 5a-2. Create Content Flow: Create Exhibit (Informasi Pameran - Langkah 2)
+        // -------------------------------------------------------------
+        composable(Screen.CreateExhibitInfo.route) {
+            val context = LocalContext.current
+            CreateExhibitInfoScreen(
+                state = createExhibitState,
+                onCloseClick = {
+                    navController.popBackStack()
+                },
+                onTitleChange = createExhibitViewModel::onTitleChange,
+                onDescriptionChange = createExhibitViewModel::onDescriptionChange,
+                onBannerSelected = createExhibitViewModel::onBannerSelected,
+                onNextClick = {
+                    createExhibitViewModel.validateAndProceedToEditor(context) {
+                        val latest = createExhibitViewModel.uiState.value
+                        val template = latest.selectedTemplate ?: latest.templates.firstOrNull() ?: createExhibitState.selectedTemplate ?: createExhibitState.templates.first()
+                        val finalTemplateId = template.unityTemplateId.ifBlank { template.id }
+
+                        var resolvedBanner = latest.bannerUrl
+                        if (resolvedBanner.isBlank() && latest.bannerUri != null) {
+                            try {
+                                val cacheBanner = java.io.File(context.cacheDir, "exhibit_banner_preview.jpg")
+                                context.contentResolver.openInputStream(latest.bannerUri!!)?.use { input ->
+                                    cacheBanner.outputStream().use { output -> input.copyTo(output) }
+                                }
+                                resolvedBanner = cacheBanner.absolutePath
+                            } catch (_: Exception) {}
+                        }
+
+                        navController.navigate(
+                            Screen.CreateExhibitEditor.createRoute(
+                                templateId = finalTemplateId,
+                                title = latest.title,
+                                description = latest.description,
+                                bannerUrl = resolvedBanner,
+                                tipe = template.tipe,
+                            )
+                        )
+                    }
+                },
+                onNavigateToPost = {
+                    navController.navigate(Screen.CreatePost.route) {
+                        popUpTo(Screen.CreateExhibit.route) { inclusive = true }
+                        launchSingleTop = true
+                    }
+                },
+            )
+        }
+
+        // -------------------------------------------------------------
+        // 5a-3. Create Content Flow: Create Exhibit (Unity 3D Engine Editor)
         // -------------------------------------------------------------
         composable(
             route = Screen.CreateExhibitEditor.route,
             arguments = listOf(
                 navArgument("templateId") {
                     type = NavType.StringType
-                    defaultValue = "tpl_small"
+                    defaultValue = "template01"
+                },
+                navArgument("title") {
+                    type = NavType.StringType
+                    defaultValue = ""
+                },
+                navArgument("description") {
+                    type = NavType.StringType
+                    defaultValue = ""
+                },
+                navArgument("bannerUrl") {
+                    type = NavType.StringType
+                    defaultValue = ""
+                },
+                navArgument("tipe") {
+                    type = NavType.StringType
+                    defaultValue = "kecil"
                 },
             ),
-        ) {
-            CreateExhibitEditorScreen(
-                onBackClick = { navController.popBackStack() },
-                onPublishSuccess = {
-                    if (!navController.popBackStack(Screen.CreateExhibit.route, inclusive = true)) {
-                        navController.popBackStack()
+        ) { backStackEntry ->
+            val templateId = backStackEntry.arguments?.getString("templateId") ?: "template01"
+            val title = backStackEntry.arguments?.getString("title") ?: ""
+            val description = backStackEntry.arguments?.getString("description") ?: ""
+            val bannerUrl = backStackEntry.arguments?.getString("bannerUrl") ?: ""
+            val tipe = backStackEntry.arguments?.getString("tipe") ?: "kecil"
+            UnityLoadingScreen(
+                targetId = templateId,
+                title = title,
+                description = description,
+                bannerUrl = bannerUrl,
+                tipe = tipe,
+                isEditor = true,
+                onBackClick = {
+                    createExhibitViewModel.clearTemporaryData()
+                    if (!navController.popBackStack(Screen.Home.route, inclusive = false)) {
+                        navController.navigate(Screen.Home.route) {
+                            popUpTo(0)
+                        }
                     }
+                },
+            )
+        }
+
+        // -------------------------------------------------------------
+        // 5a-4. View Existing Exhibition (Unity 3D Engine Viewer / PlayScene)
+        // -------------------------------------------------------------
+        composable(
+            route = Screen.ViewExhibit.route,
+            arguments = listOf(
+                navArgument("exhibitId") {
+                    type = NavType.StringType
+                    defaultValue = ""
+                },
+            ),
+        ) { backStackEntry ->
+            val exhibitId = backStackEntry.arguments?.getString("exhibitId") ?: ""
+            UnityLoadingScreen(
+                targetId = exhibitId,
+                isEditor = false,
+                onBackClick = {
+                    navController.popBackStack()
                 },
             )
         }
@@ -299,19 +474,122 @@ fun AppNavHost(showExplore: Boolean = false) {
                     type = NavType.StringType
                     defaultValue = ""
                 },
+                navArgument("userId") {
+                    type = NavType.StringType
+                    defaultValue = ""
+                },
             ),
         ) { backStackEntry ->
             val postId = backStackEntry.arguments?.getString("postId").orEmpty()
+            val userId = backStackEntry.arguments?.getString("userId").orEmpty()
+            val exploreFeed by exploreViewModel.uiState.collectAsStateWithLifecycle()
+            val homeFeed by homeViewModel.uiState.collectAsStateWithLifecycle()
+            val profileViewModel: ProfileViewModel = viewModel()
+            val profileState by profileViewModel.uiState.collectAsStateWithLifecycle()
+
+            val apiPencarian = remember { ApiClient.createService(ApiPencarian::class.java) }
+            var userPosts by remember(userId) { mutableStateOf<List<PostsFeedItem>>(emptyList()) }
+            var isUserLoading by remember(userId) { mutableStateOf(false) }
+
+            val scope = rememberCoroutineScope()
+            val loadUserPosts: () -> Unit = {
+                if (userId.isNotBlank() && userId != "me") {
+                    scope.launch {
+                        isUserLoading = true
+                        try {
+                            val res = apiPencarian.getDetailPengguna(userId)
+                            if (res.isSuccessful) {
+                                val detail = res.body()?.data
+                                val mapped = detail?.karya?.map { k ->
+                                    val author = detail.pengguna?.namaPanggilan ?: detail.pengguna?.nama ?: "Kreator"
+                                    PostsFeedItem(
+                                        id = k.idKarya,
+                                        username = "@$author",
+                                        title = k.judul,
+                                        category = k.kategori?.nama ?: "Karya",
+                                        timestampText = DateFormatter.formatRelativeTime(k.createdAt),
+                                        description = k.deskripsi.orEmpty(),
+                                        imageUrl = k.fileUrl ?: k.file,
+                                        userId = detail.pengguna?.idPengguna,
+                                        userAvatarUrl = detail.pengguna?.fotoProfil,
+                                        pameranId = k.idPameran?.toString(),
+                                    )
+                                } ?: emptyList()
+                                userPosts = mapped
+                            }
+                        } catch (_: Exception) { }
+                        isUserLoading = false
+                    }
+                }
+            }
+
+            LaunchedEffect(userId) {
+                if (userId == "me") {
+                    profileViewModel.muat()
+                } else if (userId.isNotBlank()) {
+                    loadUserPosts()
+                }
+            }
+
+            val finalPosts = when {
+                userId == "me" -> profileState.feedPosts
+                userId.isNotBlank() -> userPosts
+                else -> (exploreFeed.feedPosts + homeFeed.posts.map { it.toFeedItem() }).distinctBy { it.id }
+            }
+
             PostsFeedScreen(
-                posts = dummyPostsFeed,
+                posts = finalPosts,
+                isRefreshing = when {
+                    userId == "me" -> profileState.isLoading
+                    userId.isNotBlank() -> isUserLoading
+                    else -> exploreFeed.isRefreshing || homeFeed.isRefreshing
+                },
+                onRefresh = {
+                    when {
+                        userId == "me" -> profileViewModel.muat()
+                        userId.isNotBlank() -> loadUserPosts()
+                        else -> {
+                            exploreViewModel.muatUlang(filterSeen = true)
+                            homeViewModel.muatUlang(filterSeen = true)
+                        }
+                    }
+                },
                 onBackClick = { navController.popBackStack() },
                 onRequestMeetingClick = { id ->
                     navController.navigate(Screen.RequestMeeting.createRoute(id))
                 },
                 onView3dClick = { id ->
-                    navController.navigate(Screen.CreateExhibitEditor.createRoute(id.ifBlank { "tpl_small" }))
+                    navController.navigate(Screen.ViewExhibit.createRoute(id))
                 },
                 initialPostId = postId.ifBlank { null },
+                onUserClick = { clickedUserId ->
+                    navController.navigate(Screen.UserProfile.createRoute(clickedUserId))
+                },
+            )
+        }
+
+        // -------------------------------------------------------------
+        // 5b-2. SubPage: Detail Profil Pengguna Publik
+        // -------------------------------------------------------------
+        composable(
+            route = Screen.UserProfile.route,
+            arguments = listOf(
+                navArgument("userId") {
+                    type = NavType.StringType
+                    defaultValue = ""
+                },
+            ),
+        ) { backStackEntry ->
+            val userId = backStackEntry.arguments?.getString("userId").orEmpty()
+            UserProfileDetailScreen(
+                userId = userId,
+                onBackClick = { navController.popBackStack() },
+                onMediaClick = { media ->
+                    navController.navigate(Screen.PostsFeed.createRoute(postId = media.id, userId = userId))
+                },
+                onExhibitClick = { exhibitId ->
+                    navController.navigate(Screen.ViewExhibit.createRoute(exhibitId))
+                },
             )
         }
 
@@ -379,9 +657,12 @@ fun AppNavHost(showExplore: Boolean = false) {
                 onNavigateToPrivacyPolicy = { navController.navigate(Screen.SettingsPrivacy.route) },
                 onNavigateToHelp = { navController.navigate(Screen.SettingsHelp.route) },
                 onLogoutConfirmed = {
-                    sessionManager.clearSession()
-                    navController.navigate(Screen.Login.route) {
-                        popUpTo(0) { inclusive = true }
+                    coroutineScope.launch {
+                        runCatching { ApiLogin.logout() }
+                        sessionManager.clearSession()
+                        navController.navigate(Screen.Login.route) {
+                            popUpTo(0) { inclusive = true }
+                        }
                     }
                 },
             )
@@ -391,14 +672,20 @@ fun AppNavHost(showExplore: Boolean = false) {
             ProfileSettingsRoute(
                 onBackClick = { navController.popBackStack() },
                 onSaved = { navController.popBackStack() },
+                onSessionExpired = {
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                },
             )
         }
 
         composable(Screen.SettingsEmail.route) {
-            ChangeEmailScreen(
+            ChangeEmailRoute(
+                viewModel = changeEmailViewModel,
                 onBackClick = { navController.popBackStack() },
-                onSendOtpClick = { newEmail ->
-                    navController.navigate(Screen.SettingsVerifyEmail.createRoute(newEmail))
+                onOtpSent = {
+                    navController.navigate(Screen.SettingsVerifyEmail.route)
                 },
             )
         }
@@ -411,23 +698,20 @@ fun AppNavHost(showExplore: Boolean = false) {
                     defaultValue = ""
                 },
             ),
-        ) { backStackEntry ->
-            val email = backStackEntry.arguments?.getString("email").orEmpty()
-            VerifyEmailScreen(
-                email = email,
+        ) {
+            VerifyEmailRoute(
+                viewModel = changeEmailViewModel,
                 onBackClick = { navController.popBackStack() },
-                onVerifySuccess = {
+                onVerified = {
                     navController.popBackStack(Screen.Settings.route, inclusive = false)
                 },
             )
         }
 
         composable(Screen.SettingsPassword.route) {
-            ChangePasswordScreen(
+            ChangePasswordRoute(
                 onBackClick = { navController.popBackStack() },
-                onSendOtpClick = {
-                    navController.popBackStack()
-                },
+                onSaved = { navController.popBackStack() },
             )
         }
 
@@ -450,10 +734,14 @@ fun AppNavHost(showExplore: Boolean = false) {
         }
 
         composable(Screen.SettingsAccountStatus.route) {
-            AccountStatusScreen(
-                isDisabledInitial = isAccountDisabled,
-                onStatusChange = { isAccountDisabled = it },
+            AccountStatusRoute(
                 onBackClick = { navController.popBackStack() },
+                onDeactivated = {
+                    sessionManager.clearSession()
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                },
             )
         }
 
@@ -482,18 +770,48 @@ fun AppNavHost(showExplore: Boolean = false) {
 
 @Composable
 fun MainHomeScreen(
-    uiState: HomeUiState = SampleHomeUiState,
+    homeViewModel: HomeViewModel = viewModel(),
+    exploreViewModel: ExploreViewModel = viewModel(),
+    uiState: HomeUiState = HomeUiState(),
     initialTab: BottomNavTab = BottomNavTab.Home,
     onRequestMeetingClick: (postId: String) -> Unit = {},
     onNavigateToSettings: () -> Unit = {},
-    onNavigateToPostsFeed: (postId: String) -> Unit = {},
+    onNavigateToPostsFeed: (postId: String, userId: String) -> Unit = { _, _ -> },
     onNavigateToCreatePost: () -> Unit = {},
     onNavigateToCreateExhibit: () -> Unit = {},
     onNavigateToExhibitEditor: (templateIdOrExhibitId: String) -> Unit = {},
+    onNavigateToExhibitViewer: (exhibitId: String) -> Unit = {},
+    onNavigateToUserProfile: (userId: String) -> Unit = {},
 ) {
-    var currentTab by remember { mutableStateOf(initialTab) }
-    var profileState by remember { mutableStateOf(dummyProfileUiState) }
+    var currentTab by rememberSaveable { mutableStateOf(initialTab) }
+    val homeListState = rememberLazyListState()
+    val exploreGridState = rememberLazyGridState()
+    val scope = rememberCoroutineScope()
+    var lastHomeTapTime by remember { mutableStateOf(0L) }
+    var lastExploreTapTime by remember { mutableStateOf(0L) }
+    val profileViewModel: ProfileViewModel = viewModel()
+    val profileState by profileViewModel.uiState.collectAsStateWithLifecycle()
+    val liveHomeState by homeViewModel.uiState.collectAsStateWithLifecycle()
     var isCreateSheetOpen by remember { mutableStateOf(false) }
+
+    LaunchedEffect(currentTab) {
+        if (currentTab == BottomNavTab.Home && liveHomeState.posts.isEmpty() && !liveHomeState.isLoading) {
+            homeViewModel.muatUlang(filterSeen = false)
+        }
+        if (currentTab == BottomNavTab.Profile) {
+            profileViewModel.muat()
+        }
+    }
+
+    LifecycleResumeEffect(Unit) {
+        if (currentTab == BottomNavTab.Home && liveHomeState.posts.isEmpty() && !liveHomeState.isLoading) {
+            homeViewModel.muatUlang(filterSeen = false)
+        }
+        if (currentTab == BottomNavTab.Profile) {
+            profileViewModel.muat()
+        }
+        onPauseOrDispose { }
+    }
 
     val handleCreateClick = {
         isCreateSheetOpen = true
@@ -513,50 +831,99 @@ fun MainHomeScreen(
         )
     }
 
-    when (currentTab) {
-        BottomNavTab.Home -> {
-            HomeScreen(
-                uiState = uiState,
-                onTabSelected = { currentTab = it },
-                onCreateClick = handleCreateClick,
-                onRequestMeetingClick = onRequestMeetingClick,
-                onView3dClick = { pameranId -> onNavigateToExhibitEditor(pameranId ?: "tpl_small") },
-                onBannerClick = { eventId -> onNavigateToExhibitEditor(eventId) },
-            )
-        }
-        BottomNavTab.Schedule -> {
-            ScheduleScreen(
-                onTabSelected = { currentTab = it },
-            )
-        }
-        BottomNavTab.Ai -> {
-            AiChatScreen(
-                onTabSelected = { currentTab = it },
-            )
-        }
-        BottomNavTab.Explore -> {
-            ExploreScreen(
-                onTabSelected = { currentTab = it },
-                onMediaClick = { media -> onNavigateToPostsFeed(media.id) },
-                onExhibitClick = { exhibit -> onNavigateToExhibitEditor(exhibit.id) },
-            )
-        }
-        BottomNavTab.Profile -> {
-            ProfileScreen(
-                uiState = profileState,
-                onTabSelected = { currentTab = it },
-                onCreateClick = handleCreateClick,
-                onMenuClick = onNavigateToSettings,
-                onProfileTabChange = { profileState = profileState.copy(selectedTab = it) },
-                onSkillSheetToggle = { profileState = profileState.copy(isSkillSheetOpen = it) },
-                onMediaClick = { media ->
-                    if (profileState.selectedTab == com.ven.app.ui.screens.profile.ProfileTab.Exhibits) {
-                        onNavigateToExhibitEditor(media.id)
-                    } else {
-                        onNavigateToPostsFeed(media.id)
-                    }
-                },
-            )
+    Crossfade(
+        targetState = currentTab,
+        animationSpec = tween(durationMillis = 200),
+        label = "MainHomeScreenTabCrossfade",
+    ) { tab ->
+        when (tab) {
+            BottomNavTab.Home -> {
+                HomeScreen(
+                    uiState = liveHomeState,
+                    listState = homeListState,
+                    onTabSelected = { currentTab = it },
+                    onTabReselected = { reselectedTab ->
+                        if (reselectedTab == BottomNavTab.Home) {
+                            val now = System.currentTimeMillis()
+                            if (now - lastHomeTapTime <= 450L) {
+                                scope.launch {
+                                    homeListState.animateScrollToItem(0)
+                                }
+                                homeViewModel.muatUlang(filterSeen = true)
+                                lastHomeTapTime = 0L
+                            } else {
+                                lastHomeTapTime = now
+                                scope.launch {
+                                    homeListState.animateScrollToItem(0)
+                                }
+                            }
+                        }
+                    },
+                    onRefresh = { homeViewModel.muatUlang(filterSeen = true) },
+                    onCreateClick = handleCreateClick,
+                    onRequestMeetingClick = onRequestMeetingClick,
+                    onView3dClick = { pameranId -> pameranId?.let { onNavigateToExhibitViewer(it) } ?: onNavigateToExhibitViewer("tpl_small") },
+                    onBannerClick = { eventId -> onNavigateToExhibitViewer(eventId) },
+                    onLoadMore = homeViewModel::loadNextChunk,
+                    onUserClick = onNavigateToUserProfile,
+                )
+            }
+            BottomNavTab.Schedule -> {
+                ScheduleScreen(
+                    onTabSelected = { currentTab = it },
+                )
+            }
+            BottomNavTab.Ai -> {
+                AiChatScreen(
+                    onTabSelected = { currentTab = it },
+                )
+            }
+            BottomNavTab.Explore -> {
+                ExploreScreen(
+                    onTabSelected = { currentTab = it },
+                    gridState = exploreGridState,
+                    onTabReselected = { reselectedTab ->
+                        if (reselectedTab == BottomNavTab.Explore) {
+                            val now = System.currentTimeMillis()
+                            if (now - lastExploreTapTime <= 450L) {
+                                scope.launch {
+                                    exploreGridState.animateScrollToItem(0)
+                                }
+                                exploreViewModel.muatUlang(filterSeen = true)
+                                lastExploreTapTime = 0L
+                            } else {
+                                lastExploreTapTime = now
+                                scope.launch {
+                                    exploreGridState.animateScrollToItem(0)
+                                }
+                            }
+                        }
+                    },
+                    onRefresh = { exploreViewModel.muatUlang(filterSeen = true) },
+                    onMediaClick = { media -> onNavigateToPostsFeed(media.id, "") },
+                    onExhibitClick = { exhibit -> onNavigateToExhibitViewer(exhibit.id) },
+                    onAccountClick = onNavigateToUserProfile,
+                    viewModel = exploreViewModel,
+                )
+            }
+            BottomNavTab.Profile -> {
+                ProfileScreen(
+                    uiState = profileState,
+                    onTabSelected = { currentTab = it },
+                    onCreateClick = handleCreateClick,
+                    onMenuClick = onNavigateToSettings,
+                    onProfileTabChange = profileViewModel::pilihTab,
+                    onSkillSheetToggle = profileViewModel::aturSkillSheet,
+                    onRetryClick = profileViewModel::muat,
+                    onMediaClick = { media ->
+                        if (profileState.selectedTab == com.ven.app.ui.screens.profile.ProfileTab.Exhibits) {
+                            onNavigateToExhibitViewer(media.id)
+                        } else {
+                            onNavigateToPostsFeed(media.id, "me")
+                        }
+                    },
+                )
+            }
         }
     }
 }

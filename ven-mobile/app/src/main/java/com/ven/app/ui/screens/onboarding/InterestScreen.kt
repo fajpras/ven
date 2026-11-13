@@ -16,6 +16,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -23,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ven.app.R
+import com.ven.app.data.api.SessionManager
 import com.ven.app.data.api.models.KategoriModel
 import com.ven.app.ui.components.feature.InterestCategoryChips
 import com.ven.app.ui.components.layout.AuthLayout
@@ -39,8 +41,10 @@ import com.ven.app.ui.theme.VexTheme
 @Composable
 fun InterestRoute(
     onFinished: () -> Unit,
+    onSessionExpired: () -> Unit,
     viewModel: InterestViewModel = viewModel(),
 ) {
+    val context = LocalContext.current
     val state by viewModel.uiState.collectAsStateWithLifecycle()
 
     LaunchedEffect(viewModel) {
@@ -48,6 +52,13 @@ fun InterestRoute(
             when (event) {
                 InterestEvent.Saved -> onFinished()
             }
+        }
+    }
+
+    LaunchedEffect(state.isSessionExpired) {
+        if (state.isSessionExpired) {
+            SessionManager.getInstance(context).clearSession()
+            onSessionExpired()
         }
     }
 

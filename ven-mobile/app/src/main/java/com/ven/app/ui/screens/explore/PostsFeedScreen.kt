@@ -6,7 +6,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
@@ -25,7 +27,14 @@ import com.ven.app.ui.theme.VexTheme
 data class PostsFeedItem(
     val id: String,
     val username: String,
-    val description: String,
+    val userId: String? = null,
+    val userAvatarUrl: String? = null,
+    val title: String = "",
+    val category: String? = null,
+    val timestampText: String? = null,
+    val description: String = "",
+    val imageUrl: String? = null,
+    val pameranId: String? = null,
     val aspectRatio: Float = 4f / 5f,
 )
 
@@ -37,6 +46,7 @@ data class PostsFeedItem(
  * - Body: `LazyColumn` vertikal penuh berisi kartu [PostCard] yang dapat di-scroll.
  * - Bila [initialPostId] diberikan, feed otomatis scroll ke item tersebut.
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PostsFeedScreen(
     posts: List<PostsFeedItem>,
@@ -45,6 +55,9 @@ fun PostsFeedScreen(
     onView3dClick: (postId: String) -> Unit,
     modifier: Modifier = Modifier,
     initialPostId: String? = null,
+    isRefreshing: Boolean = false,
+    onRefresh: () -> Unit = {},
+    onUserClick: ((userId: String) -> Unit)? = null,
 ) {
     val listState = rememberLazyListState()
 
@@ -68,24 +81,38 @@ fun PostsFeedScreen(
             )
         },
     ) { innerPadding ->
-        LazyColumn(
-            state = listState,
+        PullToRefreshBox(
+            isRefreshing = isRefreshing,
+            onRefresh = onRefresh,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding),
-            contentPadding = PaddingValues(bottom = VexSpace.s6),
         ) {
-            itemsIndexed(
-                items = posts,
-                key = { _, post -> post.id },
-            ) { _, post ->
-                PostCard(
-                    username = post.username,
-                    description = post.description,
-                    aspectRatio = post.aspectRatio,
-                    onRequestMeetingClick = { onRequestMeetingClick(post.id) },
-                    onView3dClick = { onView3dClick(post.id) },
-                )
+            LazyColumn(
+                state = listState,
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(bottom = VexSpace.s6),
+            ) {
+                itemsIndexed(
+                    items = posts,
+                    key = { _, post -> post.id },
+                ) { _, post ->
+                    PostCard(
+                        username = post.username,
+                        userAvatarUrl = post.userAvatarUrl,
+                        title = post.title,
+                        category = post.category,
+                        timestampText = post.timestampText,
+                        description = post.description,
+                        imageUrl = post.imageUrl,
+                        aspectRatio = post.aspectRatio,
+                        onRequestMeetingClick = { onRequestMeetingClick(post.id) },
+                        onView3dClick = { onView3dClick(post.pameranId ?: post.id) },
+                        onUsernameClick = {
+                            post.userId?.let { onUserClick?.invoke(it) }
+                        },
+                    )
+                }
             }
         }
     }
@@ -99,11 +126,17 @@ internal val dummyPostsFeed = listOf(
     PostsFeedItem(
         id = "feed_1",
         username = "Graaph",
-        description = "Peletakan kalimat ini akan diisi dengan deskripsi yang akan menjelaskan dengan lebih rinci lagi dari apa yang ingin disampaikan oleh kr...",
+        title = "Cyberpunk Low Poly Mech Robot 3D",
+        category = "3D",
+        timestampText = "1 day ago",
+        description = "Peletakan kalimat ini akan diisi dengan deskripsi yang akan menjelaskan dengan lebih rinci lagi dari apa yang ingin disampaikan oleh kreator.",
     ),
     PostsFeedItem(
         id = "feed_2",
         username = "Shaf.One",
+        title = "Fintech Neo-Glass Mobile Banking",
+        category = "Software",
+        timestampText = "2 days ago",
         description = "Eksplorasi desain antarmuka aplikasi mobile dengan pendekatan minimalis dan tipografi tebal. Kunjungi https://vex.art/exhibit untuk detail lengkap.",
     ),
 )

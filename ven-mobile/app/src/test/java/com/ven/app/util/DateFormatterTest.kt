@@ -16,7 +16,6 @@ class DateFormatterTest {
 
     @Test
     fun formatRequestMeetingDate_singleDigitDay_formattedWithoutLeadingZero() {
-        // Pattern "EEE, d MMMM yyyy" -> single digit day has no leading zero
         val date = LocalDate.of(2026, 9, 5)
         val formatted = DateFormatter.formatRequestMeetingDate(date)
         assertEquals("Sat, 5 September 2026", formatted)
@@ -47,5 +46,47 @@ class DateFormatterTest {
     fun formatMonthYear_leapYearFebruary_formattedProperly() {
         val feb2028 = YearMonth.of(2028, 2)
         assertEquals("February 2028", DateFormatter.formatMonthYear(feb2028))
+    }
+
+    @Test
+    fun formatRelativeTime_nullOrBlank_returnsJustNow() {
+        assertEquals("Just now", DateFormatter.formatRelativeTime(null))
+        assertEquals("Just now", DateFormatter.formatRelativeTime(""))
+        assertEquals("Just now", DateFormatter.formatRelativeTime("   "))
+    }
+
+    @Test
+    fun formatRelativeTime_relativeDifferences_calculatedAccurately() {
+        val now = 1_700_000_000_000L
+
+        // 30 seconds ago
+        val date30SecAgo = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", java.util.Locale.ENGLISH).apply {
+            timeZone = java.util.TimeZone.getTimeZone("UTC")
+        }.format(java.util.Date(now - 30_000L))
+        assertEquals("Just now", DateFormatter.formatRelativeTime(date30SecAgo, now))
+
+        // 5 minutes ago
+        val date5MinAgo = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", java.util.Locale.ENGLISH).apply {
+            timeZone = java.util.TimeZone.getTimeZone("UTC")
+        }.format(java.util.Date(now - 5 * 60 * 1000L))
+        assertEquals("5 minutes ago", DateFormatter.formatRelativeTime(date5MinAgo, now))
+
+        // 1 hour ago
+        val date1HourAgo = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", java.util.Locale.ENGLISH).apply {
+            timeZone = java.util.TimeZone.getTimeZone("UTC")
+        }.format(java.util.Date(now - 1 * 3600 * 1000L))
+        assertEquals("1 hour ago", DateFormatter.formatRelativeTime(date1HourAgo, now))
+
+        // 1 day ago
+        val date1DayAgo = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", java.util.Locale.ENGLISH).apply {
+            timeZone = java.util.TimeZone.getTimeZone("UTC")
+        }.format(java.util.Date(now - 24 * 3600 * 1000L))
+        assertEquals("1 day ago", DateFormatter.formatRelativeTime(date1DayAgo, now))
+
+        // 3 days ago
+        val date3DaysAgo = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", java.util.Locale.ENGLISH).apply {
+            timeZone = java.util.TimeZone.getTimeZone("UTC")
+        }.format(java.util.Date(now - 3 * 24 * 3600 * 1000L))
+        assertEquals("3 days ago", DateFormatter.formatRelativeTime(date3DaysAgo, now))
     }
 }

@@ -22,7 +22,7 @@
     <string name="auth_placeholder_username">Username</string>
     <string name="auth_placeholder_confirm_password">Confirm Password</string>
     <string name="register_error_email">Invalid email format</string>
-    <string name="register_error_username">Username must be at least 3 characters</string>
+    <string name="register_error_username">Username 3-30 karakter, hanya huruf, angka, titik, dan garis bawah</string>
     <string name="register_error_confirm">Passwords do not match</string>
     <string name="auth_login_error_empty">Email/Username and Password cannot be empty</string>
     <string name="register_error_failed">Registration failed, please try again</string>
@@ -112,6 +112,15 @@
     <string name="settings_phone_label">Phone</string>
     <string name="settings_description_label">Description</string>
     <string name="settings_interest_label">Interest</string>
+    <string name="settings_username_error">Username 3-30 karakter, hanya huruf, angka, titik, dan garis bawah</string>
+    <string name="settings_name_error">Nama wajib diisi, maksimal 30 karakter</string>
+    <string name="settings_phone_error">Nomor HP harus 8-15 digit dan boleh diawali +</string>
+    <string name="settings_description_error">Deskripsi maksimal 150 karakter</string>
+    <string name="settings_description_counter">%1$d/150</string>
+    <string name="settings_photo_invalid">Pilih foto JPG, PNG, atau WebP</string>
+    <string name="settings_photo_too_large">Ukuran foto maksimal 5 MB</string>
+    <string name="settings_photo_uploading">Mengunggah foto...</string>
+    <string name="settings_session_expired">Sesi Anda berakhir. Silakan masuk kembali.</string>
 
     <string name="settings_new_email_label">New email</string>
     <string name="settings_password_label">Password</string>
@@ -119,6 +128,7 @@
     <string name="settings_current_password_label">Current password</string>
     <string name="settings_new_password_label">New password</string>
     <string name="settings_change_email_helper">You need to verify your new email for the change to be applied</string>
+    <string name="settings_change_password_helper">Use at least 8 characters with letters and numbers</string>
     <string name="settings_send_otp">Send OTP</string>
     <string name="settings_verify_email_title">Verify email</string>
     <string name="settings_didnt_get_mail">didn’t get your mail?</string>
@@ -217,6 +227,12 @@
 
     <!-- Create Exhibit Strings (§8.14 Create Exhibit) -->
     <string name="create_exhibit_title">New Exhibit</string>
+    <string name="create_exhibit_info_title">Exhibit Information</string>
+    <string name="create_exhibit_next_step">Open 3D Editor</string>
+    <string name="create_exhibit_title_error_empty">Title cannot be empty</string>
+    <string name="create_exhibit_title_error_max">Title cannot exceed 100 characters</string>
+    <string name="create_exhibit_banner_required">Please select a cover banner</string>
+    <string name="create_exhibit_banner_uploading">Uploading banner…</string>
     <string name="create_exhibit_template_small">Small</string>
     <string name="create_exhibit_template_medium">Medium</string>
     <string name="create_exhibit_template_big">Big</string>
@@ -259,8 +275,20 @@
 
     <!-- Create Content Options Sheet -->
     <string name="create_sheet_title">Create</string>
+    <string name="create_sheet_subtitle">Choose what kind of content you want to publish</string>
+    <string name="create_sheet_close">Close</string>
     <string name="create_sheet_post_title">New Post</string>
     <string name="create_sheet_post_desc">Share artwork, photos, or designs to the feed</string>
+    <string name="create_sheet_post_badge">2D FEED</string>
     <string name="create_sheet_exhibit_title">New Exhibit (3D)</string>
     <string name="create_sheet_exhibit_desc">Build an interactive 3D virtual exhibition room</string>
+    <string name="create_sheet_exhibit_badge">3D VIRTUAL</string>
+
+    <!-- Account Deactivation (UC-04) -->
+    <string name="settings_deactivate_button">Deaktivasi Akun</string>
+    <string name="settings_deactivate_terms">Saya memahami bahwa akun saya akan dinonaktifkan sementara dan dapat diaktifkan kembali dengan masuk kembali.</string>
+    <string name="settings_deactivate_confirm_title">Konfirmasi Deaktivasi Akun</string>
+    <string name="settings_deactivate_confirm_msg">Apakah Anda yakin ingin menonaktifkan akun sementara? Anda dapat mengaktifkannya kembali dengan masuk kembali ke aplikasi.</string>
+    <string name="settings_deactivate_confirm_yes">Ya</string>
+    <string name="settings_deactivate_confirm_no">Batal</string>
 </resources>

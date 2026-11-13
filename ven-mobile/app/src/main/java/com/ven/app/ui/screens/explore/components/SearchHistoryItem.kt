@@ -99,6 +99,7 @@ fun SearchHistoryItem(
                     initials = item.username,
                     size = AvatarSize.Md,
                     imageRes = item.avatarRes,
+                    imageUrl = item.avatarUrl,
                     contentDescription = item.fullName,
                 )
 

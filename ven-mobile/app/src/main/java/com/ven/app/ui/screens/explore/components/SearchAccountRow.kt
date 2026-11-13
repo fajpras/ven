@@ -56,6 +56,7 @@ fun SearchAccountRow(
             initials = account.username,
             size = AvatarSize.Md,
             imageRes = account.avatarRes,
+            imageUrl = account.avatarUrl,
             contentDescription = account.fullName,
         )
 

@@ -62,7 +62,7 @@ class AktivitasObserver implements ShouldHandleEventsAfterCommit
             ? ($aksi === 'hapus' ? null : $key)
             : (request()?->user('sanctum')?->id_pengguna ?? auth()->id() ?? ($m->id_pengguna ?? null));
 
-        $isRegistrasi = ($m instanceof Pengguna && $aksi === 'tambah' && (request()?->is('*register*') || request()?->is('*auth/google*')));
+        $isRegistrasi = ($m instanceof Pengguna && $aksi === 'tambah' && (request()?->is('*register*') || request()?->is('*auth/google*') || request()?->is('*auth/daftar*')));
         $isSeeder = ($m instanceof Pengguna && $aksi === 'tambah' && app()->runningInConsole() && ! app()->runningUnitTests());
 
         if ($isSeeder) {

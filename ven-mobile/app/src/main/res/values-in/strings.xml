@@ -119,6 +119,7 @@
     <string name="settings_current_password_label">Kata sandi saat ini</string>
     <string name="settings_new_password_label">Kata sandi baru</string>
     <string name="settings_change_email_helper">Anda perlu memverifikasi email baru Anda agar perubahan diterapkan</string>
+    <string name="settings_change_password_helper">Gunakan minimal 8 karakter dengan huruf dan angka</string>
     <string name="settings_send_otp">Kirim OTP</string>
     <string name="settings_verify_email_title">Verifikasi email</string>
     <string name="settings_didnt_get_mail">tidak menerima email?</string>
@@ -245,9 +246,13 @@
     <string name="create_exhibit_tab_other">Lainnya</string>
 
     <!-- Create Content Options Sheet -->
-    <string name="create_sheet_title">Buat Karya</string>
+    <string name="create_sheet_title">Buat Baru</string>
+    <string name="create_sheet_subtitle">Pilih jenis format konten yang ingin dipublikasikan</string>
+    <string name="create_sheet_close">Tutup</string>
     <string name="create_sheet_post_title">Postingan Baru</string>
     <string name="create_sheet_post_desc">Bagikan karya, foto, atau desain ke linimasa</string>
+    <string name="create_sheet_post_badge">2D FEED</string>
     <string name="create_sheet_exhibit_title">Pameran 3D Baru</string>
     <string name="create_sheet_exhibit_desc">Rancang ruang pameran virtual 3D interaktif</string>
+    <string name="create_sheet_exhibit_badge">3D VIRTUAL</string>
 </resources>
