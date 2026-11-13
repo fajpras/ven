@@ -6,7 +6,7 @@
 >
 > **Commit terakhir:** `c19f7dc` — `feat(ui): redesign CreateOptionsBottomSheet with modern cards, badges, and gradient accents`
 >
-> **Perubahan terbaru:** `fix(api): selalu kembalikan JSON untuk endpoint yang tidak dapat diakses` — 13 November 2026 (commit lokal setelah `c19f7dc`)
+> **Perubahan terbaru:** fallback JSON API terpusat + halaman Blade 404 — 13 November 2026 (commit lokal setelah `c19f7dc`)
 >
 > **Lingkungan:** Windows + Laragon, PHP 8.3.33, Laravel 13.34.0, MySQL, Android Gradle 9.6
 
@@ -22,8 +22,9 @@ Dokumen ini merangkum hasil audit langsung terhadap repositori: modul apa yang s
 |---|---|---|
 | Konfigurasi backend | `php artisan about` | ✅ Laravel 13.34.0, PHP 8.3.33, DB MySQL, storage link aktif |
 | Daftar route backend | `php artisan route:list` | ✅ 99 route terdaftar |
-| Test backend | `php artisan test` | ⚠️ **74 test — 73 lulus, 1 gagal** (357 assertion) |
+| Test backend | `php artisan test` | ⚠️ **76 test — 75 lulus, 1 gagal** (366 assertion) |
 | Fallback galat API | `php artisan test --filter=PenanganKesalahanApiTest` | ✅ **7 test lulus** — 401, 403, 404, 405, 422, 500 tanpa kebocoran detail internal |
+| Halaman galat web | `GET /halaman-tidak-ada` | ✅ Blade 404 kustom, mandiri (tanpa aset Vite), respons `text/html` |
 | Smoke test API live | `artisan serve` + login `fajri@ven.test` | ✅ Login, `/api/pameran`, `/api/karya/rekomendasi`, `/api/profil`, `/api/pencarian`, `/api/pameran/23/room-dto` merespons normal |
 | Admin Web Panel | `GET /admin/login` | ✅ HTTP 200 |
 | Build Android | `.\gradlew.bat assembleDebug` | ✅ **BUILD SUCCESSFUL** |
@@ -57,6 +58,7 @@ C:\laragon\bin\php\php-8.3.33-Win32-vs16-x64\php.exe artisan test
 | 11 | 7 Pilar Audit DB | View, hashing, enkripsi, transaksi ACID, locking, backup otomatis, restore verification | ✅ |
 | 12 | Command & Scheduler | `ven:setup-db`, `ven:initialize-db`, `ven:backup-db`, `ven:restore-db`, `ven:enkripsi-google-id`, `ven:uji-transaksi-pameran` | ✅ |
 | 13 | Penanganan galat API terpusat | `app/Exceptions/PenanganKesalahanApi.php` + `bootstrap/app.php`: semua `/api/*` selalu JSON `{data, message}` untuk 401/403/404/405/413/419/422/429/5xx, tanpa redirect `route('login')` dan tanpa stack trace | ✅ |
+| 14 | Halaman galat web | `resources/views/errors/404.blade.php`: halaman 404 kustom bertema VEN, responsif, mendukung mode gelap, dan mandiri tanpa aset Vite | ✅ |
 
 Dokumentasi teknis: `backend-api/backend/docs/`.
 
@@ -123,7 +125,7 @@ Dokumentasi teknis: `backend-api/backend/docs/`.
 |:--:|---|---|
 | 7 | `BASE_URL` mobile default `http://10.0.2.2:8000/api/` | Hanya untuk emulator; ubah `ven-mobile/.env` untuk perangkat fisik |
 | 8 | `android:usesCleartextTraffic="true"` aktif | Wajar untuk development; matikan dan gunakan HTTPS untuk rilis |
-| 9 | README menyebut "37 tests passed" | Perbarui angka menjadi 74 test backend / 66 test Android |
+| 9 | README menyebut "37 tests passed" | Perbarui angka menjadi 76 test backend / 66 test Android |
 | 10 | APK berukuran ~113,6 MB karena Unity | Pertimbangkan Android App Bundle atau ABI split |
 | 11 | `php` tidak ada di PATH | Gunakan path Laragon atau tambahkan ke environment variable |
 
@@ -131,7 +133,7 @@ Dokumentasi teknis: `backend-api/backend/docs/`.
 
 | Tanggal | Kendala | Perbaikan | Bukti |
 |---|---|---|---|
-| 13 Nov 2026 | Request `/api/*` tanpa header `Accept: application/json` menghasilkan **HTTP 500** `Route [login] not defined.` | `bootstrap/app.php`: `redirectGuestsTo` mengembalikan `null` untuk prefix `api`; `app/Exceptions/PenanganKesalahanApi.php` merender semua galat API sebagai JSON `{data, message}` (401/403/404/405/413/419/422/429/5xx) tanpa membocorkan detail internal | `tests/Feature/PenanganKesalahanApiTest.php` — 7 test lulus; smoke test live `GET /api/profil` tanpa header → `401 application/json` |
+| 13 Nov 2026 | Request `/api/*` tanpa header `Accept: application/json` menghasilkan **HTTP 500** `Route [login] not defined.` | `bootstrap/app.php`: `redirectGuestsTo` mengembalikan `null` untuk prefix `api`; `app/Exceptions/PenanganKesalahanApi.php` merender semua galat API sebagai JSON `{data, message}` (401/403/404/405/413/419/422/429/5xx) tanpa membocorkan detail internal. Halaman web 404 memakai Blade kustom `resources/views/errors/404.blade.php` | `tests/Feature/PenanganKesalahanApiTest.php` — 7 test lulus; `tests/Feature/Halaman404Test.php` — 2 test lulus; smoke test live `GET /api/profil` tanpa header → `401 application/json`, `GET /halaman-tidak-ada` → `404 text/html` |
 
 ---
 
@@ -155,6 +157,7 @@ $php = "C:\laragon\bin\php\php-8.3.33-Win32-vs16-x64\php.exe"
 & $php artisan route:list
 & $php artisan test
 & $php vendor\phpunit\phpunit\phpunit tests/Feature/PenanganKesalahanApiTest.php
+& $php vendor\phpunit\phpunit\phpunit tests/Feature/Halaman404Test.php
 
 # Android — build & unit test
 cd ..\..\ven-mobile
@@ -166,6 +169,7 @@ cd ..\backend-api\backend
 & $php artisan serve --host=127.0.0.1 --port=8000
 # Login: POST http://127.0.0.1:8000/api/auth/masuk
 # Body: {"identitas":"fajri@ven.test","kata_sandi":"password123"}
+# Halaman 404 web: GET http://127.0.0.1:8000/halaman-tidak-ada
 ```
 
 **Database:** test wajib memakai `ven_testing`; database aplikasi adalah `ven`. Jangan arahkan test ke `ven`.
