@@ -21,8 +21,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
@@ -84,21 +86,6 @@ fun ExhibitBannerCard(
             )
         }
 
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    Brush.verticalGradient(
-                        colors = listOf(
-                            Color.Transparent,
-                            Color.Black.copy(alpha = 0.75f),
-                        ),
-                        startY = 0f,
-                        endY = Float.POSITIVE_INFINITY,
-                    ),
-                ),
-        )
-
         if (!category.isNullOrBlank()) {
             val catColor = CategoryColorMap[category] ?: colors.primary
             VexSkillChip(
@@ -120,6 +107,11 @@ fun ExhibitBannerCard(
                 text = title,
                 style = MaterialTheme.typography.titleMedium.copy(
                     fontWeight = FontWeight.Bold,
+                    shadow = Shadow(
+                        color = Color.Black.copy(alpha = 0.85f),
+                        offset = Offset(0f, 1f),
+                        blurRadius = 3f,
+                    ),
                 ),
                 color = Color.White,
                 maxLines = 2,

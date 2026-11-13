@@ -34,8 +34,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
@@ -113,31 +115,29 @@ fun MediaGridTile(
             )
         }
 
-        // Overlay gradient dan label judul karya
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    Brush.verticalGradient(
-                        colors = listOf(
-                            Color.Transparent,
-                            Color.Black.copy(alpha = 0.80f),
+        // Label judul karya tanpa overlay gradient shadow gelap yang menggelapkan gambar
+        if (item.title.isNotBlank()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 8.dp, vertical = 6.dp),
+                contentAlignment = Alignment.BottomStart,
+            ) {
+                Text(
+                    text = item.title,
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        fontWeight = FontWeight.SemiBold,
+                        shadow = Shadow(
+                            color = Color.Black.copy(alpha = 0.85f),
+                            offset = Offset(0f, 1f),
+                            blurRadius = 3f,
                         ),
-                        startY = 60f,
                     ),
-                ),
-            contentAlignment = Alignment.BottomStart,
-        ) {
-            Text(
-                text = item.title.ifBlank { "Karya Seni" },
-                style = MaterialTheme.typography.labelSmall.copy(
-                    fontWeight = FontWeight.SemiBold,
-                ),
-                color = Color.White,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
-            )
+                    color = Color.White,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
         }
     }
 }
