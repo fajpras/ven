@@ -32,14 +32,6 @@ import com.ven.app.ui.theme.ThemeMode
 import com.ven.app.ui.theme.VexSpace
 import com.ven.app.ui.theme.VexTheme
 
-/**
- * Layar Masukkan Email untuk alur Lupa Kata Sandi (Halaman 1).
- *
- * Sesuai spesifikasi DESIGN.md §8.11 [Figma node 4372:689]:
- * - Pola SubPage: [VexTopBar.Back] dengan ikon kembali, judul "Forgot Password", dan garis bawah 1dp.
- * - Form: Input Boxed untuk Email berlabel "Email".
- * - CTA Bawah: Tombol "Send OTP" pill BrandPurple dengan status loading.
- */
 @Composable
 fun ForgotPasswordScreen(
     state: ForgotPasswordUiState,
@@ -55,7 +47,6 @@ fun ForgotPasswordScreen(
             .fillMaxSize()
             .background(colors.bg),
     ) {
-        // TopBar SubPage dengan tombol kembali
         VexTopBar.Back(
             title = stringResource(R.string.forgot_password_title),
             onBackClick = onBackClick,
@@ -66,7 +57,6 @@ fun ForgotPasswordScreen(
                 .fillMaxSize()
                 .padding(horizontal = VexSpace.s6),
         ) {
-            // Konten Form
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -96,7 +86,6 @@ fun ForgotPasswordScreen(
                 )
             }
 
-            // Tombol CTA Send OTP menempel di bagian bawah
             Box(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)

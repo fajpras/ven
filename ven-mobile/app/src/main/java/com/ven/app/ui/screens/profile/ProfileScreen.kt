@@ -56,21 +56,6 @@ import com.ven.app.ui.theme.VexAspect
 import com.ven.app.ui.theme.VexSpace
 import com.ven.app.ui.theme.VexTheme
 
-/**
- * Halaman Profil Pengguna untuk aplikasi VEN (Virtual Exhibition).
- *
- * Sesuai spesifikasi wireframe (Dark & Light) dan DESIGN.md §8.7:
- * - Varian Own Profile (gra._.aph).
- * - TopBar ([VexTopBar.Profile]): "+" (kiri), username (tengah), menu (kanan -> Settings).
- * - Avatar 96dp ([AvatarSize.Lg]), nama lengkap, dan blok statistik posts/exhibits.
- * - Baris chip keahlian berlatar warna kategori ([VexSkillChip]) + chip "+N" ([VexCounterChip]),
- *   keduanya dapat diklik untuk membuka [VexBottomSheet] daftar lengkap skill.
- * - Bio deskripsi pengguna.
- * - Info kontak: Email dan Phone (label muted, teks nilai putih/kontras).
- * - Tab switcher ikon ([VexIconTabs]): Posts (foto, default) & Exhibits (kubus 3D).
- * - Grid media poster 3 kolom ([MediaGridTile]), celah 2dp.
- * - Bottom Navigation Bar (Tab Profile aktif).
- */
 @OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(
@@ -349,7 +334,6 @@ fun ProfileScreen(
                             )
                         }
                     } else {
-                        // Empty State Tab
                         item(span = { GridItemSpan(maxLineSpan) }) {
                             Box(
                                 modifier = Modifier
@@ -374,9 +358,6 @@ fun ProfileScreen(
         }
     }
 
-        // ---------------------------------------------------------
-        // Bottom Sheet: Daftar Lengkap Keahlian / Skills
-        // ---------------------------------------------------------
         if (uiState.isSkillSheetOpen) {
             VexBottomSheet(
                 onDismissRequest = { onSkillSheetToggle(false) },

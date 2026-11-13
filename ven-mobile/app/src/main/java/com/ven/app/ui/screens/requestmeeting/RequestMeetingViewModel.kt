@@ -18,9 +18,6 @@ sealed interface RequestMeetingEvent {
     data object RequestSuccess : RequestMeetingEvent
 }
 
-/**
- * ViewModel untuk alur Request Meeting dengan logika kalender dinamis.
- */
 class RequestMeetingViewModel : ViewModel() {
 
     private val initialMonth = YearMonth.of(2026, 9)
@@ -101,7 +98,6 @@ class RequestMeetingViewModel : ViewModel() {
 
         viewModelScope.launch {
             _uiState.update { it.copy(isSending = true, errorMessage = null) }
-            // Simulasi proses pengiriman request
             kotlinx.coroutines.delay(800)
             _uiState.update { it.copy(isSending = false, isSuccess = true) }
             _events.emit(RequestMeetingEvent.RequestSuccess)

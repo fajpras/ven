@@ -29,13 +29,6 @@ import com.ven.app.ui.theme.VexSize
 import com.ven.app.ui.theme.VexSpace
 import com.ven.app.ui.theme.VexTheme
 
-/**
- * Komponen baris daftar (ListRow) untuk menu Settings.
- * Sesuai DESIGN.md §6.1:
- * - Tinggi min 56dp.
- * - Ikon 24dp, jarak ikon-label 16dp.
- * - Varian Normal (dengan chevron kanan) dan Danger (Logout: ikon & teks warna danger, tanpa chevron).
- */
 @Composable
 fun VexListRow(
     @DrawableRes icon: Int,

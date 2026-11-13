@@ -18,24 +18,19 @@ import java.net.URL
 import java.security.MessageDigest
 import java.util.concurrent.ConcurrentHashMap
 
-/**
- * Pengelola Cache Gambar Berperforma Tinggi (Two-Level: Memory LruCache + Disk Cache)
- * dengan pemuatan chunked stream, concurrent throttling (Semaphore), dan downsampling otomatis.
- */
 object ImageCacheManager {
 
-    private const val BUFFER_SIZE = 8192 // 8 KB chunk buffer
+    private const val BUFFER_SIZE = 8192
     private const val DISK_CACHE_SUBDIR = "ven_image_cache"
 
     private val mutex = Mutex()
-    private val downloadSemaphore = Semaphore(permits = 3) // Maksimal 3 download serentak agar tidak membebani server lokal / jaringan
+    private val downloadSemaphore = Semaphore(permits = 3)
     private var isInitialized = false
     private lateinit var diskCacheDir: File
 
-    // 1. Memory Cache (LruCache) menggunakan 1/8 alokasi memori aplikasi
     private val memoryCache: LruCache<String, Bitmap> by lazy {
         val maxMemoryKb = (Runtime.getRuntime().maxMemory() / 1024).toInt()
-        val cacheSizeKb = (maxMemoryKb / 8).coerceAtLeast(16 * 1024) // minimal 16MB
+        val cacheSizeKb = (maxMemoryKb / 8).coerceAtLeast(16 * 1024)
 
         object : LruCache<String, Bitmap>(cacheSizeKb) {
             override fun sizeOf(key: String, value: Bitmap): Int {
@@ -44,12 +39,8 @@ object ImageCacheManager {
         }
     }
 
-    // In-flight dedup: mencegah request jaringan ganda untuk URL/key yang sama
     private val inFlightRequests = ConcurrentHashMap<String, CompletableDeferred<Bitmap?>>()
 
-    /**
-     * Inisialisasi direktori disk cache jika belum aktif.
-     */
     fun init(context: Context) {
         if (!isInitialized) {
             synchronized(this) {
@@ -63,18 +54,12 @@ object ImageCacheManager {
         }
     }
 
-    /**
-     * Mengambil Bitmap langsung dari Memory Cache secara sinkron (0ms).
-     */
     fun getMemory(url: String?, maxWidth: Int = 1080, maxHeight: Int = 1350): Bitmap? {
         if (url.isNullOrBlank()) return null
         val memKey = buildMemoryKey(url, maxWidth, maxHeight)
         return memoryCache.get(memKey)
     }
 
-    /**
-     * Memuat Bitmap dari: Memory -> Disk -> Jaringan (Chunked download + downsampled).
-     */
     suspend fun loadBitmap(
         url: String?,
         maxWidth: Int = 1080,
@@ -84,10 +69,8 @@ object ImageCacheManager {
         val memKey = buildMemoryKey(url, maxWidth, maxHeight)
         val diskKey = normalizeCacheKey(url)
 
-        // 1. Cek Memory Cache
         memoryCache.get(memKey)?.let { return it }
 
-        // 2. Cegah request duplikat serentak (In-flight deduplication per memory resolution)
         var deferred: CompletableDeferred<Bitmap?>? = null
         var isInitiator = false
 
@@ -106,17 +89,14 @@ object ImageCacheManager {
 
         return try {
             val result = withContext(Dispatchers.IO) {
-                // 3. Cek Disk Cache
                 var bmp = loadFromDisk(diskKey, maxWidth, maxHeight)
                 if (bmp != null) {
                     memoryCache.put(memKey, bmp)
                     return@withContext bmp
                 }
 
-                // 4. Unduh dari jaringan secara chunked dengan Semaphore Throttling
                 val resolvedUrl = resolveNetworkUrl(url)
                 val downloaded = downloadSemaphore.withPermit {
-                    // Cek lagi disk cache barangkali thread lain baru saja selesai mendownload
                     if (hasValidDiskCache(diskKey)) {
                         true
                     } else {
@@ -148,22 +128,17 @@ object ImageCacheManager {
         return file.exists() && file.length() > 0L
     }
 
-    /**
-     * Membaca file gambar dari disk cache dengan optimal downsampling (inSampleSize).
-     */
     private fun loadFromDisk(key: String, maxWidth: Int, maxHeight: Int): Bitmap? {
         if (!isInitialized) return null
         val file = File(diskCacheDir, key)
         if (!file.exists() || file.length() == 0L) return null
 
         return try {
-            // Langkah 1: Hanya baca ukuran gambar tanpa decode pixel ke RAM
             val options = BitmapFactory.Options().apply {
                 inJustDecodeBounds = true
             }
             BitmapFactory.decodeFile(file.absolutePath, options)
 
-            // Langkah 2: Hitung rasio inSampleSize terbaik
             options.inSampleSize = calculateInSampleSize(options, maxWidth, maxHeight)
             options.inJustDecodeBounds = false
             options.inPreferredConfig = Bitmap.Config.ARGB_8888
@@ -174,9 +149,6 @@ object ImageCacheManager {
         }
     }
 
-    /**
-     * Mengunduh gambar secara streaming chunk per chunk (8KB) langsung ke disk.
-     */
     private fun downloadToDiskChunked(urlStr: String, key: String): Boolean {
         if (!isInitialized) return false
         val targetFile = File(diskCacheDir, key)

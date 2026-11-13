@@ -1,41 +1,30 @@
 package com.ven.app.ui.navigation
 
-/**
- * Definisi route navigasi aplikasi VEN (Virtual Exhibition).
- * Sesuai arsitektur navigasi di DESIGN.md §3.2 & §7.
- */
 sealed class Screen(val route: String) {
-    // Splash / Welcome Flow
     data object Splash : Screen("splash")
 
-    // Auth Flow
     data object Login : Screen("login")
     data object Register : Screen("register")
     data object ForgotPassword : Screen("forgot_password")
     data object VerifyOtp : Screen("verify_otp")
     data object ResetPassword : Screen("reset_password")
 
-    // Onboarding Flow
     data object OnboardingInterest : Screen("onboarding_interest")
 
-    // Main 5-tab Destinations
     data object Home : Screen("home")
     data object Schedule : Screen("schedule")
     data object AiChat : Screen("ai_chat")
     data object Explore : Screen("explore")
     data object Profile : Screen("profile")
 
-    // Explore Sub-Page: Scrollable Post Feed
     data object PostsFeed : Screen("posts_feed?postId={postId}&userId={userId}") {
         fun createRoute(postId: String = "", userId: String = "") = "posts_feed?postId=$postId&userId=$userId"
     }
 
-    // Detail Profil Pengguna Publik (Instagram Style)
     data object UserProfile : Screen("user_profile/{userId}") {
         fun createRoute(userId: String) = "user_profile/$userId"
     }
 
-    // Create Content Flow
     data object CreatePost : Screen("create_post")
     data object CreateExhibitInfo : Screen("create_exhibit_info")
     data object CreateExhibit : Screen("create_exhibit")
@@ -55,7 +44,6 @@ sealed class Screen(val route: String) {
         }
     }
 
-    // SubPage Flow
     data object ViewExhibit : Screen("view_exhibit/{exhibitId}") {
         fun createRoute(exhibitId: String) = "view_exhibit/$exhibitId"
     }
@@ -63,7 +51,6 @@ sealed class Screen(val route: String) {
         fun createRoute(postId: String) = "request_meeting/$postId"
     }
 
-    // Settings Flow
     data object Settings : Screen("settings")
     data object SettingsProfile : Screen("settings/profile")
     data object SettingsEmail : Screen("settings/email")

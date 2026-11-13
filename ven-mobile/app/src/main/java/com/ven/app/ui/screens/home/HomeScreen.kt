@@ -37,18 +37,6 @@ import com.ven.app.ui.theme.ThemeMode
 import com.ven.app.ui.theme.VexSpace
 import com.ven.app.ui.theme.VexTheme
 
-/**
- * Halaman Utama (Home Screen) Aplikasi VEN (Virtual Exhibition).
- *
- * Sesuai spesifikasi DESIGN.md §8.6 (Dark Mode - Figma Wireframe Home.png):
- * 1. TopBar ([VexTopBar.Home]):
- *    - Tombol "+" di kiri (membuka Create Flow).
- *    - Logo VEN di kanan.
- * 2. Seksi "Coming Soon":
- *    - Carousel horizontal poster pameran.
- * 3. Feed Karya ([PostCard]):
- *    - Mendukung chunked loading / paginasi otomatis saat mendekati akhir list.
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
@@ -67,7 +55,6 @@ fun HomeScreen(
 ) {
     val colors = VexTheme.colors
 
-    // Deteksi scroll chunk: memicu pemuatan data berikutnya secara halus
     val shouldLoadMore by remember {
         derivedStateOf {
             val total = listState.layoutInfo.totalItemsCount
@@ -105,9 +92,6 @@ fun HomeScreen(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(bottom = VexSpace.s6),
             ) {
-            // ---------------------------------------------------------
-            // Seksi 1: Coming Soon Carousel
-            // ---------------------------------------------------------
             if (uiState.comingSoonEvents.isNotEmpty()) {
                 item {
                     CarouselExhibitions(
@@ -128,9 +112,6 @@ fun HomeScreen(
                 }
             }
 
-            // ---------------------------------------------------------
-            // Seksi 2: Feed Post Karya (Chunked & Cached)
-            // ---------------------------------------------------------
             if (uiState.posts.isNotEmpty()) {
                 items(
                     items = uiState.posts,
@@ -153,7 +134,6 @@ fun HomeScreen(
                     )
                 }
 
-                // Indikator loading saat memuat chunk berikutnya
                 if (uiState.isLoadingMore) {
                     item {
                         Box(
@@ -171,7 +151,6 @@ fun HomeScreen(
                     }
                 }
             } else if (!uiState.isLoading) {
-                // Empty State Feed
                 item {
                     Box(
                         modifier = Modifier
@@ -191,10 +170,6 @@ fun HomeScreen(
     }
 }
 }
-
-// ---------------------------------------------------------
-// Previews untuk Dark Mode & Light Mode
-// ---------------------------------------------------------
 
 val SampleHomeUiState = HomeUiState()
 

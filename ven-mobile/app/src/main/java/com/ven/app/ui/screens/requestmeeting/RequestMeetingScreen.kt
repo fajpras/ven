@@ -57,20 +57,6 @@ import com.ven.app.util.DateFormatter
 import java.time.LocalDate
 import java.time.YearMonth
 
-/**
- * Halaman Pengajuan Pertemuan (Request Meeting Screen).
- *
- * Sesuai spesifikasi DESIGN.md §8.6.1:
- * - TopBar SubPage: [VexTopBar.Back] dengan judul "Request meeting" dan divider 1dp.
- * - Konten scrollable (LazyColumn):
- *   1. Seksi Info & Banner pameran (16:9, radius lg 16dp).
- *   2. Seksi Chose Date: Grid kalender 7 kolom interaktif dengan tanggal aktif lingkaran BrandPurple.
- *   3. Seksi Chose Time: Segmented time picker (HH : MM + AM/PM toggle) interaktif.
- *   4. Seksi Pesan: Input box "Message..." multiline berbingkai.
- * - Footer Tetap ([VexBottomActionBar]):
- *   - Tombol "Send Request" FIXED di bawah seperti BottomNav (tidak ikut ter-scroll di dalam konten).
- *   - Memiliki insets navigasi & keyboard (`imePadding`).
- */
 @Composable
 fun RequestMeetingScreen(
     state: RequestMeetingUiState,
@@ -114,9 +100,6 @@ fun RequestMeetingScreen(
                 .padding(innerPadding),
             contentPadding = PaddingValues(bottom = VexSpace.s6),
         ) {
-            // ---------------------------------------------------------
-            // Seksi 1: Judul & Banner Pameran
-            // ---------------------------------------------------------
             item {
                 Column(
                     modifier = Modifier
@@ -135,7 +118,6 @@ fun RequestMeetingScreen(
                         modifier = Modifier.padding(bottom = VexSpace.s4),
                     )
 
-                    // Banner Poster Pameran (16:9, radius VexRadius.lg)
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -186,9 +168,6 @@ fun RequestMeetingScreen(
                 )
             }
 
-            // ---------------------------------------------------------
-            // Seksi 2: Pemilihan Tanggal ("Chose Date")
-            // ---------------------------------------------------------
             item {
                 Column(
                     modifier = Modifier
@@ -208,7 +187,6 @@ fun RequestMeetingScreen(
 
                     Spacer(modifier = Modifier.height(VexSpace.s3))
 
-                    // Baris Navigasi Bulan & Tahun (mis. "September 2026" + Chevron Prev & Next)
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -264,7 +242,6 @@ fun RequestMeetingScreen(
 
                     Spacer(modifier = Modifier.height(VexSpace.s4))
 
-                    // Header Hari: Mon, Tue, Wed, Thu, Fri, Sat, Sun
                     val dayHeaders = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -285,7 +262,6 @@ fun RequestMeetingScreen(
 
                     Spacer(modifier = Modifier.height(VexSpace.s3))
 
-                    // Grid Tanggal 7 Kolom
                     val rows = state.calendarDays.chunked(7)
                     Column(
                         verticalArrangement = Arrangement.spacedBy(VexSpace.s3),
@@ -351,9 +327,6 @@ fun RequestMeetingScreen(
                 )
             }
 
-            // ---------------------------------------------------------
-            // Seksi 3: Pemilihan Jam ("Chose Time" - Segmented Picker)
-            // ---------------------------------------------------------
             item {
                 Column(
                     modifier = Modifier
@@ -373,20 +346,17 @@ fun RequestMeetingScreen(
 
                     Spacer(modifier = Modifier.height(VexSpace.s4))
 
-                    // Segmented Time Picker Controls
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(10.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        // Kotak Jam (Hour)
                         TimeDigitBox(
                             value = state.hourText,
                             onValueChange = onHourChange,
                             modifier = Modifier.weight(1f),
                         )
 
-                        // Tanda Titik Dua
                         Text(
                             text = ":",
                             style = MaterialTheme.typography.titleLarge.copy(
@@ -397,14 +367,12 @@ fun RequestMeetingScreen(
                             textAlign = TextAlign.Center,
                         )
 
-                        // Kotak Menit (Minute)
                         TimeDigitBox(
                             value = state.minuteText,
                             onValueChange = onMinuteChange,
                             modifier = Modifier.weight(1f),
                         )
 
-                        // Tombol AM
                         PeriodToggleBox(
                             label = stringResource(R.string.request_meeting_am),
                             isSelected = state.isAm,
@@ -412,7 +380,6 @@ fun RequestMeetingScreen(
                             modifier = Modifier.weight(1f),
                         )
 
-                        // Tombol PM
                         PeriodToggleBox(
                             label = stringResource(R.string.request_meeting_pm),
                             isSelected = !state.isAm,
@@ -430,9 +397,6 @@ fun RequestMeetingScreen(
                 )
             }
 
-            // ---------------------------------------------------------
-            // Seksi 4: Catatan Pesan ("Message...")
-            // ---------------------------------------------------------
             item {
                 Column(
                     modifier = Modifier
@@ -477,9 +441,6 @@ fun RequestMeetingScreen(
     }
 }
 
-/**
- * Komponen kotak digit untuk jam / menit (Segmented Time Box).
- */
 @Composable
 private fun TimeDigitBox(
     value: String,
@@ -513,9 +474,6 @@ private fun TimeDigitBox(
     }
 }
 
-/**
- * Komponen kotak toggle untuk AM / PM.
- */
 @Composable
 private fun PeriodToggleBox(
     label: String,
@@ -553,10 +511,6 @@ private fun PeriodToggleBox(
         )
     }
 }
-
-// ---------------------------------------------------------
-// Previews untuk Dark Mode dan Light Mode
-// ---------------------------------------------------------
 
 @Preview(name = "RequestMeeting - Dark Mode", showBackground = true, backgroundColor = 0xFF1F1F1F)
 @Composable

@@ -47,14 +47,6 @@ import com.ven.app.ui.theme.VexSpace
 import com.ven.app.ui.theme.VexTheme
 import kotlinx.coroutines.launch
 
-/**
- * Layar utama AI Assistant / AI Chat untuk VEN (Virtual Exhibition).
- * Sesuai spesifikasi DESIGN.md §8.12 dan observasi 4 wireframe resmi:
- * - Wireframe - AI Chat.png (Empty state: watermark sparkle, input pill di tengah kanvas vertikal, label).
- * - Wireframe - AI Chat-1.png (Conversation state: bubble user kanan ber-ekor, pesan AI netral justify).
- * - Wireframe - AI Chat-2.png (History Drawer 300dp: New chat, Recents, daftar percakapan).
- * - Wireframe - AI Chat-3.png (Input active: tombol kirim dinamis, responsif keyboard via imePadding).
- */
 @Composable
 fun AiChatScreen(
     onTabSelected: (BottomNavTab) -> Unit,
@@ -74,9 +66,6 @@ fun AiChatScreen(
     )
 }
 
-/**
- * Composable Stateless untuk konten layar AI Assistant (memungkinkan pengujian & pratinjau fleksibel).
- */
 @Composable
 fun AiChatScreenContent(
     uiState: AiChatUiState,
@@ -92,7 +81,6 @@ fun AiChatScreenContent(
     val coroutineScope = rememberCoroutineScope()
     val listState = rememberLazyListState()
 
-    // Otomatis auto-scroll ke pesan terbaru saat percakapan bertambah
     LaunchedEffect(uiState.messages.size, uiState.isAiTyping) {
         if (uiState.messages.isNotEmpty()) {
             val targetIndex = if (uiState.isAiTyping) uiState.messages.size else uiState.messages.size - 1
@@ -146,7 +134,6 @@ fun AiChatScreenContent(
             ) {
                 when (uiState.screenState) {
                     AiScreenState.Empty -> {
-                        // State Kosong: Sparkle + input pill tengah + label "AI assistant"
                         AiChatEmptyState(
                             inputText = uiState.inputText,
                             onInputChange = onInputChange,
@@ -156,7 +143,6 @@ fun AiChatScreenContent(
                     }
 
                     AiScreenState.Conversation -> {
-                        // State Percakapan: Daftar pesan scrollable + input pill di atas BottomNav
                         Column(
                             modifier = Modifier
                                 .fillMaxSize()
@@ -192,7 +178,6 @@ fun AiChatScreenContent(
                                 }
                             }
 
-                            // Input pill melayang di dasar layar
                             AiChatInput(
                                 value = uiState.inputText,
                                 onValueChange = onInputChange,

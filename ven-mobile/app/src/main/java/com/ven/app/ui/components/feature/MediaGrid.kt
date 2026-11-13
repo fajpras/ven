@@ -51,9 +51,6 @@ import com.ven.app.ui.theme.ThemeMode
 import com.ven.app.ui.theme.VexAspect
 import com.ven.app.ui.theme.VexTheme
 
-/**
- * Model data representasi satu kartu media dalam [MediaGrid].
- */
 @Immutable
 data class MediaGridItem(
     val id: String,
@@ -63,9 +60,6 @@ data class MediaGridItem(
     val span: Int = 1,
 )
 
-/**
- * Tile individual karya seni/poster untuk grid media dengan sistematis Memory & Disk Caching (360x480 thumbnail).
- */
 @Composable
 fun MediaGridTile(
     item: MediaGridItem,
@@ -75,7 +69,6 @@ fun MediaGridTile(
 ) {
     val colors = VexTheme.colors
 
-    // Memuat bitmap dari Memory LruCache (0ms) atau Disk Cache ter-downsample (360x480)
     val bitmap = rememberAsyncImageBitmap(
         url = item.imageUrl,
         maxWidth = 360,
@@ -115,7 +108,6 @@ fun MediaGridTile(
             )
         }
 
-        // Label judul karya tanpa overlay gradient shadow gelap yang menggelapkan gambar
         if (item.title.isNotBlank()) {
             Box(
                 modifier = Modifier
@@ -142,12 +134,6 @@ fun MediaGridTile(
     }
 }
 
-/**
- * Grid Media untuk Explore dan Profile dengan dukungan paginasi scroll otomatis (chunk).
- * Sesuai spesifikasi DESIGN.md §5.3 & §6.3:
- * - Standar 3 kolom, celah antar item 2dp.
- * - Sudut tajam tanpa radius (0dp).
- */
 @Composable
 fun MediaGrid(
     items: List<MediaGridItem>,

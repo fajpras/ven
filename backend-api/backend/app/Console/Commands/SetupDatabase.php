@@ -13,16 +13,12 @@ class SetupDatabase extends Command
 
     public function handle(): int
     {
-        // -------------------------------------------------------------
-        // 1️⃣ Gather connection info
-        // -------------------------------------------------------------
         $host = env('DB_HOST', '127.0.0.1');
         $host = $host === 'localhost' ? '127.0.0.1' : $host;
         $port = env('DB_PORT', '3306');
         $db   = env('DB_DATABASE');
         $clientHost = env('VEN_DB_CLIENT_HOST', env('DB_CLIENT_HOST', 'localhost'));
 
-        // ROOT account – used to create databases, users, roles, and assign privileges
         $rootUser = env('MYSQL_ROOT_USER', 'root');
         $rootPass = (string) $this->secret("Password MySQL untuk ROOT '{$rootUser}' (kosongkan bila tidak ada)");
 
@@ -31,9 +27,6 @@ class SetupDatabase extends Command
             return self::FAILURE;
         }
 
-        // -------------------------------------------------------------
-        // 2️⃣ Build PDO connection (ROOT)
-        // -------------------------------------------------------------
         try {
             $pdo = new PDO(
                 "mysql:host={$host};port={$port};charset=utf8mb4",
@@ -46,9 +39,6 @@ class SetupDatabase extends Command
             return self::FAILURE;
         }
 
-        // -------------------------------------------------------------
-        // 3️⃣ Collect application accounts (APP, USER, ADMIN, DBA)
-        // -------------------------------------------------------------
         $accounts = [];
         foreach (['APP', 'USER', 'ADMIN', 'DBA'] as $key) {
             $user = env("DB_{$key}_USERNAME");
@@ -60,9 +50,6 @@ class SetupDatabase extends Command
             $accounts[$key] = [$user, $pass];
         }
 
-        // -------------------------------------------------------------
-        // 4️⃣ Initialize database, roles, users & default assignments (ROOT)
-        // -------------------------------------------------------------
         if ($this->option('fresh')) {
             $this->warn("Menghapus database `{$db}` untuk setup ulang dari nol...");
             $pdo->exec("DROP DATABASE IF EXISTS `{$db}`");
@@ -82,9 +69,7 @@ class SetupDatabase extends Command
             $initialQueries[] = "ALTER USER {$accountString($key)} IDENTIFIED BY {$quote($pass)}";
         }
 
-        // Grant ALL to DBA so DBA can manage tables, run migrations, and backups
         $initialQueries[] = "GRANT ALL PRIVILEGES ON `{$db}`.* TO {$accountString('DBA')} WITH GRANT OPTION";
-        // Grant PROCESS to DBA so mysqldump can dump tablespaces/status without error
         $initialQueries[] = "GRANT PROCESS ON *.* TO {$accountString('DBA')}";
 
         $initialQueries[] = "GRANT 'user_role' TO {$accountString('USER')}";
@@ -101,20 +86,13 @@ class SetupDatabase extends Command
             }
         }
 
-        // -------------------------------------------------------------
-        // 5️⃣ Revoke global privileges from non-DBA roles & app
-        // -------------------------------------------------------------
         foreach (['`user_role`', '`admin_role`', $accountString('APP')] as $grantee) {
             try {
                 $pdo->exec("REVOKE ALL PRIVILEGES ON `{$db}`.* FROM {$grantee}");
             } catch (Throwable) {
-                // Ignore if not previously granted
             }
         }
 
-        // -------------------------------------------------------------
-        // 6️⃣ Apply granular least-privilege grants if tables exist
-        // -------------------------------------------------------------
         $tableCheck = $pdo->query(
             "SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = {$quote($db)} AND TABLE_NAME = 'pengguna'"
         )->fetch();

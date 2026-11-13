@@ -32,12 +32,6 @@ import com.ven.app.ui.theme.VexRadius
 import com.ven.app.ui.theme.VexSpace
 import com.ven.app.ui.theme.VexTheme
 
-/**
- * Halaman utama Settings and activity.
- * Sesuai wireframe dan DESIGN.md §8.8:
- * - Mengelompokkan pengaturan ke dalam 4 seksi: Account, Interface, Security & Others, Login.
- * - Logout menampilkan dialog konfirmasi.
- */
 @Composable
 fun SettingsScreen(
     onBackClick: () -> Unit,
@@ -74,9 +68,6 @@ fun SettingsScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(bottom = VexSpace.s8),
         ) {
-            // ---------------------------------------------------------
-            // Seksi 1: Account
-            // ---------------------------------------------------------
             VexSectionLabel(title = stringResource(R.string.settings_section_account))
 
             VexListRow(
@@ -105,9 +96,6 @@ fun SettingsScreen(
                 onClick = onNavigateToHistory,
             )
 
-            // ---------------------------------------------------------
-            // Seksi 2: Interface
-            // ---------------------------------------------------------
             VexSectionLabel(title = stringResource(R.string.settings_section_interface))
 
             VexListRow(
@@ -121,9 +109,6 @@ fun SettingsScreen(
                 onClick = onNavigateToLanguage,
             )
 
-            // ---------------------------------------------------------
-            // Seksi 3: Security & Others
-            // ---------------------------------------------------------
             VexSectionLabel(title = stringResource(R.string.settings_section_security_others))
 
             VexListRow(
@@ -137,9 +122,6 @@ fun SettingsScreen(
                 onClick = onNavigateToHelp,
             )
 
-            // ---------------------------------------------------------
-            // Seksi 4: Login
-            // ---------------------------------------------------------
             VexSectionLabel(title = stringResource(R.string.settings_section_login))
 
             VexListRow(
@@ -150,7 +132,6 @@ fun SettingsScreen(
             )
         }
 
-        // Dialog Konfirmasi Logout
         if (showLogoutDialog) {
             LogoutConfirmationDialog(
                 onConfirm = {
@@ -163,11 +144,6 @@ fun SettingsScreen(
     }
 }
 
-/**
- * Dialog konfirmasi logout dengan frame yang rapi, simetris, dan presisi.
- * Menggunakan radius 28dp (VexRadius.xl), kontainer colors.surface,
- * dan garis outline border 1dp colors.border yang elegan.
- */
 @Composable
 fun LogoutConfirmationDialog(
     onConfirm: () -> Unit,

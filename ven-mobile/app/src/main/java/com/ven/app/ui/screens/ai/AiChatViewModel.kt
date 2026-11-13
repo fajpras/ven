@@ -10,10 +10,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-/**
- * ViewModel untuk halaman AI Assistant (DESIGN.md §8.12.6).
- * Mengelola state percakapan, drawer riwayat, serta interaksi API online / fallback offline mockup.
- */
 class AiChatViewModel : ViewModel() {
 
     private val _uiState = MutableStateFlow(

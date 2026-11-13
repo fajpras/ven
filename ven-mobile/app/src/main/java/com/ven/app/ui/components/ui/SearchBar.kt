@@ -38,16 +38,6 @@ import com.ven.app.ui.theme.VexSize
 import com.ven.app.ui.theme.VexSpace
 import com.ven.app.ui.theme.VexTheme
 
-/**
- * Komponen SearchBar berbentuk pill untuk VEN (Virtual Exhibition).
- * Sesuai DESIGN.md §6.1 & §8.4.1:
- * - Bentuk: Pill ([VexRadius.full]).
- * - Tinggi: [VexSize.control] (44–46dp).
- * - Background: [VexTheme.colors.surfaceInput].
- * - Leading icon: [VexIcons.Search] warna [VexTheme.colors.textMuted].
- * - Teks input: [VexTheme.colors.text].
- * - Placeholder: [VexTheme.colors.textMuted].
- */
 @Composable
 fun SearchBar(
     query: String,
@@ -70,7 +60,6 @@ fun SearchBar(
             .padding(horizontal = VexSpace.s4),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        // Leading icon: tombol kembali (mode Search Active) atau ikon pencarian.
         if (onBackClick != null) {
             Box(
                 modifier = Modifier
@@ -102,7 +91,6 @@ fun SearchBar(
 
         Spacer(modifier = Modifier.width(VexSpace.s3))
 
-        // Input Field
         Box(
             modifier = Modifier.weight(1f),
             contentAlignment = Alignment.CenterStart,
@@ -128,7 +116,6 @@ fun SearchBar(
             )
         }
 
-        // Clear query action if not empty
         if (query.isNotEmpty()) {
             Box(
                 modifier = Modifier

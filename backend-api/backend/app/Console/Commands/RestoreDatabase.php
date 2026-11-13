@@ -8,17 +8,8 @@ use Throwable;
 
 class RestoreDatabase extends Command
 {
-    /**
-     * The name and signature of the console command.
-     *
-     * Options:
-     *   --path : full path to the .sql dump file to import (required)
-     */
     protected $signature = 'ven:restore-db {--path= : Full path to the .sql dump file to restore} {--db= : Target database name (default: DB_DATABASE)}';
 
-    /**
-     * The console command description.
-     */
     protected $description = 'Restore MySQL database from a .sql dump file.';
 
     public function handle(): int

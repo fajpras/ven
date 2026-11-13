@@ -18,16 +18,6 @@ import com.ven.app.ui.theme.ThemeMode
 import com.ven.app.ui.theme.VexSpace
 import com.ven.app.ui.theme.VexTheme
 
-/**
- * Bar aksi bawah tetap (Sticky Bottom Action Bar) untuk layar SubPage / CreateFlow tanpa BottomNav.
- *
- * Sesuai spesifikasi DESIGN.md §5.2, §6.2, dan §8.6.1:
- * - Ditempatkan pada slot bottomBar Scaffold: `Scaffold(bottomBar = { VexBottomActionBar(...) })`.
- * - Fixed di bawah layar (tidak ikut ter-scroll di dalam konten).
- * - Background menggunakan `colors.navBar` (#252525 di Dark, #FFFFFF di Light).
- * - Garis pembatas atas 1dp menggunakan `colors.border`.
- * - Margin horizontal 20dp, padding atas 12dp, padding bawah 24dp + insets navigasi & keyboard (`imePadding`).
- */
 @Composable
 fun VexBottomActionBar(
     modifier: Modifier = Modifier,

@@ -25,18 +25,6 @@ import com.ven.app.ui.theme.ThemeMode
 import com.ven.app.ui.theme.VexSpace
 import com.ven.app.ui.theme.VexTheme
 
-/**
- * Komponen Carousel Pameran (Carousel Exhibitions) yang reusable.
- *
- * Mendukung berbagai seksi pameran horizontal (seperti "Coming Soon", "Trending Exhibitions", dll).
- * Menggunakan [rememberSnapFlingBehavior] agar scroll berhenti (snap) per-kartu selayaknya carousel.
- *
- * Sesuai spesifikasi DESIGN.md §6.3 & §8.6:
- * - Judul seksi: `titleLarge` SemiBold, padding horizontal 24dp (VexSpace.s6), margin bawah 8dp (VexSpace.s2).
- * - Carousel: `LazyRow` horizontal dengan padding konten 24dp, jarak antar item 12dp (VexSpace.s3).
- * - Snap behavior: Menahan dan menyelaraskan posisi item saat di-fling.
- * - Divider pembatas seksi opsional (default true): tebal 1dp, warna `#313131`.
- */
 @Composable
 fun CarouselExhibitions(
     title: String,
@@ -54,7 +42,6 @@ fun CarouselExhibitions(
             .fillMaxWidth()
             .padding(vertical = VexSpace.s4),
     ) {
-        // Judul Seksi Carousel
         Text(
             text = title,
             style = MaterialTheme.typography.titleLarge.copy(
@@ -69,7 +56,6 @@ fun CarouselExhibitions(
 
         Spacer(modifier = Modifier.height(VexSpace.s2))
 
-        // Carousel Horizontal dengan Snap Fling Behavior
         LazyRow(
             state = state,
             contentPadding = contentPadding,
@@ -78,7 +64,6 @@ fun CarouselExhibitions(
             content = content,
         )
 
-        // Garis Pembatas Seksi (Opsional)
         if (showDivider) {
             Spacer(modifier = Modifier.height(VexSpace.s4))
             HorizontalDivider(

@@ -39,10 +39,6 @@ import com.ven.app.ui.theme.VexSize
 import com.ven.app.ui.theme.VexSpace
 import com.ven.app.ui.theme.VexTheme
 
-/**
- * Layar Register Aplikasi VEN (Virtual Exhibition).
- * Sesuai spesifikasi DESIGN.md §8.3 (Wireframe - Register.png).
- */
 @Composable
 fun RegisterScreen(
     state: RegisterUiState,
@@ -167,7 +163,6 @@ fun RegisterScreen(
         title = stringResource(R.string.register_title),
         modifier = modifier,
         formContent = {
-            // Email
             VexTextField(
                 value = state.email,
                 onValueChange = onEmailChange,
@@ -183,7 +178,6 @@ fun RegisterScreen(
 
             Spacer(Modifier.height(VexSpace.s4))
 
-            // Username
             VexTextField(
                 value = state.username,
                 onValueChange = onUsernameChange,
@@ -199,7 +193,6 @@ fun RegisterScreen(
 
             Spacer(Modifier.height(VexSpace.s4))
 
-            // Password
             VexPasswordField(
                 value = state.password,
                 onValueChange = onPasswordChange,
@@ -223,7 +216,6 @@ fun RegisterScreen(
 
             Spacer(Modifier.height(VexSpace.s4))
 
-            // Confirm Password
             VexPasswordField(
                 value = state.confirmPassword,
                 onValueChange = onConfirmPasswordChange,
@@ -249,7 +241,6 @@ fun RegisterScreen(
 
             Spacer(Modifier.height(VexSpace.s8))
 
-            // Register Button
             VexButton(
                 text = stringResource(R.string.register_button),
                 onClick = onRegisterClick,
@@ -267,7 +258,6 @@ fun RegisterScreen(
 
             Spacer(Modifier.height(VexSpace.s6))
 
-            // Google Sign In
             VexButton(
                 text = stringResource(R.string.google_sign_in),
                 onClick = onGoogleClick,

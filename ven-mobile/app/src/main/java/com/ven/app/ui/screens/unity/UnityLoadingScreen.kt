@@ -97,7 +97,6 @@ fun UnityLoadingScreen(
         }
     }
 
-    // Animasi denyut glowing pada lingkaran 3D
     val infiniteTransition = rememberInfiniteTransition(label = "UnityLoadingPulse")
     val pulseScale by infiniteTransition.animateFloat(
         initialValue = 0.92f,
@@ -123,7 +122,6 @@ fun UnityLoadingScreen(
             .fillMaxSize()
             .background(colors.bg),
     ) {
-        // Tombol Close di pojok kiri atas
         IconButton(
             onClick = onBackClick,
             modifier = Modifier
@@ -138,7 +136,6 @@ fun UnityLoadingScreen(
             )
         }
 
-        // Konten Tengah: Animasi Glowing 3D, Judul, Progress Indicator
         Column(
             modifier = Modifier
                 .align(Alignment.Center)
@@ -146,12 +143,10 @@ fun UnityLoadingScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
         ) {
-            // Lingkaran Glowing 3D Exhibition
             Box(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier.size(130.dp),
             ) {
-                // Outer Glow ring
                 Box(
                     modifier = Modifier
                         .size(120.dp)
@@ -167,7 +162,6 @@ fun UnityLoadingScreen(
                         ),
                 )
 
-                // Inner circle
                 Box(
                     contentAlignment = Alignment.Center,
                     modifier = Modifier
@@ -187,7 +181,6 @@ fun UnityLoadingScreen(
 
             Spacer(modifier = Modifier.height(VexSpace.s6))
 
-            // Teks Status
             Text(
                 text = if (isEditor) "Membuka Ruang 3D Unity" else "Memuat Pameran 3D",
                 style = MaterialTheme.typography.titleLarge.copy(
@@ -213,7 +206,6 @@ fun UnityLoadingScreen(
 
             Spacer(modifier = Modifier.height(VexSpace.s6))
 
-            // Progress Bar Halus
             LinearProgressIndicator(
                 modifier = Modifier
                     .fillMaxWidth(0.65f)
@@ -225,7 +217,6 @@ fun UnityLoadingScreen(
             )
         }
 
-        // Kotak Informasi Tips di Bawah
         Box(
             modifier = Modifier
                 .align(Alignment.BottomCenter)

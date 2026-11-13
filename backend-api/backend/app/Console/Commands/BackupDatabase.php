@@ -1,25 +1,5 @@
 <?php
 
-/*
- * ---------------------------------------------------------------
- *  Command: ven:backup-db
- * ---------------------------------------------------------------
- * Usage via CLI:
- *   php artisan ven:backup-db                     # backup ke folder default
- *   php artisan ven:backup-db --path=storage/app/custom   # backup ke folder custom
- *
- * Usage programmatically (e.g. from another command):
- *   \Illuminate\Support\Facades\Artisan::call('ven:backup-db');
- *   // atau dengan opsi:
- *   \Illuminate\Support\Facades\Artisan::call('ven:backup-db', ['--path' => 'storage/app/custom']);
- *
- * Penjelasan:
- *   - Membuat dump MySQL dengan mysqldump.
- *   - Lokasi default diambil dari config('backup.path').
- *   - File bernama backup_{db}_{timestamp}.sql.
- * ---------------------------------------------------------------
- */
-
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
@@ -28,17 +8,8 @@ use Throwable;
 
 class BackupDatabase extends Command
 {
-    /**
-     * The name and signature of the console command.
-     *
-     * Options:
-     *   --path : directory where the backup file will be stored (default storage/app/backups)
-     */
     protected $signature = 'ven:backup-db {--path= : Directory to store the backup file}';
 
-    /**
-     * The console command description.
-     */
     protected $description = 'Backup MySQL database using mysqldump. Stores the dump in the specified directory.';
 
     public function handle(): int

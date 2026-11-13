@@ -31,21 +31,6 @@ import com.ven.app.ui.theme.VexSize
 import com.ven.app.ui.theme.VexSpace
 import com.ven.app.ui.theme.VexTheme
 
-/**
- * TopBar khusus untuk aplikasi VEN (Virtual Exhibition).
- *
- * Sesuai spesifikasi DESIGN.md §6.2 & §8.6:
- * - VexTopBar.Home:
- *   - Sisi Kiri: Tombol Tambah ("+") untuk membuka alur Create Flow (New Post / New Exhibit).
- *   - Sisi Kanan: Logo resmi VEN.
- *   - Latar belakang menyatu dengan canvas (VexTheme.colors.bg / #1F1F1F).
- *   - Tanpa garis pembatas bawah di Dark Mode [OBSERVED].
- *
- * - VexTopBar.Back:
- *   - SubPage header: Tombol Kembali ("<-", ic_action_back) di kiri.
- *   - Judul halaman (SemiBold 600, warna text).
- *   - Garis pembatas bawah 1dp (VexTheme.colors.border).
- */
 object VexTopBar {
 
     @Composable
@@ -69,7 +54,6 @@ object VexTopBar {
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                // Sisi Kiri: Ikon "+" (ic_action_add)
                 IconButton(
                     onClick = onCreateClick,
                     modifier = Modifier.padding(start = 0.dp),
@@ -82,7 +66,6 @@ object VexTopBar {
                     )
                 }
 
-                // Sisi Kanan: Logo Resmi VEN
                 VexLogo(
                     modifier = Modifier.height(28.dp),
                     contentDescription = stringResource(R.string.app_name),
@@ -181,7 +164,6 @@ object VexTopBar {
                     .fillMaxWidth()
                     .height(VexSize.topBar),
             ) {
-                // Sisi Kiri: Ikon "+" (ic_action_add) -> Create Flow
                 IconButton(
                     onClick = onCreateClick,
                     modifier = Modifier
@@ -196,7 +178,6 @@ object VexTopBar {
                     )
                 }
 
-                // Sisi Tengah: Username
                 Text(
                     text = username,
                     style = MaterialTheme.typography.titleMedium.copy(
@@ -206,7 +187,6 @@ object VexTopBar {
                     modifier = Modifier.align(Alignment.Center),
                 )
 
-                // Sisi Kanan: Ikon Menu (ic_action_menu) -> Settings
                 IconButton(
                     onClick = onMenuClick,
                     modifier = Modifier

@@ -86,10 +86,6 @@ import com.ven.app.ui.screens.settings.dummyHistoryEntries
 import com.ven.app.ui.screens.splash.SplashScreen
 import com.ven.app.ui.theme.VexTheme
 
-/**
- * Host navigasi utama aplikasi VEN (Virtual Exhibition).
- * Menghubungkan seluruh alur autentikasi, onboarding, dan destinasi utama.
- */
 @Composable
 fun AppNavHost(showExplore: Boolean = false) {
     val context = LocalContext.current
@@ -142,9 +138,6 @@ fun AppNavHost(showExplore: Boolean = false) {
         popEnterTransition = { fadeIn(tween(180)) },
         popExitTransition = { fadeOut(tween(220)) },
     ) {
-        // -------------------------------------------------------------
-        // 0. Alur Splash
-        // -------------------------------------------------------------
         composable(Screen.Splash.route) {
             SplashScreen(
                 onSplashFinished = {
@@ -155,9 +148,6 @@ fun AppNavHost(showExplore: Boolean = false) {
             )
         }
 
-        // -------------------------------------------------------------
-        // 1. Alur Login
-        // -------------------------------------------------------------
         composable(Screen.Login.route) {
             LoginRoute(
                 onNavigateToHome = {
@@ -181,9 +171,6 @@ fun AppNavHost(showExplore: Boolean = false) {
             )
         }
 
-        // -------------------------------------------------------------
-        // 2. Alur Register
-        // -------------------------------------------------------------
         composable(Screen.Register.route) {
             RegisterRoute(
                 onNavigateToOnboarding = {
@@ -208,9 +195,6 @@ fun AppNavHost(showExplore: Boolean = false) {
             )
         }
 
-        // -------------------------------------------------------------
-        // 3. Alur Onboarding (Pemilihan Kategori Minat)
-        // -------------------------------------------------------------
         composable(Screen.OnboardingInterest.route) {
             InterestRoute(
                 onFinished = {
@@ -231,10 +215,6 @@ fun AppNavHost(showExplore: Boolean = false) {
             )
         }
 
-        // -------------------------------------------------------------
-        // 4. Alur Lupa Kata Sandi (3 Halaman: Email -> OTP -> Buat Password Baru)
-        // -------------------------------------------------------------
-        // Halaman 1: Masukkan Email terdaftar
         composable(Screen.ForgotPassword.route) {
             ForgotPasswordScreen(
                 state = forgotState,
@@ -244,7 +224,6 @@ fun AppNavHost(showExplore: Boolean = false) {
             )
         }
 
-        // Halaman 2: Masukkan Kode OTP 6-Digit
         composable(Screen.VerifyOtp.route) {
             VerifyOtpScreen(
                 state = forgotState,
@@ -255,7 +234,6 @@ fun AppNavHost(showExplore: Boolean = false) {
             )
         }
 
-        // Halaman 3: Buat Kata Sandi Baru
         composable(Screen.ResetPassword.route) {
             ResetPasswordScreen(
                 state = forgotState,
@@ -266,9 +244,6 @@ fun AppNavHost(showExplore: Boolean = false) {
             )
         }
 
-        // -------------------------------------------------------------
-        // 5. Destinasi Utama (Home)
-        // -------------------------------------------------------------
         composable(Screen.Home.route) {
             MainHomeScreen(
                 homeViewModel = homeViewModel,
@@ -301,9 +276,6 @@ fun AppNavHost(showExplore: Boolean = false) {
             )
         }
 
-        // -------------------------------------------------------------
-        // 5a. Create Content Flow: Create Post (Media Picker & Details Form)
-        // -------------------------------------------------------------
         composable(Screen.CreatePost.route) {
             CreatePostScreen(
                 onCloseClick = { navController.popBackStack() },
@@ -319,9 +291,6 @@ fun AppNavHost(showExplore: Boolean = false) {
             )
         }
 
-        // -------------------------------------------------------------
-        // 5a-1. Create Content Flow: Create Exhibit (Pilih Template - Langkah 1)
-        // -------------------------------------------------------------
         composable(Screen.CreateExhibit.route) {
             CreateExhibitTemplateScreen(
                 viewModel = createExhibitViewModel,
@@ -341,9 +310,6 @@ fun AppNavHost(showExplore: Boolean = false) {
             )
         }
 
-        // -------------------------------------------------------------
-        // 5a-2. Create Content Flow: Create Exhibit (Informasi Pameran - Langkah 2)
-        // -------------------------------------------------------------
         composable(Screen.CreateExhibitInfo.route) {
             val context = LocalContext.current
             CreateExhibitInfoScreen(
@@ -391,9 +357,6 @@ fun AppNavHost(showExplore: Boolean = false) {
             )
         }
 
-        // -------------------------------------------------------------
-        // 5a-3. Create Content Flow: Create Exhibit (Unity 3D Engine Editor)
-        // -------------------------------------------------------------
         composable(
             route = Screen.CreateExhibitEditor.route,
             arguments = listOf(
@@ -442,9 +405,6 @@ fun AppNavHost(showExplore: Boolean = false) {
             )
         }
 
-        // -------------------------------------------------------------
-        // 5a-4. View Existing Exhibition (Unity 3D Engine Viewer / PlayScene)
-        // -------------------------------------------------------------
         composable(
             route = Screen.ViewExhibit.route,
             arguments = listOf(
@@ -464,9 +424,6 @@ fun AppNavHost(showExplore: Boolean = false) {
             )
         }
 
-        // -------------------------------------------------------------
-        // 5b. SubPage: Explore Post Feed (scrollable)
-        // -------------------------------------------------------------
         composable(
             route = Screen.PostsFeed.route,
             arguments = listOf(
@@ -568,9 +525,6 @@ fun AppNavHost(showExplore: Boolean = false) {
             )
         }
 
-        // -------------------------------------------------------------
-        // 5b-2. SubPage: Detail Profil Pengguna Publik
-        // -------------------------------------------------------------
         composable(
             route = Screen.UserProfile.route,
             arguments = listOf(
@@ -593,9 +547,6 @@ fun AppNavHost(showExplore: Boolean = false) {
             )
         }
 
-        // -------------------------------------------------------------
-        // 5c. Destination: AI Assistant
-        // -------------------------------------------------------------
         composable(Screen.AiChat.route) {
             AiChatScreen(
                 onTabSelected = { tab ->
@@ -604,15 +555,12 @@ fun AppNavHost(showExplore: Boolean = false) {
                         BottomNavTab.Schedule -> navController.navigate(Screen.Schedule.route)
                         BottomNavTab.Explore -> navController.navigate(Screen.Explore.route)
                         BottomNavTab.Profile -> navController.navigate(Screen.Profile.route)
-                        BottomNavTab.Ai -> { /* Already here */ }
+                        BottomNavTab.Ai -> { }
                     }
                 },
             )
         }
 
-        // -------------------------------------------------------------
-        // 6. SubPage: Request Meeting
-        // -------------------------------------------------------------
         composable(Screen.RequestMeeting.route) {
             val requestViewModel: RequestMeetingViewModel = viewModel()
             val requestState by requestViewModel.uiState.collectAsStateWithLifecycle()
@@ -641,9 +589,6 @@ fun AppNavHost(showExplore: Boolean = false) {
             )
         }
 
-        // -------------------------------------------------------------
-        // 7. SubPage: Settings and Activity Flow
-        // -------------------------------------------------------------
         composable(Screen.Settings.route) {
             SettingsScreen(
                 onBackClick = { navController.popBackStack() },

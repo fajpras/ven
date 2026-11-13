@@ -44,22 +44,6 @@ import com.ven.app.ui.theme.ThemeMode
 import com.ven.app.ui.theme.VexSize
 import com.ven.app.ui.theme.VexTheme
 
-/**
- * Custom Bottom Navigation Bar untuk aplikasi VEN (Virtual Exhibition).
- *
- * Sesuai spesifikasi DESIGN.md:
- * - Dibuat custom (bukan NavigationBar M3 bawaan).
- * - Tinggi: [VexSize.bottomNav] (64dp) + inset navigation bar.
- * - Latar belakang: [VexTheme.colors.navBar] (#252525 di Dark Mode, #FFFFFF di Light Mode).
- * - Di Dark Mode: TANPA garis atas.
- * - Di Light Mode: Ada garis atas 1dp border (#DADADA).
- * - 5 Tab: Home, Schedule, AI Assistant, Explore, Profile.
- * - State aktif: Ikon terisi (filled).
- * - State nonaktif: Ikon outline.
- * - Tab Profile: Avatar melingkar 28dp dengan border warna [VexTheme.colors.text] saat aktif.
- * - Warna ikon: Selalu [VexTheme.colors.text] (putih di Dark, hitam di Light).
- * - Tanpa label teks dan tanpa pill indikator.
- */
 @Composable
 fun BottomNav(
     selectedTab: BottomNavTab,
@@ -83,7 +67,6 @@ fun BottomNav(
                 .fillMaxWidth()
                 .navigationBarsPadding(),
         ) {
-            // Garis pembatas atas hanya di Light Mode (di Dark Mode tanpa garis sesuai wireframe)
             if (!isDark) {
                 HorizontalDivider(
                     thickness = 1.dp,
@@ -124,9 +107,6 @@ fun BottomNav(
     }
 }
 
-/**
- * Item individual pada [BottomNav].
- */
 @Composable
 private fun BottomNavItem(
     tab: BottomNavTab,
@@ -160,7 +140,6 @@ private fun BottomNavItem(
         contentAlignment = Alignment.Center,
     ) {
         if (tab.isProfile) {
-            // Tab Profile: Foto avatar bulat 28dp dengan border saat aktif
             ProfileTabItem(
                 isSelected = isSelected,
                 contentDescription = tab.title,
@@ -169,7 +148,6 @@ private fun BottomNavItem(
                 profileContent = profileContent,
             )
         } else {
-            // Tab 1-4: Home, Schedule, AI, Explore
             val iconRes = if (isSelected) {
                 tab.iconPair?.filled ?: 0
             } else {
@@ -186,9 +164,6 @@ private fun BottomNavItem(
     }
 }
 
-/**
- * Avatar item khusus untuk tab Profile.
- */
 @Composable
 private fun ProfileTabItem(
     isSelected: Boolean,

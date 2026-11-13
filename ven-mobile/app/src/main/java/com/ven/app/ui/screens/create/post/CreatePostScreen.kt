@@ -66,12 +66,6 @@ import com.ven.app.ui.theme.VexRadius
 import com.ven.app.ui.theme.VexSpace
 import com.ven.app.ui.theme.VexTheme
 
-/**
- * Screen utama untuk pembuatan karya baru (Create Post).
- * Mengimplementasikan alur 2 langkah sesuai spesifikasi DESIGN.md §8.13:
- * - Langkah 1: Media Picker (pratinjau besar terpilih + grid 3 kolom + SegmentedPill melayang).
- * - Langkah 2: Details Form (pratinjau strip + formulir Title, Category, Product Link, Description).
- */
 @Composable
 fun CreatePostScreen(
     onCloseClick: () -> Unit,
@@ -172,9 +166,6 @@ fun CreatePostContent(
     }
 }
 
-/**
- * Langkah 1: Media Picker (Tampilan Image 1 / wireframe node 4256-704)
- */
 @Composable
 private fun CreatePostMediaPickerStep(
     state: CreatePostUiState,
@@ -194,7 +185,6 @@ private fun CreatePostMediaPickerStep(
         Column(
             modifier = Modifier.fillMaxSize(),
         ) {
-            // TopBar: X + "New Post" di kiri, "Next" warna ungu di kanan
             VexTopBar.Create(
                 title = stringResource(R.string.create_post_title),
                 actionText = stringResource(R.string.create_post_next),
@@ -204,7 +194,6 @@ private fun CreatePostMediaPickerStep(
                 actionEnabled = true,
             )
 
-            // Grid vertikal berisi Header (Pratinjau Besar + Label "Recents") + 3-kolom galeri
             LazyVerticalGrid(
                 columns = GridCells.Fixed(3),
                 modifier = Modifier
@@ -214,7 +203,6 @@ private fun CreatePostMediaPickerStep(
                 verticalArrangement = Arrangement.spacedBy(2.dp),
                 contentPadding = PaddingValues(bottom = 88.dp),
             ) {
-                // Header 1: Pratinjau media terpilih ukuran besar
                 item(span = { GridItemSpan(maxLineSpan) }) {
                     Box(
                         modifier = Modifier
@@ -240,7 +228,6 @@ private fun CreatePostMediaPickerStep(
                     }
                 }
 
-                // Header 2: Label Seksi "Recents"
                 item(span = { GridItemSpan(maxLineSpan) }) {
                     Box(
                         modifier = Modifier
@@ -262,7 +249,6 @@ private fun CreatePostMediaPickerStep(
                     }
                 }
 
-                // Item Galeri Media (3 kolom)
                 items(
                     items = state.mediaItems,
                     key = { it.id },
@@ -296,7 +282,6 @@ private fun CreatePostMediaPickerStep(
                             )
                         }
 
-                        // Overlay sorotan jika terpilih
                         if (isSelected) {
                             Box(
                                 modifier = Modifier
@@ -309,7 +294,6 @@ private fun CreatePostMediaPickerStep(
             }
         }
 
-        // SegmentedPill "Post | Exhibit" melayang di bagian bawah tengah
         SegmentedPill(
             selectedType = state.selectedContentType,
             onTypeSelected = onContentTypeSelected,
@@ -323,9 +307,6 @@ private fun CreatePostMediaPickerStep(
     }
 }
 
-/**
- * Langkah 2: Details Form (Tampilan Image 2 / wireframe node 4256-861)
- */
 @Composable
 private fun CreatePostDetailsStep(
     state: CreatePostUiState,
@@ -345,7 +326,6 @@ private fun CreatePostDetailsStep(
             .fillMaxSize()
             .background(colors.bg),
     ) {
-        // TopBar: Panah kembali + "New Post" di kiri, "Post" di kanan (aktif jika valid)
         VexTopBar.Create(
             title = stringResource(R.string.create_post_title),
             actionText = stringResource(R.string.create_post_action),
@@ -363,7 +343,6 @@ private fun CreatePostDetailsStep(
                 .navigationBarsPadding()
                 .imePadding(),
         ) {
-            // Pita pratinjau karya terpilih (latar abu terang / surfaceInput, gambar centered)
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -383,14 +362,12 @@ private fun CreatePostDetailsStep(
                 }
             }
 
-            // Formulir Metadata Postingan
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = VexSpace.s6, vertical = VexSpace.s5),
                 verticalArrangement = Arrangement.spacedBy(VexSpace.s4),
             ) {
-                // 1. Title
                 VexTextField(
                     value = state.title,
                     onValueChange = onTitleChange,
@@ -399,7 +376,6 @@ private fun CreatePostDetailsStep(
                     placeholder = stringResource(R.string.create_post_title_placeholder),
                 )
 
-                // 2. Category
                 VexDropdown(
                     label = stringResource(R.string.create_post_category_label),
                     selectedOption = state.category,
@@ -407,7 +383,6 @@ private fun CreatePostDetailsStep(
                     onOptionSelected = onCategoryChange,
                 )
 
-                // 3. Product Link (dengan header baris Product Link + label "optional")
                 Column(modifier = Modifier.fillMaxWidth()) {
                     Row(
                         modifier = Modifier
@@ -438,7 +413,6 @@ private fun CreatePostDetailsStep(
                     )
                 }
 
-                // 4. Description (VexTextArea multiline)
                 VexTextArea(
                     value = state.description,
                     onValueChange = onDescriptionChange,

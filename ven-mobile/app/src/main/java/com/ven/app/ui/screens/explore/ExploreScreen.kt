@@ -57,15 +57,6 @@ import com.ven.app.ui.theme.VexSize
 import com.ven.app.ui.theme.VexSpace
 import com.ven.app.ui.theme.VexTheme
 
-/**
- * Layar utama Explore untuk VEN (Virtual Exhibition).
- *
- * Sesuai DESIGN.md §8.5 & wireframe dark mode `D:\front-mobile\dark-mode\explore\`:
- * - Berjalan murni di sisi frontend dengan mock data lokal mandiri.
- * - Terbungkus [AppScaffold] dengan [BottomNavTab.Explore] aktif.
- * - Mengelola 4 state tampilan secara lokal (MVI): Discovery, Search History,
- *   Search Results (4 tab), dan Filter Sheet.
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ExploreScreen(
@@ -84,7 +75,6 @@ fun ExploreScreen(
     val vmState = viewModel?.uiState?.collectAsStateWithLifecycle()?.value
     val uiState = vmState ?: localUiState
 
-    // Intercept back button saat pencarian aktif atau filter sheet terbuka
     BackHandler(enabled = uiState.isSearchActive || uiState.isFilterSheetOpen) {
         if (uiState.isFilterSheetOpen) {
             if (viewModel != null) viewModel.setFilterSheetOpen(false) else localUiState = localUiState.copy(isFilterSheetOpen = false)

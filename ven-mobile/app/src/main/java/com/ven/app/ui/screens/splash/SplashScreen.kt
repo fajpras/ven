@@ -21,10 +21,6 @@ import com.ven.app.R
 import com.ven.app.ui.theme.VexTheme
 import kotlinx.coroutines.launch
 
-/**
- * Splash Screen minimalis standar dengan animasi logo berdurasi 500ms.
- * Setelah animasi selesai, aplikasi otomatis diarahkan ke halaman login.
- */
 @Composable
 fun SplashScreen(
     onSplashFinished: () -> Unit,

@@ -19,15 +19,6 @@ import com.ven.app.ui.navigation.BottomNavTab
 import com.ven.app.ui.theme.ThemeMode
 import com.ven.app.ui.theme.VexTheme
 
-/**
- * Kerangka layout utama aplikasi VEN (Virtual Exhibition).
- * Mengintegrasikan Scaffold Material 3 dengan custom [BottomNav] dan penanganan inset.
- *
- * Sesuai DESIGN.md §5.1 & §5.2:
- * - Digunakan pada: Home, Schedule, AI, Explore, Profile.
- * - Konten di-scroll, bottom nav tetap diam.
- * - Menggunakan `innerPadding` agar konten tidak tertutup bottom nav.
- */
 @Composable
 fun AppScaffold(
     currentTab: BottomNavTab,

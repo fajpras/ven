@@ -6,9 +6,6 @@ import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.YearMonth
 
-/**
- * Representasi satu hari dalam kalender grid 7 kolom.
- */
 @Immutable
 data class CalendarDay(
     val date: LocalDate,
@@ -18,10 +15,6 @@ data class CalendarDay(
     val dayNumber: Int get() = date.dayOfMonth
 }
 
-/**
- * UI State untuk halaman Request Meeting.
- * Sesuai spesifikasi DESIGN.md §8.6.1 dengan kalender dinamis (java.time).
- */
 @Immutable
 data class RequestMeetingUiState(
     val pameranId: String = "1",
@@ -34,7 +27,7 @@ data class RequestMeetingUiState(
     val calendarDays: List<CalendarDay> = emptyList(),
     val hourText: String = "02",
     val minuteText: String = "30",
-    val isAm: Boolean = false, // false = PM (sesuai wireframe aktif di PM)
+    val isAm: Boolean = false,
     val message: String = "",
     val isLoading: Boolean = false,
     val isSending: Boolean = false,
@@ -42,10 +35,6 @@ data class RequestMeetingUiState(
     val isSuccess: Boolean = false,
 )
 
-/**
- * Membangun 42 sel (6 minggu x 7 hari) untuk kalender dinamis.
- * Dimulai dari hari Senin (Monday-first) sesuai wireframe.
- */
 fun buildMonthGrid(
     visibleMonth: YearMonth,
     selectedDate: LocalDate?,

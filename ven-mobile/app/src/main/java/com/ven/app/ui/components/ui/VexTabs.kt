@@ -31,13 +31,6 @@ import com.ven.app.ui.theme.ThemeMode
 import com.ven.app.ui.theme.VexSize
 import com.ven.app.ui.theme.VexTheme
 
-/**
- * Tab switcher berbasis ikon untuk VEN (Virtual Exhibition).
- * Sesuai DESIGN.md §6.1:
- * - Aktif: Ikon terisi (filled) warna [VexTheme.colors.text] + garis bawah 1dp putih/kontras.
- * - Nonaktif: Ikon outline warna [VexTheme.colors.textMuted] + garis bawah warna border netral.
- * - Memiliki lebar kolom seimbang (weight 1f).
- */
 @Composable
 fun <T> VexIconTabs(
     tabs: List<T>,
@@ -90,7 +83,6 @@ fun <T> VexIconTabs(
                     )
                 }
 
-                // Garis indikator bawah selebar tab
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -102,13 +94,6 @@ fun <T> VexIconTabs(
     }
 }
 
-/**
- * Tab switcher berbasis teks untuk VEN (Virtual Exhibition).
- * Sesuai DESIGN.md §6.1 & §8.4.1:
- * - Aktif: Teks warna [VexTheme.colors.text] (SemiBold) + garis bawah 1dp warna [VexTheme.colors.text].
- * - Nonaktif: Teks warna [VexTheme.colors.textMuted] (Medium) + garis bawah [VexTheme.colors.border].
- * - Lebar kolom seimbang (weight 1f).
- */
 @Composable
 fun <T> VexTextTabs(
     tabs: List<T>,
@@ -158,7 +143,6 @@ fun <T> VexTextTabs(
                     )
                 }
 
-                // Garis indikator bawah selebar tab
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()

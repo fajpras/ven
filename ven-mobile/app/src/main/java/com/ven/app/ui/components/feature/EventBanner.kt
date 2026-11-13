@@ -32,9 +32,6 @@ import com.ven.app.ui.theme.VexRadius
 import com.ven.app.ui.theme.VexSpace
 import com.ven.app.ui.theme.VexTheme
 
-/**
- * Event Banner / Poster Pameran untuk carousel "Coming Soon" di beranda.
- */
 @Composable
 fun EventBanner(
     title: String,

@@ -6,9 +6,6 @@ import com.ven.app.data.api.models.PameranItemModel
 import com.ven.app.ui.screens.explore.PostsFeedItem
 import com.ven.app.util.DateFormatter
 
-/**
- * Data model untuk item banner pameran yang akan datang ("Coming Soon").
- */
 @Immutable
 data class ComingSoonEvent(
     val id: String,
@@ -17,9 +14,6 @@ data class ComingSoonEvent(
     val imageUrl: String? = null,
 )
 
-/**
- * Data model untuk postingan karya di Home Feed.
- */
 @Immutable
 data class PostItem(
     val id: String,
@@ -35,10 +29,6 @@ data class PostItem(
     val description: String = "",
 )
 
-/**
- * UI State untuk Home Screen.
- * Sesuai prinsip Clean Architecture & MVI/MVVM dengan dukungan paginasi chunk.
- */
 @Immutable
 data class HomeUiState(
     val isLoading: Boolean = false,
@@ -52,9 +42,6 @@ data class HomeUiState(
     val errorMessage: String? = null,
 )
 
-/**
- * Helper mapper dari DTO ke UI models.
- */
 fun PameranItemModel.toComingSoonEvent(): ComingSoonEvent {
     val dateDisplay = createdAt?.take(10) ?: "Coming Soon"
     return ComingSoonEvent(

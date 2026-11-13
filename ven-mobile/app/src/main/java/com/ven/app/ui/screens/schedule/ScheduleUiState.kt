@@ -3,21 +3,12 @@ package com.ven.app.ui.screens.schedule
 import androidx.annotation.DrawableRes
 import androidx.compose.runtime.Immutable
 
-/**
- * Tab pilihan pada halaman Schedule sesuai DESIGN.md §8.4:
- * - Approved: Jadwal pameran/pertemuan yang sudah disetujui.
- * - Waiting: Permohonan keluar yang menunggu persetujuan penyelenggara.
- * - Request: Inbox permohonan masuk dari kolaborator/mitra lain.
- */
 enum class ScheduleTab {
     Approved,
     Waiting,
     Request,
 }
 
-/**
- * Model item kegiatan pertemuan pameran untuk tab Approved dan Waiting.
- */
 @Immutable
 data class ScheduleEventItem(
     val id: String,
@@ -29,9 +20,6 @@ data class ScheduleEventItem(
     val isApproved: Boolean = true,
 )
 
-/**
- * Model item permohonan pertemuan masuk untuk tab Request.
- */
 @Immutable
 data class ScheduleRequestItem(
     val id: String,
@@ -44,9 +32,6 @@ data class ScheduleRequestItem(
     @param:DrawableRes val requesterAvatarRes: Int? = null,
 )
 
-/**
- * UI State untuk [ScheduleScreen] mengikuti pola MVI (Unidirectional Data Flow).
- */
 @Immutable
 data class ScheduleUiState(
     val selectedTab: ScheduleTab = ScheduleTab.Approved,
@@ -58,9 +43,6 @@ data class ScheduleUiState(
     val activeRequestDetail: ScheduleRequestItem? = null,
     val userFeedbackMessage: String? = null,
 ) {
-    /**
-     * Item Approved yang telah difilter berdasarkan [searchQuery].
-     */
     val filteredApprovedItems: List<ScheduleEventItem>
         get() = if (searchQuery.isBlank()) {
             approvedItems
@@ -73,9 +55,6 @@ data class ScheduleUiState(
             }
         }
 
-    /**
-     * Item Waiting yang telah difilter berdasarkan [searchQuery].
-     */
     val filteredWaitingItems: List<ScheduleEventItem>
         get() = if (searchQuery.isBlank()) {
             waitingItems
@@ -88,9 +67,6 @@ data class ScheduleUiState(
             }
         }
 
-    /**
-     * Item Request yang telah difilter berdasarkan [searchQuery].
-     */
     val filteredRequestItems: List<ScheduleRequestItem>
         get() = if (searchQuery.isBlank()) {
             requestItems

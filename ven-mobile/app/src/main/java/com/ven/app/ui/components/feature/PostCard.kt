@@ -63,9 +63,6 @@ import com.ven.app.ui.theme.VexSize
 import com.ven.app.ui.theme.VexSpace
 import com.ven.app.ui.theme.VexTheme
 
-/**
- * Model potongan teks hasil parsing URL dalam deskripsi.
- */
 data class CaptionTextPart(
     val text: String,
     val url: String? = null,
@@ -77,10 +74,6 @@ private val URL_REGEX = Regex(
 
 private val TRAILING_PUNCTUATION = charArrayOf('.', ',', '!', '?', ';', ':', ')', ']', '}')
 
-/**
- * Memecah string menjadi daftar potongan teks biasa dan URL.
- * Tanda baca trailing (seperti titik atau tanda seru di akhir URL) dipisahkan agar tautan valid.
- */
 fun parseCaptionTextWithUrls(input: String): List<CaptionTextPart> {
     if (input.isEmpty()) return emptyList()
 
@@ -123,9 +116,6 @@ fun parseCaptionTextWithUrls(input: String): List<CaptionTextPart> {
     return parts
 }
 
-/**
- * Membangun [AnnotatedString] berisi nama pengguna tebal (bold) dan deskripsi dengan link yang dapat diklik.
- */
 fun buildPostCaptionAnnotatedString(
     username: String,
     title: String? = null,
@@ -159,7 +149,6 @@ fun buildPostCaptionAnnotatedString(
                 }
             }
 
-            // Format B: Judul Karya ditebalkan di samping nama pembuat
             if (!title.isNullOrBlank()) {
                 append("  ")
                 withStyle(
@@ -221,12 +210,6 @@ fun buildPostCaptionAnnotatedString(
     }
 }
 
-/**
- * Komponen teks caption untuk kartu post:
- * - Menampilkan username dan teks deskripsi.
- * - Memotong teks panjang ke [collapsedMaxLines] baris dengan opsi 'see more' / 'see less'.
- * - Link URL di dalam deskripsi dapat diklik untuk membuka peramban web.
- */
 @Composable
 fun PostCaption(
     username: String,
@@ -307,16 +290,6 @@ fun PostCaption(
     }
 }
 
-/**
- * Kartu Post Karya Seni / Pameran untuk Feed di Home Screen dan Explore Posts Feed.
- *
- * Mengadopsi arsitektur visual Instagram Modern:
- * - Header: Avatar + @username kreator (dapat diklik membuka profil).
- * - Media Post: Gambar edge-to-edge penuh.
- * - Action Bar: Ikon Aksi (Request Meeting & Ruang 3D) di kiri + Pill Kategori di kanan.
- * - Caption: Format B (Username & Judul Karya di baris 1, deskripsi di baris 2).
- * - Timestamp: Waktu unggah halus di baris paling bawah.
- */
 @Composable
 fun PostCard(
     username: String,
@@ -344,9 +317,6 @@ fun PostCard(
             .fillMaxWidth()
             .background(colors.bg),
     ) {
-        // ---------------------------------------------------------
-        // 1. Header Kartu Post: Avatar & Username di kiri, Tombol Jadwal & Play di kanan
-        // ---------------------------------------------------------
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -359,7 +329,6 @@ fun PostCard(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            // Kiri: Avatar + Username pembuat karya (clickable ke detail profil)
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -382,12 +351,10 @@ fun PostCard(
                 )
             }
 
-            // Kanan: Tombol Jadwal (Meeting) dan Play (3D Room) berdesain elegan
             Row(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                // Tombol Request Meeting (Jadwal)
                 Surface(
                     onClick = onRequestMeetingClick,
                     shape = CircleShape,
@@ -405,7 +372,6 @@ fun PostCard(
                     }
                 }
 
-                // Tombol 3D Room (Play)
                 Surface(
                     onClick = onView3dClick,
                     shape = CircleShape,
@@ -425,9 +391,6 @@ fun PostCard(
             }
         }
 
-        // ---------------------------------------------------------
-        // 2. Media Post (Gambar Karya - Full Edge-to-Edge, 0dp Radius dengan Crossfade)
-        // ---------------------------------------------------------
         val bitmap = rememberAsyncImageBitmap(imageUrl)
 
         Box(
@@ -474,9 +437,6 @@ fun PostCard(
             }
         }
 
-        // ---------------------------------------------------------
-        // 3. Chip Kategori Mungil Elegan (bila ada)
-        // ---------------------------------------------------------
         if (!category.isNullOrBlank()) {
             val catColor = CategoryColorMap[category]
                 ?: CategoryColorMap["Others"]
@@ -500,9 +460,6 @@ fun PostCard(
             }
         }
 
-        // ---------------------------------------------------------
-        // 4. Caption Post: Format B (Username + Judul, lalu Deskripsi di baris baru)
-        // ---------------------------------------------------------
         if (description.isNotBlank() || !title.isNullOrBlank()) {
             PostCaption(
                 username = username,
@@ -524,9 +481,6 @@ fun PostCard(
             )
         }
 
-        // ---------------------------------------------------------
-        // 5. Timestamp Muted (Khas Instagram)
-        // ---------------------------------------------------------
         if (!timestampText.isNullOrBlank()) {
             Text(
                 text = timestampText.uppercase(),

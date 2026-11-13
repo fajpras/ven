@@ -41,17 +41,6 @@ import com.ven.app.ui.theme.ThemeMode
 import com.ven.app.ui.theme.VexSpace
 import com.ven.app.ui.theme.VexTheme
 
-/**
- * Layar utama Schedule untuk VEN (Virtual Exhibition).
- * Sesuai DESIGN.md §8.4 & Wireframe `wireframe schedule.png` - `wireframe schedule-5.png`:
- * - Berjalan murni di sisi frontend dengan mock data lokal mandiri.
- * - Terbungkus dalam [AppScaffold] dengan [BottomNavTab.Schedule] aktif.
- * - Header SearchBar dengan pencarian instan (realtime filter).
- * - Tab Switcher teks: [ScheduleTab.Approved] | [ScheduleTab.Waiting] | [ScheduleTab.Request].
- * - Tab Approved & Waiting: Menampilkan [EventListItem]. Klik membuka [EventDetailSheet].
- * - Tab Request: Menampilkan [RequestListItem]. Klik membuka [RequestDetailSheet].
- * - Aksi Approve & Reject: Memperbarui state secara lokal di memori.
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ScheduleScreen(
@@ -73,7 +62,6 @@ fun ScheduleScreen(
             isRefreshing = isRefreshing,
             onRefresh = {
                 isRefreshing = true
-                // Simulasi pembaruan jadwal
                 uiState = dummyScheduleUiState
                 isRefreshing = false
             },
@@ -104,7 +92,6 @@ fun ScheduleScreen(
                 uiState = uiState.copy(activeEventDetail = null)
             },
             onApproveRequest = { request ->
-                // Pindahkan request ke approved items secara lokal
                 val approvedEvent = ScheduleEventItem(
                     id = "approved_${request.id}",
                     title = request.requesterName,
@@ -130,7 +117,6 @@ fun ScheduleScreen(
                 ).show()
             },
             onRejectRequest = { request ->
-                // Hapus request dari daftar secara lokal
                 val updatedRequests = uiState.requestItems.filterNot { it.id == request.id }
 
                 uiState = uiState.copy(
@@ -149,9 +135,6 @@ fun ScheduleScreen(
     }
 }
 
-/**
- * Komponen konten murni (stateless) untuk [ScheduleScreen].
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ScheduleContent(
@@ -176,7 +159,6 @@ fun ScheduleContent(
             .background(colors.bg)
             .statusBarsPadding(),
     ) {
-        // SearchBar di bagian atas
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -189,7 +171,6 @@ fun ScheduleContent(
             )
         }
 
-        // Tab Switcher Teks (Approved | Waiting | Request)
         VexTextTabs(
             tabs = ScheduleTab.entries,
             selectedTab = uiState.selectedTab,
@@ -208,7 +189,6 @@ fun ScheduleContent(
             color = colors.border,
         )
 
-        // Konten Daftar Sesuai Tab dengan PullToRefreshBox
         PullToRefreshBox(
             isRefreshing = isRefreshing,
             onRefresh = onRefresh,
@@ -280,7 +260,6 @@ fun ScheduleContent(
         }
     }
 
-    // Modal Bottom Sheet untuk Detail Approved & Waiting
     uiState.activeEventDetail?.let { event ->
         EventDetailSheet(
             event = event,
@@ -289,7 +268,6 @@ fun ScheduleContent(
         )
     }
 
-    // Modal Bottom Sheet untuk Detail Request (Inbox)
     uiState.activeRequestDetail?.let { request ->
         RequestDetailSheet(
             request = request,
@@ -300,9 +278,6 @@ fun ScheduleContent(
     }
 }
 
-/**
- * Tampilan kosong (Empty state) ketika tidak ada data atau hasil pencarian nihil.
- */
 @Composable
 private fun EmptyScheduleView(
     message: String,
