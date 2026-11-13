@@ -272,12 +272,34 @@ class KaryaController extends Controller
 
     public function berkas(Karya $karya)
     {
-        abort_unless($karya->file && Storage::disk('local')->exists($karya->file), 404);
+        if (! $karya->file) {
+            abort(404);
+        }
 
-        return Storage::disk('local')->response($karya->file, null, [
-            'X-Content-Type-Options' => 'nosniff',
-            'Cache-Control' => 'private, max-age=1800',
-        ]);
+        $cleanPath = ltrim(preg_replace('#^/?storage/#', '', $karya->file), '/');
+
+        if (Storage::disk('public')->exists($cleanPath)) {
+            return Storage::disk('public')->response($cleanPath, null, [
+                'X-Content-Type-Options' => 'nosniff',
+                'Cache-Control' => 'public, max-age=86400',
+            ]);
+        }
+
+        if (Storage::disk('local')->exists($karya->file)) {
+            return Storage::disk('local')->response($karya->file, null, [
+                'X-Content-Type-Options' => 'nosniff',
+                'Cache-Control' => 'private, max-age=1800',
+            ]);
+        }
+
+        if (Storage::disk('local')->exists($cleanPath)) {
+            return Storage::disk('local')->response($cleanPath, null, [
+                'X-Content-Type-Options' => 'nosniff',
+                'Cache-Control' => 'private, max-age=1800',
+            ]);
+        }
+
+        abort(404);
     }
 
     private function rules(Request $request, bool $wajib): array
